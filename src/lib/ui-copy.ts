@@ -330,7 +330,7 @@ const en = {
         quote:
           'The reasoning explanations actually draw the diagram out. Two of my friends switched over just for that.',
         name: 'Imran Sheikh',
-        detail: 'Nagpur · CGL 2027',
+        detail: 'Mumbai · CGL 2027',
         initials: 'IS',
       },
       {
@@ -846,7 +846,7 @@ const en = {
     common: 'Common questions',
     brand: 'SabPadho',
     how: 'How it works',
-    city: 'Nagpur, Maharashtra',
+    city: 'Mumbai, Maharashtra',
     copyright: '© 2026 SabPadho. Sample data shown while the question bank is under review.',
     independent: 'An independent study platform. Not affiliated with the Staff Selection Commission.',
   },
@@ -1446,7 +1446,7 @@ const hi: typeof en = {
         quote:
           'रीज़निंग की समझ सच में आरेख बनाकर दिखाती है। सिर्फ उसी के लिए मेरे दो दोस्त यहाँ आ गए।',
         name: 'Imran Sheikh',
-        detail: 'नागपुर · CGL 2027',
+        detail: 'मुंबई · CGL 2027',
         initials: 'IS',
       },
       {
@@ -1952,7 +1952,7 @@ const hi: typeof en = {
     common: 'आम प्रश्न',
     brand: 'SabPadho',
     how: 'यह कैसे काम करता है',
-    city: 'नागपुर, महाराष्ट्र',
+    city: 'मुंबई, महाराष्ट्र',
     copyright: '© 2026 SabPadho। प्रश्न बैंक समीक्षा में है तब तक नमूना डेटा।',
     independent: 'एक स्वतंत्र अध्ययन मंच। कर्मचारी चयन आयोग से संबद्ध नहीं।',
   },

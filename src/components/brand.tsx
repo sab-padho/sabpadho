@@ -7,46 +7,28 @@ import { useCopy } from '../lib/ui-copy'
 
 export function LogoMark({ size = 34, className }: { size?: number; className?: string }) {
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 40 40"
-      fill="none"
-      className={cn('shrink-0', className)}
+    <span
+      className={cn('relative block shrink-0 overflow-hidden', className)}
+      style={{ width: size, height: size, borderRadius: Math.max(6, Math.round(size * 0.24)) }}
       aria-hidden
     >
-      <defs>
-        <linearGradient id="sb-tile" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#17213A" />
-          <stop offset="1" stopColor="#080B14" />
-        </linearGradient>
-        <linearGradient id="sb-gold" x1="4" y1="34" x2="36" y2="8" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#B07C27" />
-          <stop offset="0.45" stopColor="#F2CE84" />
-          <stop offset="1" stopColor="#BF8C32" />
-        </linearGradient>
-      </defs>
-      <rect width="40" height="40" rx="10" fill="url(#sb-tile)" />
-      <rect x="0.5" y="0.5" width="39" height="39" rx="9.5" stroke="#fff" strokeOpacity=".1" />
-      <path
-        d="M8.5 20.9a11.5 11.5 0 0 1 23 0"
-        stroke="url(#sb-gold)"
-        strokeWidth="1.7"
-        strokeLinecap="round"
+      <img
+        src="/brand/logo-light.png"
+        alt=""
+        width={size}
+        height={size}
+        draggable={false}
+        className="block h-full w-full dark:hidden"
       />
-      <path
-        d="M6 27.9c4.8-2.7 9.4-2.6 14 .5 4.6-3.1 9.2-3.2 14-.5v3.5c-4.8-2.6-9.4-2.5-14 .6-4.6-3.1-9.2-3.2-14-.6z"
-        fill="#F1E5CA"
+      <img
+        src="/brand/logo-dark.png"
+        alt=""
+        width={size}
+        height={size}
+        draggable={false}
+        className="hidden h-full w-full dark:block"
       />
-      <path d="M18.6 25.4 29.1 14.8" stroke="url(#sb-gold)" strokeWidth="2.3" strokeLinecap="round" />
-      <path
-        d="M23.7 14.5h5.8v5.8"
-        stroke="url(#sb-gold)"
-        strokeWidth="2.3"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
+    </span>
   )
 }
 

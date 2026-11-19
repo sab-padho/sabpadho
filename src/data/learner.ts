@@ -2,7 +2,7 @@ export const learner = {
   name: 'Aarav Deshmukh',
   firstName: 'Aarav',
   email: 'aarav.deshmukh@example.com',
-  city: 'Nagpur, Maharashtra',
+  city: 'Mumbai, Maharashtra',
   initials: 'AD',
   target: 'SSC CGL 2027 · Tier I',
   targetDate: '11 March 2027',

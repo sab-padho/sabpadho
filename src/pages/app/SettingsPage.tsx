@@ -1,17 +1,22 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { ArrowRight, LogOut, Trash2 } from 'lucide-react'
-import { Avatar, Badge, Button, ButtonLink, SectionLabel, Segmented, Switch } from '../../components/ui'
+import { Avatar, Badge, Button, SectionLabel, Segmented, Switch } from '../../components/ui'
 import { learner } from '../../data/learner'
 import { useTheme } from '../../lib/theme'
 import { useLang } from '../../lib/lang'
+import { localDate, planLabel, useCopy } from '../../lib/ui-copy'
+import { useAuth } from '../../lib/auth'
 import { useLocalStorage, usePageTitle } from '../../lib/hooks'
 import { useToast } from '../../lib/toast'
 
 export function SettingsPage() {
-  usePageTitle('Preferences')
-  const { resolved, setMode } = useTheme()
   const { lang, setLang } = useLang()
+  const copy = useCopy()
+  usePageTitle(copy.nav.settings)
+  const navigate = useNavigate()
+  const { resolved, setMode } = useTheme()
   const { notify } = useToast()
+  const { signOut } = useAuth()
   const [defaultLength, setDefaultLength] = useLocalStorage('sabpadho-default-length', 5)
   const [showExplanation, setShowExplanation] = useLocalStorage('sabpadho-auto-explain', true)
   const [reminders, setReminders] = useLocalStorage('sabpadho-reminders', true)
@@ -27,19 +32,18 @@ export function SettingsPage() {
       }
     }
     keys.forEach((key) => localStorage.removeItem(key))
-    notify('Preview data cleared. Reload to start fresh.', 'success')
+    notify(copy.settings.cleared, 'success')
   }
 
   return (
     <div className="space-y-5">
       <header>
-        <SectionLabel>Preferences</SectionLabel>
+        <SectionLabel>{copy.settings.label}</SectionLabel>
         <h1 className="mt-1.5 text-[26px] font-semibold leading-tight sm:text-[30px]">
-          Make the desk yours
+          {copy.settings.title}
         </h1>
         <p className="mt-1.5 max-w-xl text-[13px] leading-relaxed text-muted">
-          Appearance, language and the defaults used when you start a sprint. These settings stay in
-          this browser.
+          {copy.settings.intro}
         </p>
       </header>
 
@@ -48,60 +52,60 @@ export function SettingsPage() {
           <section className="card p-4 sm:p-5">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h2 className="text-[14.5px] font-semibold">Appearance</h2>
+                <h2 className="text-[14.5px] font-semibold">{copy.settings.appearance}</h2>
                 <p className="mt-0.5 text-[11.5px] text-muted">
-                  Light is the default. Dark is one switch, and it sticks to this browser.
+                  {copy.settings.appearanceBody}
                 </p>
               </div>
-              <Badge tone="outline">{resolved === 'dark' ? 'Dark' : 'Light'}</Badge>
+              <Badge tone="outline">{resolved === 'dark' ? copy.settings.dark : copy.settings.light}</Badge>
             </div>
 
             <div className="mt-3 border-t border-line pt-1">
               <Switch
                 checked={resolved === 'dark'}
                 onChange={(next) => setMode(next ? 'dark' : 'light')}
-                label="Dark theme"
-                description="Warm-white canvas by day, low-glare ink at night."
+                label={copy.settings.darkTheme}
+                description={copy.settings.darkDesc}
               />
             </div>
           </section>
 
           <section className="card p-4 sm:p-5">
-            <h2 className="text-[14.5px] font-semibold">Question language</h2>
+            <h2 className="text-[14.5px] font-semibold">{copy.settings.questionLang}</h2>
             <p className="mt-0.5 text-[11.5px] text-muted">
-              Used for prompts, options and explanations. Option order stays the same.
+              {copy.settings.questionLangBody}
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <Segmented
-                ariaLabel="Preferred question language"
+                ariaLabel={copy.settings.questionLang}
                 value={lang}
                 onChange={setLang}
                 options={[
-                  { value: 'en', label: 'English' },
-                  { value: 'hi', label: 'हिंदी' },
+                  { value: 'en', label: copy.practice.english },
+                  { value: 'hi', label: copy.practice.hindi },
                 ]}
               />
               <span className="text-[11px] text-muted">
-                {lang === 'en' ? 'English is saved as your default.' : 'हिंदी आपकी डिफ़ॉल्ट भाषा है।'}
+                {lang === 'en' ? copy.settings.langSavedEn : copy.settings.langSavedHi}
               </span>
             </div>
           </section>
 
           <section className="card p-4 sm:p-5">
-            <h2 className="text-[14.5px] font-semibold">Study defaults</h2>
+            <h2 className="text-[14.5px] font-semibold">{copy.settings.studyDefaults}</h2>
             <p className="mt-0.5 text-[11.5px] text-muted">
-              Applied when you open practice setup, still changeable per session.
+              {copy.settings.studyDefaultsBody}
             </p>
 
             <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-3">
               <div>
-                <p className="text-[12.5px] font-medium">Default sprint length</p>
+                <p className="text-[12.5px] font-medium">{copy.settings.defaultLength}</p>
                 <p className="mt-0.5 text-[11px] text-muted">
-                  Sets the preselected length for a new sprint.
+                  {copy.settings.defaultLengthBody}
                 </p>
               </div>
               <Segmented
-                ariaLabel="Default sprint length"
+                ariaLabel={copy.settings.defaultLength}
                 size="sm"
                 value={defaultLength}
                 onChange={setDefaultLength}
@@ -117,8 +121,8 @@ export function SettingsPage() {
               <Switch
                 checked={showExplanation}
                 onChange={setShowExplanation}
-                label="Show the reasoning after every check"
-                description="Turn off if you prefer to review the solution at the end of a set."
+                label={copy.settings.showReasoning}
+                description={copy.settings.showReasoningBody}
               />
             </div>
             <div className="border-t border-line">
@@ -127,33 +131,33 @@ export function SettingsPage() {
                 onChange={(value) => {
                   setReducedMotion(value)
                   document.documentElement.classList.toggle('reduce-motion', value)
-                  notify(value ? 'Reduced motion on' : 'Reduced motion off')
+                  notify(value ? copy.settings.motionOn : copy.settings.motionOff)
                 }}
-                label="Reduce motion"
-                description="Limits chart and page animations. Your device setting is still respected."
+                label={copy.settings.reduceMotion}
+                description={copy.settings.reduceMotionBody}
               />
             </div>
           </section>
 
           <section className="card p-4 sm:p-5">
-            <h2 className="text-[14.5px] font-semibold">Reminders</h2>
+            <h2 className="text-[14.5px] font-semibold">{copy.settings.reminders}</h2>
             <p className="mt-0.5 text-[11.5px] text-muted">
-              Illustrative in this preview; no messages are sent.
+              {copy.settings.remindersBody}
             </p>
             <div className="mt-1">
               <Switch
                 checked={reminders}
                 onChange={setReminders}
-                label="Revision due reminder"
-                description="A single daily note when questions are due, around 7 pm."
+                label={copy.settings.revisionReminder}
+                description={copy.settings.revisionReminderBody}
               />
             </div>
             <div className="border-t border-line">
               <Switch
                 checked={mockAlerts}
                 onChange={setMockAlerts}
-                label="Sunday mock reminder"
-                description="One message before the weekly full-length paper opens."
+                label={copy.settings.sundayReminder}
+                description={copy.settings.sundayReminderBody}
               />
             </div>
           </section>
@@ -161,26 +165,24 @@ export function SettingsPage() {
           <section className="card p-4 sm:p-5">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h2 className="text-[14.5px] font-semibold">Preview data</h2>
+                <h2 className="text-[14.5px] font-semibold">{copy.settings.previewData}</h2>
                 <p className="mt-0.5 max-w-md text-[11.5px] leading-relaxed text-muted">
-                  Bookmarks, revision history and mock submissions on this device. There is no
-                  server copy in this phase.
+                  {copy.settings.previewDataBody}
                 </p>
               </div>
               <Button variant="secondary" size="sm" onClick={resetData}>
-                <Trash2 size={13} /> Clear data
+                <Trash2 size={13} /> {copy.settings.clearData}
               </Button>
             </div>
             <p className="mt-3 rounded-lg bg-surface-2/70 px-3 py-2 text-[10.5px] leading-relaxed text-muted">
-              No password, payment or personal data is collected. Signing in on the other screen uses
-              a fixed demo profile.
+              {copy.settings.noPassword}
             </p>
           </section>
         </div>
 
         <aside className="space-y-3">
           <div className="card p-4">
-            <p className="label">Your profile</p>
+            <p className="label">{copy.settings.profile}</p>
             <div className="mt-3 flex items-center gap-3">
               <Avatar initials={learner.initials} size={44} />
               <div className="min-w-0">
@@ -190,10 +192,10 @@ export function SettingsPage() {
             </div>
             <dl className="mt-3 space-y-2 border-t border-line pt-3 text-[11.5px]">
               {[
-                ['Target', learner.target],
-                ['Exam date', `${learner.targetDate} · ${learner.daysToExam} days`],
-                ['Joined', learner.joined],
-                ['Plan', learner.plan],
+                [copy.settings.target, learner.target],
+                [copy.settings.examDate, `${localDate(lang, learner.targetDate)} · ${copy.settings.daysN(learner.daysToExam)}`],
+                [copy.settings.joined, localDate(lang, learner.joined)],
+                [copy.settings.plan, planLabel(lang, learner.plan)],
               ].map(([label, value]) => (
                 <div key={label} className="flex items-start justify-between gap-3">
                   <dt className="text-muted">{label}</dt>
@@ -202,30 +204,38 @@ export function SettingsPage() {
               ))}
             </dl>
             <p className="mt-3 rounded-md bg-brand-soft/60 px-2 py-1.5 text-[9.5px] leading-relaxed text-brand-ink">
-              Demo profile. No real student data is shown anywhere in this preview.
+              {copy.settings.demoProfile}
             </p>
           </div>
 
           <div className="card p-4">
-            <p className="text-[12px] font-medium">Need a hand?</p>
+            <p className="text-[12px] font-medium">{copy.settings.needHand}</p>
             <p className="mt-1 text-[11px] leading-relaxed text-muted">
-              Write to{' '}
+              {copy.settings.writeTo}{' '}
               <a href="mailto:hello@sabpadho.in" className="link-underline text-ink-soft">
                 hello@sabpadho.in
               </a>{' '}
-              with the paper name and what you saw. A person replies, usually the same day.
+              {copy.settings.withPaper}
             </p>
           </div>
 
           <div className="flex flex-col gap-2">
-            <ButtonLink to="/signin" variant="secondary" size="sm">
-              <LogOut size={13} /> Sign out of demo
-            </ButtonLink>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                signOut()
+                notify(copy.auth.signedOut)
+                navigate('/signin')
+              }}
+            >
+              <LogOut size={13} /> {copy.settings.signOut}
+            </Button>
             <Link
               to="/how-it-works"
               className="inline-flex items-center justify-center gap-1 text-[11px] text-muted hover:text-ink"
             >
-              How SabPadho works <ArrowRight size={12} />
+              {copy.settings.howWorks} <ArrowRight size={12} />
             </Link>
           </div>
         </aside>

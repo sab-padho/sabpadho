@@ -6,22 +6,24 @@ import { questionsForSubject } from '../data/questions'
 import { tintTile } from '../components/subject-tint'
 import { cn } from '../lib/utils'
 import { usePageTitle } from '../lib/hooks'
+import { useLang } from '../lib/lang'
+import { subjectShortByLabel, useCopy } from '../lib/ui-copy'
 
 export function SubjectsPage() {
-  usePageTitle('Subjects')
+  const copy = useCopy()
+  const { lang } = useLang()
+  usePageTitle(copy.library.title)
   const totalChapters = subjects.reduce((sum, subject) => sum + subject.chapters.length, 0)
 
   return (
     <div className="container-page pb-16 pt-10 md:pt-14">
       <div className="max-w-2xl">
-        <SectionLabel>Chapter primers</SectionLabel>
+        <SectionLabel>{copy.library.eyebrow}</SectionLabel>
         <h1 className="mt-3 text-[32px] font-semibold leading-[1.1] sm:text-[44px]">
-          The syllabus, chapter by chapter.
+          {copy.library.heading}
         </h1>
         <p className="mt-3 text-[14.5px] leading-relaxed text-muted">
-          Five subjects, {totalChapters} chapters. Read what a chapter covers and how one worked
-          example is solved — no account needed. When you are ready, the practice set is one click
-          away.
+          {copy.library.intro(totalChapters)}
         </p>
       </div>
 
@@ -32,7 +34,7 @@ export function SubjectsPage() {
             href={`#${subject.slug}`}
             className="chip transition hover:border-line-strong hover:text-ink"
           >
-            {subject.short}
+            {subjectShortByLabel(lang, subject.short)}
             <span className="text-[10px] text-muted">{questionsForSubject(subject.id).length}</span>
           </a>
         ))}
@@ -52,7 +54,7 @@ export function SubjectsPage() {
                   {subject.code}
                 </span>
                 <div>
-                  <h2 className="text-[20px] font-semibold leading-tight">{subject.name.en}</h2>
+                  <h2 className="text-[20px] font-semibold leading-tight">{lang === 'hi' ? subject.name.hi : subject.name.en}</h2>
                   <p className="mt-1 max-w-xl text-[12.5px] leading-relaxed text-muted">
                     {subject.description}
                   </p>
@@ -60,13 +62,13 @@ export function SubjectsPage() {
               </div>
               <div className="flex items-center gap-2">
                 <Badge tone="neutral">
-                  <ListChecks size={11} /> {subject.chapters.length} chapters
+                  <ListChecks size={11} /> {copy.library.chaptersN(subject.chapters.length)}
                 </Badge>
                 <Link
                   to={`/subjects/${subject.slug}`}
                   className="inline-flex items-center gap-1 text-[12.5px] font-medium text-brand-ink hover:underline"
                 >
-                  Overview <ArrowRight size={13} />
+                  {copy.library.overview} <ArrowRight size={13} />
                 </Link>
               </div>
             </div>
@@ -80,9 +82,9 @@ export function SubjectsPage() {
                 >
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[13.5px] font-medium text-ink">
-                      {chapter.title.en}
+                      {lang === 'hi' ? chapter.title.hi : chapter.title.en}
                       <span className="ml-2 text-[11.5px] font-normal text-muted">
-                        {chapter.title.hi}
+                        {lang === 'hi' ? chapter.title.en : chapter.title.hi}
                       </span>
                     </span>
                     <span className="mt-0.5 block truncate text-[11.5px] text-muted">
@@ -90,7 +92,7 @@ export function SubjectsPage() {
                     </span>
                   </span>
                   <span className="hidden shrink-0 items-center gap-1 text-[10.5px] text-muted sm:inline-flex">
-                    <Clock size={11} /> {chapter.minutes} min
+                    <Clock size={11} /> {copy.library.minN(chapter.minutes)}
                   </span>
                   <ArrowRight
                     size={14}
@@ -105,13 +107,13 @@ export function SubjectsPage() {
 
       <div className="mt-14 flex flex-col items-start justify-between gap-4 rounded-2xl border border-line bg-surface px-5 py-6 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-[18px] font-semibold">Already know the chapter?</h2>
+          <h2 className="text-[18px] font-semibold">{copy.library.alreadyTitle}</h2>
           <p className="mt-1 text-[13px] text-muted">
-            Skip the primer and take a five-question sprint with your saved language and length.
+            {copy.library.alreadyBody}
           </p>
         </div>
         <ButtonLink to="/app/practice">
-          Set up a sprint <ArrowRight size={15} />
+          {copy.library.sprintCta} <ArrowRight size={15} />
         </ButtonLink>
       </div>
     </div>

@@ -6,15 +6,18 @@ import { App } from './App'
 import { ThemeProvider } from './lib/theme'
 import { LangProvider } from './lib/lang'
 import { ToastProvider } from './lib/toast'
+import { AuthProvider } from './lib/auth'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProvider>
       <LangProvider>
         <ToastProvider>
-          <BrowserRouter>
-            <App />
-          </BrowserRouter>
+          <AuthProvider>
+            <BrowserRouter>
+              <App />
+            </BrowserRouter>
+          </AuthProvider>
         </ToastProvider>
       </LangProvider>
     </ThemeProvider>

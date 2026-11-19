@@ -1,4 +1,6 @@
 import { cn } from '../lib/utils'
+import { useLang } from '../lib/lang'
+import { useCopy, weekdayShort } from '../lib/ui-copy'
 
 export function WeeklyActivityChart({
   data,
@@ -7,6 +9,8 @@ export function WeeklyActivityChart({
   data: Array<{ label: string; date?: string; questions: number }>
   className?: string
 }) {
+  const { lang } = useLang()
+  const copy = useCopy()
   const max = Math.max(...data.map((d) => d.questions), 1)
   const ceiling = Math.max(10, Math.ceil((max * 1.2) / 10) * 10)
   const activeIndex = data.reduce(
@@ -51,7 +55,7 @@ export function WeeklyActivityChart({
                           active ? 'opacity-100' : 'group-hover:opacity-100',
                         )}
                       >
-                        {item.questions} questions
+                        {copy.practice.questions(item.questions)}
                       </span>
                     </div>
                   ) : (
@@ -71,7 +75,7 @@ export function WeeklyActivityChart({
                 index === activeIndex ? 'font-semibold text-ink' : 'text-muted',
               )}
             >
-              {item.label}
+              {weekdayShort(lang, item.label)}
             </div>
           ))}
         </div>
@@ -258,6 +262,7 @@ export function ScoreSplitBar({
   wrong: number
   unattempted: number
 }) {
+  const copy = useCopy()
   const total = Math.max(1, correct + wrong + unattempted)
   return (
     <div>
@@ -268,14 +273,14 @@ export function ScoreSplitBar({
       </div>
       <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 text-[11.5px] text-muted">
         <span className="inline-flex items-center gap-1.5">
-          <i className="h-2 w-2 rounded-[2px] bg-positive" /> {correct} correct
+          <i className="h-2 w-2 rounded-[2px] bg-positive" /> {correct} {copy.result.correct.toLowerCase()}
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <i className="h-2 w-2 rounded-[2px] bg-negative/70" /> {wrong} wrong
+          <i className="h-2 w-2 rounded-[2px] bg-negative/70" /> {wrong} {copy.result.wrong.toLowerCase()}
         </span>
         <span className="inline-flex items-center gap-1.5">
           <i className="h-2 w-2 rounded-[2px] bg-surface-3 ring-1 ring-inset ring-line-strong" />{' '}
-          {unattempted} unattempted
+          {unattempted} {copy.result.unattempted.toLowerCase()}
         </span>
       </div>
     </div>

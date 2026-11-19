@@ -5,21 +5,25 @@ import { Badge, Button, ButtonLink, SectionLabel } from '../../components/ui'
 import { getMock, paperMarks, paperQuestionCount, sectionQuestionCount } from '../../data/mocks'
 import { loadResult } from '../../lib/attempt'
 import { usePageTitle } from '../../lib/hooks'
+import { useLang } from '../../lib/lang'
+import { useCopy, localDate, mockKindLabel, sectionName } from '../../lib/ui-copy'
 
 export function MockInstructions() {
   const { mockId = '' } = useParams()
   const paper = getMock(mockId)
   const navigate = useNavigate()
+  const { lang } = useLang()
+  const copy = useCopy()
   const [ack, setAck] = useState(false)
-  usePageTitle(paper ? `${paper.title} · Instructions` : 'Mock instructions')
+  usePageTitle(paper ? copy.instructions.title(paper.title) : copy.instructions.fallback)
 
   if (!paper) {
     return (
       <div className="card mx-auto max-w-md p-6 text-center">
-        <p className="text-[15px] font-semibold">This paper is not available</p>
-        <p className="mt-1.5 text-[12.5px] text-muted">Check the mock series for papers open now.</p>
+        <p className="text-[15px] font-semibold">{copy.mock.notAvailableTitle}</p>
+        <p className="mt-1.5 text-[12.5px] text-muted">{copy.mock.notAvailableBody}</p>
         <ButtonLink to="/app/mocks" className="mt-4">
-          Back to mocks
+          {copy.mock.backToMocks}
         </ButtonLink>
       </div>
     )
@@ -36,27 +40,25 @@ export function MockInstructions() {
         to="/app/mocks"
         className="inline-flex items-center gap-1.5 text-[12px] text-muted transition hover:text-ink"
       >
-        <ArrowLeft size={14} /> Mock tests
+        <ArrowLeft size={14} /> {copy.mock.label}
       </Link>
 
       <div className="mt-3 grid gap-4 lg:grid-cols-[1.5fr_1fr] lg:items-start">
         <div className="space-y-4">
           <div className="card p-5">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge tone="brand">{paper.kind}</Badge>
-              <span className="text-[11px] text-muted">
-                {paper.exam} · Tier I · paper version 1
-              </span>
+              <Badge tone="brand">{mockKindLabel(lang, paper.kind)}</Badge>
+              <span className="text-[11px] text-muted">{copy.instructions.examMeta(paper.exam)}</span>
             </div>
             <h1 className="mt-2.5 text-[25px] font-semibold leading-tight">{paper.title}</h1>
-            <p className="mt-2 text-[13px] leading-relaxed text-muted">{paper.description}</p>
+            <p className="mt-2 text-[13px] leading-relaxed text-muted">{lang === 'hi' ? paper.descriptionHi : paper.description}</p>
 
             <dl className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
               {[
-                { label: 'Questions', value: count },
-                { label: 'Minutes', value: paper.durationMinutes },
-                { label: 'Marks', value: marks },
-                { label: 'Sections', value: paper.sections.length },
+                { label: copy.instructions.questions, value: count },
+                { label: copy.instructions.minutes, value: paper.durationMinutes },
+                { label: copy.instructions.marks, value: marks },
+                { label: copy.instructions.sections, value: paper.sections.length },
               ].map((item) => (
                 <div key={item.label} className="rounded-lg border border-line bg-surface-2/50 px-2.5 py-2">
                   <dt className="text-[10px] text-muted">{item.label}</dt>
@@ -70,31 +72,30 @@ export function MockInstructions() {
             {scheduled ? (
               <div className="mt-4 flex items-start gap-2 rounded-lg border border-gold/30 bg-gold-soft px-3 py-2.5 text-[12px] leading-relaxed text-gold">
                 <CalendarDays size={14} className="mt-0.5 shrink-0" />
-                This paper opens {paper.opensOn}. The instructions stay here, and a reminder is all
-                you need until then.
+                {paper.opensOn ? copy.instructions.opensBody(localDate(lang, paper.opensOn)) : null}
               </div>
             ) : result ? (
               <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-positive/25 bg-positive-soft px-3 py-2.5 text-[12px] text-positive">
                 <span className="inline-flex items-center gap-1.5">
-                  <Check size={13} /> You have already submitted this paper.
+                  <Check size={13} /> {copy.instructions.alreadySubmitted}
                 </span>
                 <Link
                   to={`/app/mocks/${paper.id}/result`}
                   className="font-medium underline underline-offset-2"
                 >
-                  View the result
+                  {copy.instructions.viewResult}
                 </Link>
               </div>
             ) : null}
           </div>
 
           <div className="card p-5">
-            <SectionLabel>Paper pattern</SectionLabel>
+            <SectionLabel>{copy.instructions.pattern}</SectionLabel>
             <div className="mt-3 overflow-hidden rounded-lg border border-line">
               <div className="grid grid-cols-[1.6fr_0.7fr_0.7fr] gap-2 border-b border-line bg-surface-2/70 px-3 py-2 text-[10px] font-medium uppercase tracking-[0.08em] text-muted">
-                <span>Section</span>
-                <span className="text-right">Questions</span>
-                <span className="text-right">Marks</span>
+                <span>{copy.instructions.section}</span>
+                <span className="text-right">{copy.instructions.questionsCol}</span>
+                <span className="text-right">{copy.instructions.marksCol}</span>
               </div>
               <ul className="divide-y divide-line">
                 {paper.sections.map((section) => (
@@ -102,7 +103,7 @@ export function MockInstructions() {
                     key={section.id}
                     className="grid grid-cols-[1.6fr_0.7fr_0.7fr] items-center gap-2 px-3 py-2 text-[12px]"
                   >
-                    <span className="text-ink-soft">{section.name}</span>
+                    <span className="text-ink-soft">{sectionName(lang, section.name)}</span>
                     <span className="num text-right text-muted">{sectionQuestionCount(section)}</span>
                     <span className="num text-right">{sectionQuestionCount(section) * 2}</span>
                   </li>
@@ -110,16 +111,16 @@ export function MockInstructions() {
               </ul>
             </div>
 
-            <SectionLabel className="mt-5">Instructions</SectionLabel>
+            <SectionLabel className="mt-5">{copy.instructions.heading}</SectionLabel>
             <ol className="mt-2.5 space-y-2 text-[12.5px] leading-relaxed text-ink-soft">
               {[
-                `The paper has ${count} questions and a limit of ${paper.durationMinutes} minutes. The clock starts when you open the paper.`,
-                'A correct answer earns 2 marks; a wrong answer deducts 0.5; an unattempted question earns nothing.',
-                'Use the question palette to move between questions. Answered, marked and unanswered states are labelled separately.',
-                'Your selection is saved as you choose it. The “answer saved” label reflects the last acknowledged change.',
-                'The language switch in the header changes the prompt only — your selection, timer and review flag stay in place.',
-                'Submit once, before the clock runs out. On expiry, the answers already saved are graded.',
-                'In this preview, the attempt is kept in this browser tab so a reload does not lose it.',
+                copy.instructions.ruleClock(count, paper.durationMinutes),
+                copy.instructions.ruleMarking,
+                copy.instructions.rulePalette,
+                copy.instructions.ruleSaved,
+                copy.instructions.ruleLanguage,
+                copy.instructions.ruleSubmit,
+                copy.instructions.rulePreview,
               ].map((line, index) => (
                 <li key={line} className="flex gap-2.5">
                   <span className="num mt-0.5 grid h-4.5 w-4.5 shrink-0 place-items-center rounded-full border border-line text-[9px] text-muted">
@@ -142,7 +143,7 @@ export function MockInstructions() {
                 className="mt-0.5 h-4 w-4 accent-[var(--brand)]"
               />
               <span className="text-ink-soft">
-                I have read the marking scheme and the instructions for this paper.
+                {copy.instructions.ack}
               </span>
             </label>
 
@@ -151,11 +152,11 @@ export function MockInstructions() {
                 disabled={!ack || scheduled}
                 onClick={() => navigate(`/app/mocks/${paper.id}/attempt`)}
               >
-                {scheduled ? 'Not open yet' : 'Begin paper'}
+                {scheduled ? copy.instructions.notOpen : copy.instructions.begin}
                 <ArrowRight size={15} />
               </Button>
               <ButtonLink to="/app/mocks" variant="ghost" size="sm">
-                Not now
+                {copy.instructions.notNow}
               </ButtonLink>
             </div>
           </div>
@@ -163,47 +164,46 @@ export function MockInstructions() {
 
         <aside className="space-y-3 lg:sticky lg:top-24">
           <div className="card p-4">
-            <p className="label">At a glance</p>
+            <p className="label">{copy.instructions.glance}</p>
             <ul className="mt-3 space-y-2.5 text-[12px]">
               <li className="flex items-start justify-between gap-3">
                 <span className="inline-flex items-center gap-1.5 text-muted">
-                  <Clock size={12} /> Duration
+                  <Clock size={12} /> {copy.instructions.duration}
                 </span>
-                <span>{paper.durationMinutes} minutes</span>
+                <span>{copy.mock.minutesN(paper.durationMinutes)}</span>
               </li>
               <li className="flex items-start justify-between gap-3">
                 <span className="inline-flex items-center gap-1.5 text-muted">
-                  <Trophy size={12} /> Maximum
+                  <Trophy size={12} /> {copy.instructions.maximum}
                 </span>
-                <span>{marks} marks</span>
+                <span>{copy.mock.marksN(marks)}</span>
               </li>
               <li className="flex items-start justify-between gap-3">
                 <span className="inline-flex items-center gap-1.5 text-muted">
-                  <Info size={12} /> Negative
+                  <Info size={12} /> {copy.instructions.negative}
                 </span>
-                <span>0.5 per wrong</span>
+                <span>{copy.instructions.negativeVal}</span>
               </li>
               <li className="flex items-start justify-between gap-3">
-                <span className="text-muted">Language</span>
+                <span className="text-muted">{copy.instructions.language}</span>
                 <span>English · हिंदी</span>
               </li>
             </ul>
           </div>
 
           <div className="card p-4">
-            <p className="text-[12px] font-medium">Before you begin</p>
+            <p className="text-[12px] font-medium">{copy.instructions.beforeBegin}</p>
             <ul className="mt-2 space-y-1.5 text-[11px] leading-relaxed text-muted">
-              <li>Keep a rough sheet and pen handy.</li>
-              <li>Use a stable connection if you can; the preview keeps answers locally.</li>
-              <li>Decide a submission point — 5 minutes left is a sensible one.</li>
+              <li>{copy.instructions.tip1}</li>
+              <li>{copy.instructions.tip2}</li>
+              <li>{copy.instructions.tip3}</li>
             </ul>
           </div>
 
           <div className="rounded-xl border border-dashed border-line bg-surface-2/40 p-4">
-            <p className="text-[11.5px] font-medium">A note on the clock</p>
+            <p className="text-[11.5px] font-medium">{copy.instructions.clockNote}</p>
             <p className="mt-1 text-[10.5px] leading-relaxed text-muted">
-              In the live product the deadline is stored on the server, so a browser refresh cannot
-              buy extra time. This preview uses the same rule but keeps the deadline in the tab.
+              {copy.instructions.clockBody}
             </p>
           </div>
         </aside>

@@ -3,6 +3,7 @@ import { Moon, Sun } from 'lucide-react'
 import { cn } from '../lib/utils'
 import { useTheme } from '../lib/theme'
 import { useLang } from '../lib/lang'
+import { useCopy } from '../lib/ui-copy'
 
 export function LogoMark({ size = 34, className }: { size?: number; className?: string }) {
   return (
@@ -53,32 +54,42 @@ export function Logo({
   size = 'md',
   withTagline = false,
   to = '/',
+  tone = 'default',
   className,
 }: {
   size?: 'sm' | 'md'
   withTagline?: boolean
   to?: string
+  tone?: 'default' | 'rail'
   className?: string
 }) {
+  const copy = useCopy()
   const markSize = size === 'sm' ? 28 : 34
+  const rail = tone === 'rail'
   return (
     <Link
       to={to}
       className={cn('group inline-flex items-center gap-2.5 no-underline', className)}
-      aria-label="SabPadho home"
+      aria-label={copy.a11y.home}
     >
       <LogoMark size={markSize} />
       <span className="flex flex-col leading-none">
         <span
           className={cn(
-            'font-display font-bold tracking-[-0.03em] text-ink',
+            'font-display font-bold tracking-[-0.03em]',
+            rail ? 'text-rail-ink' : 'text-ink',
             size === 'sm' ? 'text-[16px]' : 'text-[18px]',
           )}
         >
-          Sab<span className="text-brand">Padho</span>
+          Sab<span className={rail ? 'text-[#c6b1e6]' : 'text-brand'}>Padho</span>
         </span>
         {withTagline ? (
-          <span className="mt-1 text-[10px] font-medium tracking-[0.01em] text-muted">
+          <span
+            className={cn(
+              'mt-1 text-[10px] font-medium tracking-[0.01em]',
+              rail ? 'text-rail-muted' : 'text-muted',
+            )}
+          >
             Sab padho, sab badho.
           </span>
         ) : null}
@@ -89,13 +100,14 @@ export function Logo({
 
 export function ThemeToggle({ className, withLabel = false }: { className?: string; withLabel?: boolean }) {
   const { resolved, toggle } = useTheme()
+  const copy = useCopy()
   const next = resolved === 'dark' ? 'light' : 'dark'
   return (
     <button
       type="button"
       onClick={toggle}
-      aria-label={`Switch to ${next} theme`}
-      title={`Switch to ${next} theme`}
+      aria-label={copy.a11y.switchTo(next === 'dark' ? copy.settings.dark : copy.settings.light)}
+      title={copy.a11y.switchTo(next === 'dark' ? copy.settings.dark : copy.settings.light)}
       className={cn(
         'inline-flex h-9 items-center justify-center gap-2 rounded-[10px] border border-line bg-surface px-2.5 text-muted transition hover:border-line-strong hover:bg-surface-2 hover:text-ink',
         withLabel && 'px-3',
@@ -118,9 +130,9 @@ export function ThemeToggle({ className, withLabel = false }: { className?: stri
           )}
         />
       </span>
-      {withLabel ? <span className="text-[13px] font-medium">{next === 'dark' ? 'Dark' : 'Light'}</span> : null}
+      {withLabel ? <span className="text-[13px] font-medium">{next === 'dark' ? copy.settings.dark : copy.settings.light}</span> : null}
       <span className="sr-only" aria-live="polite">
-        {resolved === 'dark' ? 'Dark theme on' : 'Light theme on'}
+        {resolved === 'dark' ? copy.a11y.themeOn : copy.a11y.themeOff}
       </span>
     </button>
   )
@@ -128,10 +140,11 @@ export function ThemeToggle({ className, withLabel = false }: { className?: stri
 
 export function LangToggle({ className }: { className?: string }) {
   const { lang, setLang } = useLang()
+  const copy = useCopy()
   return (
     <div
       role="group"
-      aria-label="Question language"
+      aria-label={copy.marketing.questionLanguage}
       className={cn(
         'inline-flex h-9 items-center rounded-[10px] border border-line bg-surface p-0.5',
         className,

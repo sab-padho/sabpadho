@@ -19,18 +19,21 @@ import { clearAttempt, loadAttempt, saveAttempt, saveResult } from '../../lib/at
 import { cn, formatClock } from '../../lib/utils'
 import { usePageTitle } from '../../lib/hooks'
 import { useLang } from '../../lib/lang'
+import { useCopy, localDate, sectionName, sectionShort } from '../../lib/ui-copy'
 import { useToast } from '../../lib/toast'
 
 export function MockAttempt() {
   const { mockId = '' } = useParams()
   const paper = getMock(mockId)
-  usePageTitle(paper ? `${paper.title} · Exam hall` : 'Exam hall')
+  const { lang } = useLang()
+  const copy = useCopy()
+  usePageTitle(paper ? copy.attempt.title(paper.title) : copy.attempt.fallback)
 
   if (!paper) {
     return (
       <div className="card mx-auto max-w-md p-6 text-center">
-        <p className="text-[15px] font-semibold">This paper is not available</p>
-        <p className="mt-1.5 text-[12.5px] text-muted">It may have been withdrawn or the link is old.</p>
+        <p className="text-[15px] font-semibold">{copy.attempt.notAvailableTitle}</p>
+        <p className="mt-1.5 text-[12.5px] text-muted">{copy.attempt.notAvailableBody}</p>
         <ButtonLink to="/app/mocks" className="mt-4">
           Back to mocks
         </ButtonLink>
@@ -41,8 +44,8 @@ export function MockAttempt() {
   if (paper.status === 'scheduled') {
     return (
       <div className="card mx-auto max-w-md p-6 text-center">
-        <p className="text-[15px] font-semibold">This paper is not open yet</p>
-        <p className="mt-1.5 text-[12.5px] text-muted">It opens {paper.opensOn}.</p>
+        <p className="text-[15px] font-semibold">{copy.attempt.notOpenTitle}</p>
+        <p className="mt-1.5 text-[12.5px] text-muted">{paper.opensOn ? copy.attempt.opensBody(localDate(lang, paper.opensOn)) : null}</p>
         <ButtonLink to="/app/mocks" className="mt-4">
           Back to mocks
         </ButtonLink>
@@ -53,14 +56,14 @@ export function MockAttempt() {
   if (!paper.sections.some((section) => section.questionIds.length > 0)) {
     return (
       <div className="card mx-auto max-w-md p-6 text-center">
-        <p className="text-[15px] font-semibold">This paper has already been submitted</p>
+        <p className="text-[15px] font-semibold">{copy.attempt.alreadyTitle}</p>
         <p className="mt-1.5 text-[12.5px] text-muted">
-          The live question set closed when the paper was finalised. The result is still available.
+          {copy.attempt.alreadyBody}
         </p>
         <div className="mt-4 flex flex-wrap justify-center gap-2">
-          <ButtonLink to={`/app/mocks/${paper.id}/result`}>View result</ButtonLink>
+          <ButtonLink to={`/app/mocks/${paper.id}/result`}>{copy.attempt.viewResult}</ButtonLink>
           <ButtonLink to="/app/mocks" variant="secondary">
-            Back to mocks
+            {copy.attempt.backToMocks}
           </ButtonLink>
         </div>
       </div>
@@ -73,6 +76,7 @@ export function MockAttempt() {
 function AttemptRunner({ paper }: { paper: MockPaper }) {
   const navigate = useNavigate()
   const { lang } = useLang()
+  const copy = useCopy()
   const { notify } = useToast()
 
   const [boot] = useState(() => loadAttempt(paper.id))
@@ -155,7 +159,7 @@ function AttemptRunner({ paper }: { paper: MockPaper }) {
       submittedAt: new Date().toISOString(),
     })
     clearAttempt(paper.id)
-    if (auto) notify('Time is up — your saved answers were submitted')
+    if (auto) notify(copy.attempt.timeUp)
     navigate(`/app/mocks/${paper.id}/result`, { replace: true })
   }
 
@@ -206,7 +210,7 @@ function AttemptRunner({ paper }: { paper: MockPaper }) {
       {paper.sections.map((section, sectionIndex) => (
         <div key={section.id} className={sectionIndex > 0 ? 'mt-4' : ''}>
           <div className="flex items-center justify-between">
-            <p className="text-[10.5px] font-medium text-ink-soft">{section.name}</p>
+            <p className="text-[10.5px] font-medium text-ink-soft">{sectionName(lang, section.name)}</p>
             <span className="text-[9.5px] text-muted">
               {section.questionIds.filter((id) => answers[id] !== undefined).length}/
               {section.questionIds.length}
@@ -225,7 +229,7 @@ function AttemptRunner({ paper }: { paper: MockPaper }) {
                     setIndex(entryIndex)
                     setPaletteOpen(false)
                   }}
-                  aria-label={`Question ${entryIndex + 1}, ${status.replace('-', ' and ')}`}
+                  aria-label={copy.attempt.ariaQuestion(entryIndex + 1, status.replace('-', lang === 'hi' ? ' और ' : ' and '))}
                   aria-current={current}
                   className={cn(
                     'relative grid h-7 place-items-center rounded-[5px] border text-[10.5px] font-medium transition',
@@ -249,21 +253,20 @@ function AttemptRunner({ paper }: { paper: MockPaper }) {
 
       <div className="mt-4 grid grid-cols-2 gap-x-3 gap-y-1.5 border-t border-line pt-3 text-[9.5px] text-muted">
         <span className="inline-flex items-center gap-1.5">
-          <i className="h-2.5 w-2.5 rounded-[3px] border border-brand/30 bg-brand-soft" /> Answered
+          <i className="h-2.5 w-2.5 rounded-[3px] border border-brand/30 bg-brand-soft" /> {copy.attempt.answered}
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <i className="h-2.5 w-2.5 rounded-[3px] border border-gold/40 bg-gold-soft" /> Marked
+          <i className="h-2.5 w-2.5 rounded-[3px] border border-gold/40 bg-gold-soft" /> {copy.attempt.marked}
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <i className="h-2.5 w-2.5 rounded-[3px] border border-line bg-surface" /> Not answered
+          <i className="h-2.5 w-2.5 rounded-[3px] border border-line bg-surface" /> {copy.attempt.notAnswered}
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <i className="h-2.5 w-2.5 rounded-[3px] ring-2 ring-brand" /> Current
+          <i className="h-2.5 w-2.5 rounded-[3px] ring-2 ring-brand" /> {copy.attempt.current}
         </span>
       </div>
       <p className="mt-2 text-[9.5px] leading-relaxed text-muted">
-        Marked for review is stored separately from the answer, so a flagged question still counts
-        as answered.
+        {copy.attempt.paletteNote}
       </p>
     </div>
   )
@@ -277,13 +280,13 @@ function AttemptRunner({ paper }: { paper: MockPaper }) {
             onClick={() => setConfirmExit(true)}
             className="inline-flex items-center gap-1 rounded-md text-[11.5px] text-muted transition hover:text-ink"
           >
-            <ArrowLeft size={14} /> Exit
+            <ArrowLeft size={14} /> {copy.attempt.exit}
           </button>
           <span className="h-3 w-px bg-line" />
           <div className="min-w-0">
             <p className="truncate text-[12px] font-medium">{paper.title}</p>
             <p className="text-[10px] text-muted">
-              {paper.sections.length} sections · {entries.length} questions · version 1
+              {copy.attempt.meta(paper.sections.length, entries.length)}
             </p>
           </div>
         </div>
@@ -299,10 +302,10 @@ function AttemptRunner({ paper }: { paper: MockPaper }) {
           >
             <Clock size={14} className={warning ? 'text-negative' : 'text-muted'} />
             <span className="num text-[15px] font-semibold leading-none">{formatClock(remaining)}</span>
-            <span className="hidden text-[9.5px] text-muted sm:inline">left</span>
+            <span className="hidden text-[9.5px] text-muted sm:inline">{copy.attempt.left}</span>
           </div>
           <Button size="sm" onClick={() => setConfirmSubmit(true)}>
-            <Send size={13} /> Submit
+            <Send size={13} /> {copy.attempt.submit}
           </Button>
         </div>
       </div>
@@ -324,7 +327,7 @@ function AttemptRunner({ paper }: { paper: MockPaper }) {
                   : 'text-muted hover:bg-surface-2 hover:text-ink',
               )}
             >
-              {section.name.replace('General Intelligence & Reasoning', 'Reasoning').replace('Quantitative Aptitude', 'Quant').replace('English Comprehension', 'English').replace('General Awareness', 'GA')}
+              {sectionShort(lang, section.name)}
               <span className="ml-1.5 text-[9.5px] opacity-70">
                 {sectionAnswered}/{section.questionIds.length}
               </span>
@@ -332,7 +335,7 @@ function AttemptRunner({ paper }: { paper: MockPaper }) {
           )
         })}
         <span className="ml-auto hidden items-center gap-1.5 pl-3 text-[10px] text-positive sm:inline-flex">
-          <Check size={11} /> All answers saved
+          <Check size={11} /> {copy.attempt.allSaved}
         </span>
       </div>
 
@@ -341,10 +344,10 @@ function AttemptRunner({ paper }: { paper: MockPaper }) {
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-2.5">
             <div className="flex items-center gap-2">
               <p className="text-[11px] font-medium text-ink-soft">
-                Question {index + 1} of {entries.length}
+                {copy.attempt.questionOf(index + 1, entries.length)}
               </p>
               <span className="h-1 w-1 rounded-full bg-line-strong" />
-              <p className="text-[10.5px] text-muted">{currentEntry.sectionName}</p>
+              <p className="text-[10.5px] text-muted">{sectionName(lang, currentEntry.sectionName)}</p>
             </div>
             <div className="flex items-center gap-2 text-[10px] text-muted">
               <span
@@ -355,11 +358,11 @@ function AttemptRunner({ paper }: { paper: MockPaper }) {
               >
                 {saving ? (
                   <>
-                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-muted" /> Saving…
+                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-muted" /> {copy.attempt.saving}
                   </>
                 ) : (
                   <>
-                    <Check size={11} /> Saved
+                    <Check size={11} /> {copy.attempt.saved}
                   </>
                 )}
               </span>
@@ -416,7 +419,7 @@ function AttemptRunner({ paper }: { paper: MockPaper }) {
                 onClick={clearResponse}
                 disabled={answers[question.id] === undefined}
               >
-                Clear
+                {copy.attempt.clear}
               </Button>
               <Button
                 variant="ghost"
@@ -425,7 +428,7 @@ function AttemptRunner({ paper }: { paper: MockPaper }) {
                 className={marked.includes(question.id) ? 'text-gold' : undefined}
               >
                 <Flag size={13} />
-                {marked.includes(question.id) ? 'Marked' : 'Mark for review'}
+                {marked.includes(question.id) ? copy.attempt.markedShort : copy.attempt.markReview}
               </Button>
             </div>
 
@@ -436,15 +439,15 @@ function AttemptRunner({ paper }: { paper: MockPaper }) {
                 onClick={() => go(-1)}
                 disabled={index === 0}
               >
-                <ChevronLeft size={14} /> Previous
+                <ChevronLeft size={14} /> {copy.attempt.previous}
               </Button>
               {index === entries.length - 1 ? (
                 <Button size="sm" onClick={() => setConfirmSubmit(true)}>
-                  Review &amp; submit <ArrowRight size={14} />
+                  {copy.attempt.reviewSubmit} <ArrowRight size={14} />
                 </Button>
               ) : (
                 <Button size="sm" onClick={() => go(1)}>
-                  Save &amp; next <ArrowRight size={14} />
+                  {copy.attempt.saveNext} <ArrowRight size={14} />
                 </Button>
               )}
             </div>
@@ -454,28 +457,22 @@ function AttemptRunner({ paper }: { paper: MockPaper }) {
         <aside className="hidden lg:block lg:sticky lg:top-24">
           <div className="card p-3.5">
             <div className="flex items-center justify-between">
-              <p className="text-[11.5px] font-semibold">Question palette</p>
+              <p className="text-[11.5px] font-semibold">{copy.attempt.paletteTitle}</p>
               <span className="text-[9.5px] text-muted">
                 {answeredCount}/{entries.length}
               </span>
             </div>
             <div className="mt-3">{palette}</div>
           </div>
-          <p className="mt-2 px-1 text-[9.5px] leading-relaxed text-muted">
-            The timer stays with the paper. Refreshing this tab will not add time in the live
-            product; in this preview your attempt is restored.
-          </p>
+
         </aside>
       </div>
 
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[10px] text-muted">
-        <span>
-          {answeredCount} answered · {markedCount} marked · {entries.length - answeredCount}{' '}
-          unanswered
-        </span>
+        <span>{copy.attempt.summary(answeredCount, markedCount, entries.length - answeredCount)}</span>
         <span className="lg:hidden">
           <Button variant="secondary" size="sm" onClick={() => setPaletteOpen(true)}>
-            <Grid2x2 size={13} /> Open palette
+            <Grid2x2 size={13} /> {copy.attempt.openPalette}
           </Button>
         </span>
       </div>
@@ -483,8 +480,8 @@ function AttemptRunner({ paper }: { paper: MockPaper }) {
       <Dialog
         open={paletteOpen}
         onClose={() => setPaletteOpen(false)}
-        title="Question palette"
-        description="Answered, marked and unanswered are shown as separate states."
+        title={copy.attempt.paletteTitle}
+        description={copy.attempt.paletteDesc}
         width="max-w-md"
       >
         {palette}
@@ -493,24 +490,24 @@ function AttemptRunner({ paper }: { paper: MockPaper }) {
       <Dialog
         open={confirmSubmit}
         onClose={() => setConfirmSubmit(false)}
-        title="Submit this paper?"
-        description="Once submitted, the paper is finalised and the same result is returned on any retry."
+        title={copy.attempt.submitTitle}
+        description={copy.attempt.submitDesc}
         footer={
           <>
             <Button variant="ghost" onClick={() => setConfirmSubmit(false)}>
-              Keep attempting
+              {copy.attempt.keepAttempting}
             </Button>
             <Button onClick={() => finish(false)}>
-              Submit paper <Send size={14} />
+              {copy.attempt.submitPaper} <Send size={14} />
             </Button>
           </>
         }
       >
         <div className="grid grid-cols-3 gap-2">
           {[
-            { label: 'Answered', value: answeredCount, tone: 'text-positive' },
-            { label: 'Marked', value: markedCount, tone: 'text-gold' },
-            { label: 'Unanswered', value: entries.length - answeredCount, tone: 'text-muted' },
+            { label: copy.attempt.answered, value: answeredCount, tone: 'text-positive' },
+            { label: copy.attempt.marked, value: markedCount, tone: 'text-gold' },
+            { label: copy.attempt.notAnswered, value: entries.length - answeredCount, tone: 'text-muted' },
           ].map((item) => (
             <div key={item.label} className="rounded-lg border border-line bg-surface-2/60 px-2.5 py-2">
               <p className="text-[10px] text-muted">{item.label}</p>
@@ -521,40 +518,37 @@ function AttemptRunner({ paper }: { paper: MockPaper }) {
         <p className="mt-3 flex items-start gap-2 rounded-lg bg-warning-soft px-3 py-2 text-[11px] leading-relaxed text-warning">
           <AlertTriangle size={13} className="mt-0.5 shrink-0" />
           {entries.length - answeredCount > 0
-            ? `${entries.length - answeredCount} questions are still unanswered. They score zero but carry no negative marking.`
-            : 'Every question has an answer. Check your marked questions before submitting.'}
+            ? copy.attempt.unansweredWarn(entries.length - answeredCount)
+            : copy.attempt.allAnswered}
         </p>
       </Dialog>
 
       <Dialog
         open={confirmExit}
         onClose={() => setConfirmExit(false)}
-        title="Leave the exam hall?"
-        description="Your answers stay saved in this tab and the clock keeps running."
+        title={copy.attempt.exitTitle}
+        description={copy.attempt.exitDesc}
         footer={
           <>
             <Button variant="ghost" onClick={() => setConfirmExit(false)}>
-              Stay in the paper
+              {copy.attempt.stay}
             </Button>
             <Link to="/app/mocks" className="btn btn-secondary">
-              Leave
+              {copy.attempt.leave}
             </Link>
           </>
         }
       >
         <div className="flex items-start gap-2 rounded-lg border border-line bg-surface-2/60 px-3 py-2.5 text-[11.5px] leading-relaxed text-muted">
           <Clock size={14} className="mt-0.5 shrink-0" />
-          {formatClock(remaining)} remaining. In the live product the deadline is held on the
-          server, so leaving does not pause the paper.
+          {copy.attempt.remainingBody(formatClock(remaining))}
         </div>
       </Dialog>
 
-      <p className="mt-6 hidden text-[9.5px] text-muted sm:block">
-        Sample paper · keys stay out of the browser payload in production.
-      </p>
+      <p className="mt-6 hidden text-[9.5px] text-muted sm:block">{copy.attempt.sampleNote}</p>
 
       <div className="sr-only" aria-live="polite">
-        {saving ? 'Answer saving' : 'Answer saved'} · {answeredCount} of {entries.length} answered
+        {saving ? copy.attempt.ariaSaving : copy.attempt.ariaSaved} · {copy.attempt.ariaOf(answeredCount, entries.length)}
       </div>
     </div>
   )

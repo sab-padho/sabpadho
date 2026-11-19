@@ -31,7 +31,7 @@ export function useLocalStorage<T>(key: string, initial: T) {
 
 export function usePageTitle(title?: string) {
   useEffect(() => {
-    document.title = title ? `${title} · SabPadho` : 'SabPadho — Sab padho, sab badho.'
+    document.title = title ? `${title} · SabPadho` : 'SabPadho: Sab padho, sab badho.'
   }, [title])
 }
 

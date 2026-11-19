@@ -1,8 +1,23 @@
 import { ArrowRight, Bookmark, Check, Flag, RotateCcw, Timer, TrendingUp } from 'lucide-react'
 import { LogoMark } from './brand'
 import { cn } from '../lib/utils'
+import { useLang } from '../lib/lang'
+import {
+  chapterHindi,
+  lastSeenLabel,
+  sectionShort,
+  subjectShortByLabel,
+  useCopy,
+} from '../lib/ui-copy'
 
 export function HeroPreview() {
+  const { lang } = useLang()
+  const copy = useCopy()
+  const revisionItems = [
+    { title: 'Profit & loss', subject: 'Maths', soon: false },
+    { title: 'Syllogisms', subject: 'Reasoning', soon: false },
+    { title: 'Indian polity', subject: 'GK', soon: true },
+  ]
   return (
     <div className="relative">
       <div
@@ -13,29 +28,29 @@ export function HeroPreview() {
         <div className="flex items-center justify-between border-b border-line px-4 py-3">
           <div className="flex items-center gap-2">
             <LogoMark size={22} />
-            <span className="font-display text-[12.5px] font-semibold">Study desk</span>
+            <span className="font-display text-[12.5px] font-semibold">{copy.nav.desk}</span>
           </div>
-          <span className="text-[10.5px] text-muted">Thu, 19 Nov</span>
+          <span className="text-[10.5px] text-muted">{copy.preview.date}</span>
         </div>
 
         <div className="space-y-3 p-4">
           <div className="flex items-end justify-between gap-3">
             <div>
-              <p className="text-[11px] text-muted">Good evening, Aarav</p>
+              <p className="text-[11px] text-muted">{copy.preview.evening}</p>
               <p className="mt-0.5 font-display text-[15px] font-semibold">SSC CGL 2027 · Tier I</p>
             </div>
             <span className="rounded-full bg-positive-soft px-2 py-0.5 text-[10px] font-medium text-positive">
-              9-day streak
+              {copy.shell.streak(9)}
             </span>
           </div>
 
           <div className="rounded-xl border border-brand/15 bg-brand-soft px-3 py-2.5">
             <p className="text-[9.5px] font-semibold uppercase tracking-[0.12em] text-brand-ink/70">
-              Continue where you left off
+              {copy.dashboard.continueLabel}
             </p>
             <div className="mt-1 flex items-center justify-between gap-3">
-              <p className="text-[12.5px] font-medium text-brand-ink">Percentages · 7 of 10</p>
-              <span className="text-[10.5px] text-brand-ink/70">5 min left</span>
+              <p className="text-[12.5px] font-medium text-brand-ink">{lang === 'hi' ? chapterHindi('Percentages') : 'Percentages'} · {copy.preview.of(7, 10)}</p>
+              <span className="text-[10.5px] text-brand-ink/70">{copy.preview.minLeft(5)}</span>
             </div>
             <div className="mt-2 flex items-center gap-2">
               <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/60 dark:bg-black/20">
@@ -47,10 +62,10 @@ export function HeroPreview() {
 
           <div className="grid grid-cols-2 gap-2">
             {[
-              { value: '72%', label: 'Accuracy this week', icon: TrendingUp },
-              { value: '6', label: 'Questions due today', icon: RotateCcw },
-              { value: '2', label: 'Mocks taken', icon: Timer },
-              { value: '8', label: 'Saved questions', icon: Bookmark },
+              { value: '72%', label: copy.dashboard.accuracy, icon: TrendingUp },
+              { value: '6', label: copy.dashboard.dueToday, icon: RotateCcw },
+              { value: '2', label: copy.dashboard.mocksTaken, icon: Timer },
+              { value: '8', label: copy.dashboard.saved, icon: Bookmark },
             ].map((stat) => (
               <div key={stat.label} className="rounded-lg border border-line bg-surface-2/60 px-2.5 py-2">
                 <div className="flex items-center justify-between">
@@ -66,15 +81,11 @@ export function HeroPreview() {
 
           <div>
             <div className="flex items-center justify-between">
-              <p className="text-[10.5px] font-medium text-ink-soft">Today’s revision</p>
-              <span className="text-[9.5px] text-muted">6 due</span>
+              <p className="text-[10.5px] font-medium text-ink-soft">{copy.dashboard.revision}</p>
+              <span className="text-[9.5px] text-muted">{copy.dashboard.dueCount(6)}</span>
             </div>
             <ul className="mt-1.5 space-y-1">
-              {[
-                { title: 'Profit & loss', subject: 'Maths', when: 'Due' },
-                { title: 'Syllogisms', subject: 'Reasoning', when: 'Due' },
-                { title: 'Indian polity', subject: 'GK', when: 'Tomorrow' },
-              ].map((item) => (
+              {revisionItems.map((item) => (
                 <li
                   key={item.title}
                   className="flex items-center gap-2 rounded-lg border border-line bg-surface px-2.5 py-1.5"
@@ -82,12 +93,18 @@ export function HeroPreview() {
                   <span
                     className={cn(
                       'h-1.5 w-1.5 shrink-0 rounded-full',
-                      item.when === 'Due' ? 'bg-brand' : 'bg-line-strong',
+                      item.soon ? 'bg-line-strong' : 'bg-brand',
                     )}
                   />
-                  <span className="flex-1 truncate text-[11px] text-ink-soft">{item.title}</span>
-                  <span className="text-[9.5px] text-muted">{item.subject}</span>
-                  <span className="text-[9.5px] font-medium text-ink-soft">{item.when}</span>
+                  <span className="flex-1 truncate text-[11px] text-ink-soft">
+                    {lang === 'hi' ? chapterHindi(item.title) : item.title}
+                  </span>
+                  <span className="text-[9.5px] text-muted">
+                    {subjectShortByLabel(lang, item.subject)}
+                  </span>
+                  <span className="text-[9.5px] font-medium text-ink-soft">
+                    {item.soon ? copy.preview.tomorrow : copy.dashboard.due}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -99,13 +116,15 @@ export function HeroPreview() {
 }
 
 export function PracticePreview() {
+  const { lang } = useLang()
+  const copy = useCopy()
   return (
     <div className="card overflow-hidden p-0">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-2.5">
         <div className="flex items-center gap-2">
-          <span className="label">Percentages · 4 of 10</span>
+          <span className="label">{lang === 'hi' ? chapterHindi('Percentages') : 'Percentages'} · {copy.preview.of(4, 10)}</span>
           <span className="inline-flex items-center gap-1 text-[10.5px] text-positive">
-            <Check size={11} /> Saved
+            <Check size={11} /> {copy.attempt.saved}
           </span>
         </div>
         <div className="flex items-center gap-1.5">
@@ -115,10 +134,7 @@ export function PracticePreview() {
       </div>
 
       <div className="p-4">
-        <p className="text-[13px] leading-relaxed text-ink">
-          A shopkeeper marks an article 20% above its cost price and then allows a 10% discount. What
-          is his profit percentage?
-        </p>
+        <p className="text-[13px] leading-relaxed text-ink">{copy.preview.prompt}</p>
 
         <div className="mt-3 space-y-1.5">
           {[
@@ -146,7 +162,7 @@ export function PracticePreview() {
               </span>
               {option.text}
               {option.selected ? (
-                <span className="ml-auto text-[9.5px] font-medium text-brand-ink">Your answer</span>
+                <span className="ml-auto text-[9.5px] font-medium text-brand-ink">{copy.practice.yourAnswer}</span>
               ) : null}
             </div>
           ))}
@@ -154,24 +170,24 @@ export function PracticePreview() {
 
         <div className="mt-3 rounded-lg border border-positive/20 bg-positive-soft/70 p-2.5">
           <p className="flex items-center gap-1.5 text-[11px] font-semibold text-positive">
-            <Check size={12} /> Correct — the answer is 8%
+            <Check size={12} /> {copy.preview.verdict}
           </p>
           <p className="mt-1 text-[10.5px] leading-relaxed text-ink-soft">
-            Take cost price as 100 → marked price 120 → after 10% discount 108. Profit = 8.
+            {copy.preview.working}
           </p>
         </div>
 
         <div className="mt-3 flex items-center justify-between">
           <div className="flex items-center gap-3 text-[10.5px] text-muted">
             <span className="inline-flex items-center gap-1">
-              <Bookmark size={12} /> Save
+              <Bookmark size={12} /> {copy.preview.save}
             </span>
             <span className="inline-flex items-center gap-1">
-              <Flag size={12} /> Review
+              <Flag size={12} /> {copy.preview.review}
             </span>
           </div>
           <span className="inline-flex items-center gap-1 rounded-md bg-brand px-2 py-1 text-[10.5px] font-medium text-white">
-            Next <ArrowRight size={11} />
+            {copy.preview.next} <ArrowRight size={11} />
           </span>
         </div>
       </div>
@@ -180,6 +196,8 @@ export function PracticePreview() {
 }
 
 export function PalettePreview() {
+  const { lang } = useLang()
+  const copy = useCopy()
   const states = [
     'answered', 'answered', 'marked', 'answered', 'blank',
     'answered', 'answered', 'answered', 'marked', 'current',
@@ -194,17 +212,17 @@ export function PalettePreview() {
           <p className="text-[9.5px] font-semibold uppercase tracking-[0.12em] text-muted">
             SSC CGL · Mock 03
           </p>
-          <p className="text-[12px] font-medium">Reasoning · questions 1–25</p>
+          <p className="text-[12px] font-medium">{sectionShort(lang, 'General Intelligence & Reasoning')} · {copy.preview.qRange}</p>
         </div>
         <div className="text-right">
           <p className="num rounded-md border border-line px-2 py-1 text-[15px] font-semibold leading-none">
             41:12
           </p>
-          <p className="mt-1 text-[9px] text-muted">server clock</p>
+          <p className="mt-1 text-[9px] text-muted">{copy.preview.serverClock}</p>
         </div>
       </div>
       <div className="flex items-center gap-1.5 px-4 pt-3">
-        {['Reasoning', 'Quant', 'English', 'GA'].map((tab, index) => (
+        {['General Intelligence & Reasoning', 'Quantitative Aptitude', 'English Comprehension', 'General Awareness'].map((tab, index) => (
           <span
             key={tab}
             className={cn(
@@ -212,11 +230,11 @@ export function PalettePreview() {
               index === 0 ? 'bg-brand-soft font-medium text-brand-ink' : 'text-muted',
             )}
           >
-            {tab}
+            {sectionShort(lang, tab)}
           </span>
         ))}
         <span className="ml-auto inline-flex items-center gap-1 text-[9.5px] text-positive">
-          <Check size={10} /> All saved
+          <Check size={10} /> {copy.attempt.allSaved}
         </span>
       </div>
       <div className="grid grid-cols-5 gap-1.5 p-4">
@@ -240,16 +258,16 @@ export function PalettePreview() {
       </div>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-line px-4 py-2.5 text-[9.5px] text-muted">
         <span className="inline-flex items-center gap-1">
-          <i className="h-2.5 w-2.5 rounded-[3px] border border-brand/30 bg-brand-soft" /> Answered
+          <i className="h-2.5 w-2.5 rounded-[3px] border border-brand/30 bg-brand-soft" /> {copy.attempt.answered}
         </span>
         <span className="inline-flex items-center gap-1">
-          <i className="h-2.5 w-2.5 rounded-[3px] border border-gold/40 bg-gold-soft" /> Marked
+          <i className="h-2.5 w-2.5 rounded-[3px] border border-gold/40 bg-gold-soft" /> {copy.attempt.marked}
         </span>
         <span className="inline-flex items-center gap-1">
-          <i className="h-2.5 w-2.5 rounded-[3px] border border-line bg-surface" /> Not answered
+          <i className="h-2.5 w-2.5 rounded-[3px] border border-line bg-surface" /> {copy.attempt.notAnswered}
         </span>
         <span className="inline-flex items-center gap-1">
-          <i className="h-2.5 w-2.5 rounded-[3px] bg-brand" /> Current
+          <i className="h-2.5 w-2.5 rounded-[3px] bg-brand" /> {copy.attempt.current}
         </span>
       </div>
     </div>
@@ -257,37 +275,43 @@ export function PalettePreview() {
 }
 
 export function DuePreview() {
+  const { lang } = useLang()
+  const copy = useCopy()
+  const dueItems = [
+    { chapter: 'Profit & loss', subject: 'Maths', seen: '3 days ago' },
+    { chapter: 'Syllogisms', subject: 'Reasoning', seen: '2 days ago' },
+    { chapter: 'Synonyms', subject: 'English', seen: '5 days ago' },
+    { chapter: 'Indian polity', subject: 'GK', seen: 'Yesterday' },
+  ]
   return (
     <div className="card p-4">
       <div className="flex items-center justify-between">
-        <p className="text-[12px] font-semibold">Due today</p>
-        <span className="chip py-0.5! text-[10.5px]">6 questions</span>
+        <p className="text-[12px] font-semibold">{copy.revision.dueToday}</p>
+        <span className="chip py-0.5! text-[10.5px]">{copy.revision.questionsN(6)}</span>
       </div>
       <ul className="mt-3 divide-y divide-line">
-        {[
-          { chapter: 'Profit & loss', subject: 'Maths', seen: 'last seen 3 days ago', due: 'Due' },
-          { chapter: 'Syllogisms', subject: 'Reasoning', seen: 'last seen 2 days ago', due: 'Due' },
-          { chapter: 'Synonyms', subject: 'English', seen: 'last seen 5 days ago', due: 'Due' },
-          { chapter: 'Indian polity', subject: 'GK', seen: 'last seen yesterday', due: 'Due' },
-        ].map((item) => (
+        {dueItems.map((item) => (
           <li key={item.chapter} className="flex items-center gap-3 py-2.5">
             <span className="grid h-2 w-2 shrink-0 place-items-center rounded-full bg-brand" />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[12px] text-ink">{item.chapter}</p>
+              <p className="truncate text-[12px] text-ink">
+                {lang === 'hi' ? chapterHindi(item.chapter) : item.chapter}
+              </p>
               <p className="text-[10px] text-muted">
-                {item.subject} · {item.seen}
+                {subjectShortByLabel(lang, item.subject)} ·{' '}
+                {copy.preview.lastSeen(lastSeenLabel(lang, item.seen))}
               </p>
             </div>
             <span className="rounded-full bg-brand-soft px-2 py-0.5 text-[9.5px] font-medium text-brand-ink">
-              {item.due}
+              {copy.dashboard.due}
             </span>
           </li>
         ))}
       </ul>
       <div className="mt-3 flex items-center justify-between border-t border-line pt-3">
-        <p className="text-[10.5px] text-muted">Correct retry → later · missed → sooner</p>
+        <p className="text-[10.5px] text-muted">{copy.preview.rule}</p>
         <span className="inline-flex items-center gap-1 text-[10.5px] font-medium text-brand-ink">
-          Start <ArrowRight size={11} />
+          {copy.preview.start} <ArrowRight size={11} />
         </span>
       </div>
     </div>

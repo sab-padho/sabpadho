@@ -1,6 +1,8 @@
 import { useEffect } from 'react'
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { useScrollToTop } from './lib/hooks'
+import { useAuth } from './lib/auth'
+import type { ReactNode } from 'react'
 import { MarketingLayout } from './components/MarketingLayout'
 import { AppShell } from './components/AppShell'
 import { Home } from './pages/Home'
@@ -42,7 +44,14 @@ export function App() {
         <Route path="/signin" element={<SignIn />} />
       </Route>
 
-      <Route path="/app" element={<AppShell />}>
+      <Route
+        path="/app"
+        element={
+          <RequireAuth>
+            <AppShell />
+          </RequireAuth>
+        }
+      >
         <Route index element={<Dashboard />} />
         <Route path="practice" element={<PracticeSetup />} />
         <Route path="practice/:chapterSlug" element={<PracticeSession />} />
@@ -59,4 +68,11 @@ export function App() {
       <Route path="*" element={<NotFound />} />
     </Routes>
   )
+}
+
+function RequireAuth({ children }: { children: ReactNode }) {
+  const { email } = useAuth()
+  const location = useLocation()
+  if (!email) return <Navigate to="/signin" replace state={{ from: location.pathname }} />
+  return <>{children}</>
 }

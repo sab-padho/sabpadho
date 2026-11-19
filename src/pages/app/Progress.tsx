@@ -14,9 +14,20 @@ import {
 import { subjects } from '../../data/subjects'
 import { cn } from '../../lib/utils'
 import { usePageTitle } from '../../lib/hooks'
+import { useLang } from '../../lib/lang'
+import {
+  useCopy,
+  chapterHindi,
+  localDate,
+  mockKindLabel,
+  subjectShortByLabel,
+  subjectShortHindi,
+} from '../../lib/ui-copy'
 
 export function Progress() {
-  usePageTitle('Progress')
+  const { lang } = useLang()
+  const copy = useCopy()
+  usePageTitle(copy.nav.progress)
   const [range, setRange] = useState<'week' | 'month'>('week')
   const weekQuestions = weeklyActivity.reduce((sum, day) => sum + day.questions, 0)
 
@@ -24,37 +35,36 @@ export function Progress() {
     <div className="space-y-5">
       <header className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
         <div>
-          <SectionLabel>Progress</SectionLabel>
+          <SectionLabel>{copy.progress.label}</SectionLabel>
           <h1 className="mt-1.5 text-[26px] font-semibold leading-tight sm:text-[30px]">
-            What the numbers actually say
+            {copy.progress.title}
           </h1>
           <p className="mt-1.5 max-w-xl text-[13px] leading-relaxed text-muted">
-            Every figure shows the attempts behind it. A chapter with one attempt is labelled “too
-            early to tell”, not weak.
+            {copy.progress.intro}
           </p>
         </div>
         <Segmented
-          ariaLabel="Reporting range"
+          ariaLabel={copy.progress.label}
           value={range}
           onChange={setRange}
           options={[
-            { value: 'week', label: 'Last 7 days' },
-            { value: 'month', label: 'Last 6 weeks' },
+            { value: 'week', label: copy.progress.last7 },
+            { value: 'month', label: copy.progress.last6 },
           ]}
         />
       </header>
 
       <section className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
         {[
-          { label: 'Accuracy', value: `${accuracyTrend[accuracyTrend.length - 1].value}%`, note: '+3 pts vs last week', icon: Target },
-          { label: 'Questions checked', value: String(weekQuestions), note: `${learner.streak}-day streak`, icon: Check },
+          { label: copy.progress.accuracy, value: `${accuracyTrend[accuracyTrend.length - 1].value}%`, note: copy.progress.ptsWeek, icon: Target },
+          { label: copy.progress.questionsChecked, value: String(weekQuestions), note: copy.progress.streakN(learner.streak), icon: Check },
           {
-            label: 'Study time',
-            value: `${Math.floor(learner.minutesThisWeek / 60)}h ${learner.minutesThisWeek % 60}m`,
-            note: 'About 36 min a day',
+            label: copy.progress.studyTime,
+            value: copy.progress.studyTimeVal(Math.floor(learner.minutesThisWeek / 60), learner.minutesThisWeek % 60),
+            note: copy.progress.aboutDay,
             icon: Timer,
           },
-          { label: 'Weekly goal', value: `${Math.round((learner.questionsThisWeek / learner.weeklyGoal) * 100)}%`, note: `${learner.questionsThisWeek} of ${learner.weeklyGoal} questions`, icon: Flame },
+          { label: copy.progress.weeklyGoal, value: `${Math.round((learner.questionsThisWeek / learner.weeklyGoal) * 100)}%`, note: copy.progress.ofGoal(learner.questionsThisWeek, learner.weeklyGoal), icon: Flame },
         ].map((item) => (
           <div key={item.label} className="card p-3.5">
             <div className="flex items-start justify-between">
@@ -63,7 +73,7 @@ export function Progress() {
             </div>
             <p className="num mt-2 font-display text-[23px] font-semibold leading-none">{item.value}</p>
             <p className="mt-1.5 text-[10px] text-muted">{item.note}</p>
-            {item.label === 'Weekly goal' ? (
+            {item.label === copy.progress.weeklyGoal ? (
               <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-surface-3">
                 <div
                   className="h-full rounded-full bg-brand"
@@ -81,16 +91,14 @@ export function Progress() {
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div>
                 <h2 className="text-[15px] font-semibold">
-                  {range === 'week' ? 'Questions per day' : 'Accuracy over six weeks'}
+                  {range === 'week' ? copy.progress.perDay : copy.progress.accuracy6}
                 </h2>
                 <p className="mt-0.5 text-[11px] text-muted">
-                  {range === 'week'
-                    ? 'Wednesday was a light day — 12 questions before the paper'
-                    : 'Each point is built from at least 40 checked answers'}
+                  {range === 'week' ? copy.progress.wedNote : copy.progress.pointNote}
                 </p>
               </div>
               <Badge tone="neutral">
-                <TrendingUp size={11} /> {range === 'week' ? `${weekQuestions} questions` : '+14 pts in 6 weeks'}
+                <TrendingUp size={11} /> {range === 'week' ? copy.progress.questionsN(weekQuestions) : copy.progress.pts6}
               </Badge>
             </div>
             <div className="mt-5">
@@ -105,17 +113,17 @@ export function Progress() {
           <section className="card overflow-hidden">
             <div className="flex items-center justify-between border-b border-line px-4 py-3.5 sm:px-5">
               <div>
-                <h2 className="text-[15px] font-semibold">Chapter pulse</h2>
-                <p className="mt-0.5 text-[11px] text-muted">Accuracy with the attempts behind it</p>
+                <h2 className="text-[15px] font-semibold">{copy.progress.pulse}</h2>
+                <p className="mt-0.5 text-[11px] text-muted">{copy.progress.pulseSub}</p>
               </div>
-              <span className="text-[10px] text-muted">8 chapters</span>
+              <span className="text-[10px] text-muted">{copy.progress.chapters8}</span>
             </div>
 
             <div className="hidden grid-cols-[1.5fr_0.7fr_0.6fr_0.8fr_auto] gap-3 border-b border-line px-5 py-2 text-[10px] font-medium uppercase tracking-[0.08em] text-muted sm:grid">
-              <span>Chapter</span>
-              <span>Subject</span>
-              <span>Attempts</span>
-              <span>Accuracy</span>
+              <span>{copy.progress.chapter}</span>
+              <span>{copy.progress.subject}</span>
+              <span>{copy.progress.attempts}</span>
+              <span>{copy.progress.accuracyCol}</span>
               <span className="sr-only">Action</span>
             </div>
             <ul className="divide-y divide-line">
@@ -125,16 +133,17 @@ export function Progress() {
                   className="grid grid-cols-[1.4fr_auto] items-center gap-2 px-4 py-2.5 sm:grid-cols-[1.5fr_0.7fr_0.6fr_0.8fr_auto] sm:gap-3 sm:px-5"
                 >
                   <div className="min-w-0">
-                    <p className="truncate text-[12px] text-ink">{item.chapter}</p>
+                    <p className="truncate text-[12px] text-ink">{lang === 'hi' ? chapterHindi(item.chapter) : item.chapter}</p>
                     <p className="text-[10px] text-muted sm:hidden">
-                      {item.subject} · {item.attempts} attempts
+                      {subjectShortByLabel(lang, item.subject)} · {item.attempts}{' '}
+                      {copy.progress.attemptsWord(item.attempts)}
                     </p>
                   </div>
-                  <span className="hidden text-[11px] text-muted sm:block">{item.subject}</span>
+                  <span className="hidden text-[11px] text-muted sm:block">{subjectShortByLabel(lang, item.subject)}</span>
                   <span className="num hidden text-[11px] text-ink-soft sm:block">{item.attempts}</span>
                   <div className="flex items-center justify-end gap-2 sm:justify-start">
                     <span className="num text-[11px] font-medium">
-                      {item.accuracy === null ? '—' : `${item.accuracy}%`}
+                      {item.accuracy === null ? copy.progress.missing : `${item.accuracy}%`}
                     </span>
                     <span
                       className={cn(
@@ -146,28 +155,32 @@ export function Progress() {
                             : 'bg-surface-3 text-muted',
                       )}
                     >
-                      {item.status}
+                      {item.status === 'Practise next'
+                        ? copy.progress.practiseNext
+                        : item.status === 'Steady'
+                          ? copy.progress.steady
+                          : copy.progress.earlyTell}
                     </span>
                   </div>
                   <Link
                     to="/app/practice"
                     className="hidden text-[10.5px] text-brand-ink hover:underline sm:block"
                   >
-                    Practise
+                    {copy.progress.practise}
                   </Link>
                 </li>
               ))}
             </ul>
             <div className="border-t border-line bg-surface-2/40 px-4 py-2.5 text-[10px] text-muted sm:px-5">
-              Chapters with fewer than three attempts stay unlabelled until there is enough evidence.
+              {copy.progress.unlabelled}
             </div>
           </section>
 
           <section className="card p-4 sm:p-5">
             <div className="flex items-center justify-between">
-              <h2 className="text-[15px] font-semibold">Mock history</h2>
+              <h2 className="text-[15px] font-semibold">{copy.progress.mockHistory}</h2>
               <Link to="/app/mocks" className="text-[11px] text-muted hover:text-ink">
-                All mocks
+                {copy.progress.allMocks}
               </Link>
             </div>
             <ul className="mt-3 divide-y divide-line">
@@ -180,7 +193,7 @@ export function Progress() {
                     <div className="min-w-0">
                       <p className="truncate text-[12.5px] text-ink">{attempt.paper}</p>
                       <p className="text-[10.5px] text-muted">
-                        {attempt.date} · {attempt.subjectLabel}
+                        {localDate(lang, attempt.date)} · {mockKindLabel(lang, attempt.subjectLabel)}
                       </p>
                     </div>
                     <div className="flex shrink-0 items-center gap-2.5">
@@ -206,8 +219,8 @@ export function Progress() {
         <aside className="space-y-3">
           <div className="card p-4">
             <div className="flex items-center justify-between">
-              <p className="label">Subject accuracy</p>
-              <span className="text-[10px] text-muted">this month</span>
+              <p className="label">{copy.progress.subjectAccuracy}</p>
+              <span className="text-[10px] text-muted">{copy.progress.thisMonth}</span>
             </div>
             <ul className="mt-3 space-y-3">
               {subjects.map((subject) => (
@@ -222,7 +235,7 @@ export function Progress() {
                       >
                         {subject.code}
                       </span>
-                      <span className="text-[11.5px] text-ink-soft">{subject.short}</span>
+                      <span className="text-[11.5px] text-ink-soft">{lang === 'hi' ? subjectShortHindi(subject.id) : subject.short}</span>
                     </span>
                     <span className="num text-[11.5px] font-medium">{subject.accuracy}%</span>
                   </div>
@@ -236,18 +249,17 @@ export function Progress() {
               ))}
             </ul>
             <p className="mt-3 border-t border-line pt-2.5 text-[10px] leading-relaxed text-muted">
-              Reasoning is your lowest section this month. Two short syllogism sets would move it
-              faster than another full paper.
+              {copy.progress.reasoningNote}
             </p>
           </div>
 
           <div className="card p-4">
-            <p className="label">Where time goes</p>
+            <p className="label">{copy.progress.timeGoes}</p>
             <ul className="mt-2.5 space-y-2 text-[11.5px]">
               {[
-                ['Practice sprints', '58%'],
-                ['Mock papers', '27%'],
-                ['Answers reviewed', '15%'],
+                [copy.progress.sprints, '58%'],
+                [copy.progress.papers, '27%'],
+                [copy.progress.reviewed, '15%'],
               ].map(([label, value]) => (
                 <li key={label} className="flex items-center justify-between gap-2">
                   <span className="text-muted">{label}</span>
@@ -256,26 +268,24 @@ export function Progress() {
               ))}
             </ul>
             <p className="mt-2.5 text-[10px] leading-relaxed text-muted">
-              Based on {learner.minutesThisWeek} minutes of activity this week.
+              {copy.progress.basedOn(learner.minutesThisWeek)}
             </p>
           </div>
 
           <div className="rounded-xl border border-line bg-surface-2/50 p-4">
-            <p className="text-[11.5px] font-medium">Next check-in</p>
+            <p className="text-[11.5px] font-medium">{copy.progress.nextCheckin}</p>
             <p className="mt-1 text-[10.5px] leading-relaxed text-muted">
-              Sunday’s full mock will refresh the section chart. Until then, keep the chapter pulse
-              honest with short sets.
+              {copy.progress.sundayNote}
             </p>
             <ButtonLink to="/app/mocks" variant="secondary" size="sm" className="mt-2.5">
-              View mock series <ArrowRight size={12} />
+              {copy.progress.viewSeries} <ArrowRight size={12} />
             </ButtonLink>
           </div>
         </aside>
       </div>
 
       <p className="px-1 text-[10px] text-muted">
-        Sample analytics for the demo profile. In the live product these figures come from
-        finalised attempts only.
+        {copy.progress.footer}
       </p>
     </div>
   )

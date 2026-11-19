@@ -17,12 +17,20 @@ import { mockPapers, paperMarks, paperQuestionCount, type MockKind } from '../..
 import { loadResult } from '../../lib/attempt'
 import { useToast } from '../../lib/toast'
 import { usePageTitle } from '../../lib/hooks'
+import { useLang } from '../../lib/lang'
+import { useCopy, localDate, mockKindLabel } from '../../lib/ui-copy'
 import { cn } from '../../lib/utils'
 
-const filters: Array<'All' | MockKind> = ['All', 'Full length', 'Mini', 'Sectional']
-
 export function MockList() {
-  usePageTitle('Mock tests')
+  const { lang } = useLang()
+  const copy = useCopy()
+  usePageTitle(copy.mock.label)
+  const filterOptions: Array<{ value: 'All' | MockKind; label: string }> = [
+    { value: 'All', label: copy.mock.all },
+    { value: 'Full length', label: copy.mock.fullLength },
+    { value: 'Mini', label: copy.mock.mini },
+    { value: 'Sectional', label: copy.mock.sectional },
+  ]
   const [filter, setFilter] = useState<'All' | MockKind>('All')
   const { notify } = useToast()
 
@@ -35,42 +43,43 @@ export function MockList() {
     <div className="space-y-5">
       <header className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
         <div>
-          <SectionLabel>Mock tests</SectionLabel>
+          <SectionLabel>{copy.mock.label}</SectionLabel>
           <h1 className="mt-1.5 text-[26px] font-semibold leading-tight sm:text-[30px]">
-            Rehearse the paper
+            {copy.mock.title}
           </h1>
           <p className="mt-1.5 max-w-xl text-[13px] leading-relaxed text-muted">
-            Full-length papers and short sectional sets in the Tier-I pattern. The clock starts when
-            you begin and the scoring rules are fixed for that paper.
+            {copy.mock.intro}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Badge tone="neutral">
-            <Clock size={11} /> {completed + liveResults} full paper submitted
+            <Clock size={11} /> {copy.mock.fullSubmitted(completed + liveResults)}
           </Badge>
           <Badge tone="brand">
-            <Trophy size={11} /> Best 133.5 / 200
+            <Trophy size={11} /> {copy.mock.best}
           </Badge>
         </div>
       </header>
 
       <div className="flex flex-wrap gap-1.5">
-        {filters.map((item) => (
+        {filterOptions.map((item) => (
           <button
-            key={item}
+            key={item.value}
             type="button"
-            onClick={() => setFilter(item)}
-            aria-pressed={filter === item}
+            onClick={() => setFilter(item.value)}
+            aria-pressed={filter === item.value}
             className={cn(
               'rounded-lg border px-3 py-1.5 text-[12px] font-medium transition',
-              filter === item
+              filter === item.value
                 ? 'border-brand/30 bg-brand-soft text-brand-ink'
                 : 'border-line bg-surface text-muted hover:text-ink',
             )}
           >
-            {item}
+            {item.label}
             <span className="ml-1.5 text-[10px] opacity-70">
-              {item === 'All' ? papers.length : papers.filter((paper) => paper.kind === item).length}
+              {item.value === 'All'
+                ? papers.length
+                : papers.filter((paper) => paper.kind === item.value).length}
             </span>
           </button>
         ))}
@@ -89,25 +98,25 @@ export function MockList() {
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge tone={paper.kind === 'Full length' ? 'brand' : 'neutral'}>
-                        {paper.kind}
+                        {mockKindLabel(lang, paper.kind)}
                       </Badge>
                       {isCompleted ? (
                         <Badge tone="positive">
-                          <Check size={10} /> Submitted
+                          <Check size={10} /> {copy.mock.submitted}
                         </Badge>
                       ) : result ? (
                         <Badge tone="positive">
-                          <Check size={10} /> Attempted
+                          <Check size={10} /> {copy.mock.attempted}
                         </Badge>
                       ) : isScheduled ? (
-                        <Badge tone="gold">Scheduled</Badge>
+                        <Badge tone="gold">{copy.mock.scheduled}</Badge>
                       ) : (
-                        <Badge tone="outline">Not attempted</Badge>
+                        <Badge tone="outline">{copy.mock.notAttempted}</Badge>
                       )}
                     </div>
                     <h2 className="mt-2 text-[16.5px] font-semibold leading-snug">{paper.title}</h2>
                     <p className="mt-1.5 max-w-lg text-[12px] leading-relaxed text-muted">
-                      {paper.description}
+                      {lang === 'hi' ? paper.descriptionHi : paper.description}
                     </p>
                   </div>
 
@@ -115,42 +124,42 @@ export function MockList() {
                     <Button
                       variant="secondary"
                       size="sm"
-                      onClick={() => notify(`Reminder set for ${paper.opensOn?.split('·')[0] ?? 'this paper'}`)}
+                      onClick={() => notify(copy.mock.reminderSet(paper.opensOn?.split('·')[0] ?? 'this paper'))}
                     >
-                      <Bell size={13} /> Remind me
+                      <Bell size={13} /> {copy.mock.remindMe}
                     </Button>
                   ) : result || isCompleted ? (
                     <ButtonLink to={`/app/mocks/${paper.id}/result`} size="sm" variant="secondary">
-                      View result <ArrowRight size={13} />
+                      {copy.mock.viewResult} <ArrowRight size={13} />
                     </ButtonLink>
                   ) : (
                     <ButtonLink to={`/app/mocks/${paper.id}/instructions`} size="sm">
-                      Start paper <ArrowRight size={13} />
+                      {copy.mock.startPaper} <ArrowRight size={13} />
                     </ButtonLink>
                   )}
                 </div>
 
                 <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-line pt-3 text-[11px] text-muted">
                   <span className="inline-flex items-center gap-1.5">
-                    <ClipboardList size={12} /> {count} questions
+                    <ClipboardList size={12} /> {copy.mock.questionsN(count)}
                   </span>
                   <span className="inline-flex items-center gap-1.5">
-                    <Timer size={12} /> {paper.durationMinutes} minutes
+                    <Timer size={12} /> {copy.mock.minutesN(paper.durationMinutes)}
                   </span>
                   <span className="inline-flex items-center gap-1.5">
-                    <Trophy size={12} /> {paperMarks(paper)} marks
+                    <Trophy size={12} /> {copy.mock.marksN(paperMarks(paper))}
                   </span>
                   <span className="inline-flex items-center gap-1.5">
                     <CalendarDays size={12} />
                     {paper.opensOn
-                      ? `Opens ${paper.opensOn}`
+                      ? copy.mock.opens(localDate(lang, paper.opensOn))
                       : paper.submittedOn
-                        ? `Submitted ${paper.submittedOn}`
-                        : 'Open now'}
+                        ? copy.mock.submittedOn(localDate(lang, paper.submittedOn))
+                        : copy.mock.openNow}
                   </span>
                   {paper.kind === 'Full length' ? (
                     <span className="inline-flex items-center gap-1.5">
-                      <Lock size={11} /> 4 sections
+                      <Lock size={11} /> {copy.mock.sections4}
                     </span>
                   ) : null}
                 </div>
@@ -161,13 +170,13 @@ export function MockList() {
 
         <aside className="space-y-3">
           <div className="card p-4">
-            <p className="label">Your rehearsal record</p>
+            <p className="label">{copy.mock.record}</p>
             <div className="mt-3 grid grid-cols-2 gap-2">
               {[
-                { label: 'Papers attempted', value: '2' },
-                { label: 'Best score', value: '133.5' },
-                { label: 'Avg. accuracy', value: '73%' },
-                { label: 'Time / paper', value: '54 min' },
+                { label: copy.mock.papersAttempted, value: '2' },
+                { label: copy.mock.bestScore, value: '133.5' },
+                { label: copy.mock.avgAccuracy, value: '73%' },
+                { label: copy.mock.timePaper, value: '54 min' },
               ].map((item) => (
                 <div key={item.label} className="rounded-lg border border-line bg-surface-2/50 px-2.5 py-2">
                   <p className="num font-display text-[16px] font-semibold leading-none">
@@ -181,39 +190,39 @@ export function MockList() {
               to="/app/progress"
               className="mt-3 inline-flex items-center gap-1 text-[11.5px] font-medium text-brand-ink hover:underline"
             >
-              Full progress <ArrowRight size={12} />
+              {copy.mock.fullProgress} <ArrowRight size={12} />
             </Link>
           </div>
 
           <div className="card p-4">
-            <p className="label">Marking scheme</p>
+            <p className="label">{copy.mock.marking}</p>
             <dl className="mt-2.5 space-y-1.5 text-[12px]">
               <div className="flex justify-between gap-3">
-                <dt className="text-muted">Correct</dt>
-                <dd className="font-medium text-positive">+2 marks</dd>
+                <dt className="text-muted">{copy.mock.correct}</dt>
+                <dd className="font-medium text-positive">{copy.mock.correctMarks}</dd>
               </div>
               <div className="flex justify-between gap-3">
-                <dt className="text-muted">Wrong</dt>
-                <dd className="font-medium text-negative">−0.5 marks</dd>
+                <dt className="text-muted">{copy.mock.wrong}</dt>
+                <dd className="font-medium text-negative">{copy.mock.wrongMarks}</dd>
               </div>
               <div className="flex justify-between gap-3">
-                <dt className="text-muted">Unattempted</dt>
-                <dd className="font-medium">0 marks</dd>
+                <dt className="text-muted">{copy.mock.unattempted}</dt>
+                <dd className="font-medium">{copy.mock.zeroMarks}</dd>
               </div>
             </dl>
           </div>
 
           <div className="card p-4">
             <p className="flex items-center gap-2 text-[12px] font-medium">
-              <Info size={13} className="text-brand" /> In the exam hall
+              <Info size={13} className="text-brand" /> {copy.mock.examHall}
             </p>
             <ul className="mt-2 space-y-1.5 text-[11px] leading-relaxed text-muted">
-              <li>Answers save as you select them; the palette shows what is saved.</li>
-              <li>Marked-for-review is kept separate from answered, with text labels.</li>
-              <li>Submit once. A repeat submit would return the same result.</li>
+              <li>{copy.mock.hall1}</li>
+              <li>{copy.mock.hall2}</li>
+              <li>{copy.mock.hall3}</li>
             </ul>
             <p className="mt-2.5 rounded-md bg-surface-2 px-2 py-1.5 text-[10px] leading-relaxed text-muted">
-              This preview keeps your attempt in the browser tab, not on a server.
+              {copy.mock.attemptNote}
             </p>
           </div>
         </aside>

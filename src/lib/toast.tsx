@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { CheckCircle2, Info, X } from 'lucide-react'
+import { useCopy } from './ui-copy'
 
 type Toast = { id: number; message: string; tone: 'default' | 'success' }
 
@@ -40,6 +41,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 }
 
 function ToastRow({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }) {
+  const copy = useCopy()
   useEffect(() => {
     const timer = window.setTimeout(onDismiss, 3600)
     return () => window.clearTimeout(timer)
@@ -57,7 +59,7 @@ function ToastRow({ toast, onDismiss }: { toast: Toast; onDismiss: () => void })
         type="button"
         onClick={onDismiss}
         className="rounded p-0.5 text-muted transition hover:text-ink"
-        aria-label="Dismiss notification"
+        aria-label={copy.a11y.dismiss}
       >
         <X size={14} />
       </button>

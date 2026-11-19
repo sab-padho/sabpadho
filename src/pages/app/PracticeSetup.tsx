@@ -8,11 +8,13 @@ import { tintTile } from '../../components/subject-tint'
 import { cn } from '../../lib/utils'
 import { usePageTitle } from '../../lib/hooks'
 import { useLang } from '../../lib/lang'
+import { useCopy, subjectShortHindi } from '../../lib/ui-copy'
 
 export function PracticeSetup() {
-  usePageTitle('Practice')
-  const navigate = useNavigate()
   const { lang, setLang } = useLang()
+  const copy = useCopy()
+  usePageTitle(copy.nav.practice)
+  const navigate = useNavigate()
   const [subjectId, setSubjectId] = useState<SubjectId>('maths')
   const subject = subjectById[subjectId]
   const [chapterSlug, setChapterSlug] = useState('percentages')
@@ -36,19 +38,18 @@ export function PracticeSetup() {
   return (
     <div className="space-y-5">
       <header>
-        <SectionLabel>Topic sprint</SectionLabel>
+        <SectionLabel>{copy.practice.label}</SectionLabel>
         <div className="mt-1.5 flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="text-[26px] font-semibold leading-tight sm:text-[30px]">
-              Set up a short sprint
+              {copy.practice.title}
             </h1>
             <p className="mt-1.5 max-w-xl text-[13px] leading-relaxed text-muted">
-              Choose a subject, a chapter and a length. You will see the first question right after —
-              each answer is checked with the reasoning shown.
+              {copy.practice.intro}
             </p>
           </div>
           <Badge tone="outline">
-            <Clock size={11} /> About {chapter.minutes} minutes
+            <Clock size={11} /> {copy.practice.minutes(chapter.minutes)}
           </Badge>
         </div>
       </header>
@@ -56,7 +57,7 @@ export function PracticeSetup() {
       <div className="grid gap-4 xl:grid-cols-[1.55fr_1fr]">
         <div className="space-y-4">
           <section className="card p-4 sm:p-5">
-            <StepHeading n="1" title="Subject" />
+            <StepHeading n="1" title={copy.practice.subject} />
             <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
               {subjects.map((item) => {
                 const active = item.id === subjectId
@@ -87,9 +88,9 @@ export function PracticeSetup() {
                     </span>
                     <span>
                       <span className="block text-[12px] font-medium leading-tight text-ink">
-                        {item.short}
+                        {lang === 'hi' ? subjectShortHindi(item.id) : item.short}
                       </span>
-                      <span className="mt-0.5 block text-[10px] text-muted">{count} questions</span>
+                      <span className="mt-0.5 block text-[10px] text-muted">{copy.practice.setupCount(count)}</span>
                     </span>
                   </button>
                 )
@@ -100,8 +101,11 @@ export function PracticeSetup() {
           <section className="card p-4 sm:p-5">
             <StepHeading
               n="2"
-              title="Chapter"
-              hint={`${subject.chapters.length} in ${subject.short}`}
+              title={copy.practice.chapter}
+              hint={copy.practice.inSubject(
+                subject.chapters.length,
+                lang === 'hi' ? subjectShortHindi(subject.id) : subject.short,
+              )}
             />
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
               {subject.chapters.map((item) => {
@@ -138,22 +142,22 @@ export function PracticeSetup() {
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center justify-between gap-2">
                         <span className="block truncate text-[12.5px] font-medium text-ink">
-                          {item.title.en}
+                          {item.title[lang]}
                         </span>
                         {active && item.attempts && item.attempts >= 3 && (item.accuracy ?? 0) < 72 ? (
                           <span className="shrink-0 rounded-full bg-brand px-1.5 py-0.5 text-[8.5px] font-semibold text-white">
-                            Practise next
+                            {copy.practice.practiseNext}
                           </span>
                         ) : null}
                       </span>
                       <span className="mt-0.5 block text-[10.5px] leading-relaxed text-muted">
                         {notReady
-                          ? 'Questions in review · primer ready'
+                          ? copy.practice.inReview
                           : item.attempts && item.attempts >= 3
-                            ? `${item.attempts} attempts · ${item.accuracy}% correct · ${count} questions`
+                            ? copy.practice.attemptsMeta(item.attempts, item.accuracy ?? 0, count)
                             : item.attempts
-                              ? `${item.attempts} attempt · too early to tell · ${count} questions`
-                              : `Not started · ${count} questions`}
+                              ? copy.practice.attemptMeta(item.attempts, count)
+                              : copy.practice.notStartedMeta(count)}
                       </span>
                     </span>
                   </button>
@@ -163,15 +167,14 @@ export function PracticeSetup() {
             {pool.length === 0 ? (
               <p className="mt-3 flex items-start gap-2 rounded-lg bg-warning-soft px-3 py-2 text-[11.5px] leading-relaxed text-warning">
                 <Info size={13} className="mt-0.5 shrink-0" />
-                This chapter’s questions are still in review. You can read the primer now and
-                practise as soon as the set clears review.
+                {copy.practice.inReviewBody}
               </p>
             ) : null}
           </section>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <section className="card p-4 sm:p-5">
-              <StepHeading n="3" title="Session length" />
+              <StepHeading n="3" title={copy.practice.length} />
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {lengths.map((value) => {
                   const active = value === selectedLength
@@ -188,33 +191,31 @@ export function PracticeSetup() {
                           : 'border-line bg-surface text-ink-soft hover:border-line-strong',
                       )}
                     >
-                      {value === pool.length ? `All ${value}` : `${value} questions`}
+                      {value === pool.length ? copy.practice.allQuestions(value) : copy.practice.questions(value)}
                     </button>
                   )
                 })}
               </div>
               <p className="mt-2.5 text-[11px] leading-relaxed text-muted">
-                {pool.length
-                  ? `${pool.length} questions in this chapter. Short sets are better for a first attempt.`
-                  : 'No questions available yet.'}
+                {pool.length ? copy.practice.poolMeta(pool.length) : copy.practice.noQuestions}
               </p>
             </section>
 
             <section className="card p-4 sm:p-5">
-              <StepHeading n="4" title="Language" />
+              <StepHeading n="4" title={copy.practice.language} />
               <Segmented
-                ariaLabel="Question language"
+                ariaLabel={copy.practice.language}
                 className="mt-3"
                 value={lang}
                 onChange={setLang}
                 options={[
-                  { value: 'en', label: 'English' },
-                  { value: 'hi', label: 'हिंदी' },
+                  { value: 'en', label: copy.practice.english },
+                  { value: 'hi', label: copy.practice.hindi },
                 ]}
               />
               <p className="mt-2.5 flex items-start gap-2 text-[11px] leading-relaxed text-muted">
                 <Languages size={12} className="mt-0.5 shrink-0" />
-                You can switch language inside the sprint; your selection and progress stay put.
+                {copy.practice.switchNote}
               </p>
             </section>
           </div>
@@ -223,7 +224,7 @@ export function PracticeSetup() {
         <aside className="xl:sticky xl:top-24 xl:self-start">
           <div className="card overflow-hidden">
             <div className="border-b border-line px-4 py-3">
-              <p className="label">Your sprint</p>
+              <p className="label">{copy.practice.yourSprint}</p>
             </div>
             <div className="p-4">
               <div className="flex items-center gap-2.5">
@@ -236,29 +237,30 @@ export function PracticeSetup() {
                   {subject.code}
                 </span>
                 <div className="min-w-0">
-                  <p className="truncate text-[13px] font-medium">{chapter.title.en}</p>
+                  <p className="truncate text-[13px] font-medium">{chapter.title[lang]}</p>
                   <p className="text-[11px] text-muted">
-                    {subject.short} · {selectedLength || 0} questions
+                    {lang === 'hi' ? subjectShortHindi(subject.id) : subject.short} ·{' '}
+                    {copy.practice.questions(selectedLength || 0)}
                   </p>
                 </div>
               </div>
 
               <dl className="mt-4 space-y-2 border-t border-line pt-3 text-[12px]">
                 <div className="flex justify-between gap-3">
-                  <dt className="text-muted">Length</dt>
-                  <dd>{selectedLength || 0} questions</dd>
+                  <dt className="text-muted">{copy.practice.lengthRow}</dt>
+                  <dd>{copy.practice.questions(selectedLength || 0)}</dd>
                 </div>
                 <div className="flex justify-between gap-3">
-                  <dt className="text-muted">Time</dt>
-                  <dd>About {Math.max(3, Math.round((chapter.minutes / Math.max(1, pool.length)) * Math.max(1, selectedLength)))} min</dd>
+                  <dt className="text-muted">{copy.practice.timeRow}</dt>
+                  <dd>{copy.practice.aboutMin(Math.max(3, Math.round((chapter.minutes / Math.max(1, pool.length)) * Math.max(1, selectedLength))))}</dd>
                 </div>
                 <div className="flex justify-between gap-3">
-                  <dt className="text-muted">Language</dt>
-                  <dd>{lang === 'en' ? 'English' : 'हिंदी'}</dd>
+                  <dt className="text-muted">{copy.practice.languageRow}</dt>
+                  <dd>{lang === 'en' ? copy.practice.english : copy.practice.hindi}</dd>
                 </div>
                 <div className="flex justify-between gap-3">
-                  <dt className="text-muted">Checking</dt>
-                  <dd>After each question</dd>
+                  <dt className="text-muted">{copy.practice.checkingRow}</dt>
+                  <dd>{copy.practice.afterEach}</dd>
                 </div>
               </dl>
 
@@ -268,28 +270,27 @@ export function PracticeSetup() {
                 disabled={!canStart}
                 onClick={() => navigate(`/app/practice/${chapter.slug}?len=${selectedLength}`)}
               >
-                Start sprint <ArrowRight size={15} />
+                {copy.practice.start} <ArrowRight size={15} />
               </Button>
 
               <Link
                 to={`/subjects/${subject.slug}/${chapter.slug}`}
                 className="mt-2 flex items-center justify-center gap-1.5 text-[11.5px] text-muted hover:text-ink"
               >
-                <BookOpen size={12} /> Read the chapter primer first
+                <BookOpen size={12} /> {copy.practice.readPrimer}
               </Link>
 
               <p className="mt-4 flex items-start gap-2 border-t border-line pt-3 text-[10.5px] leading-relaxed text-muted">
                 <Lock size={12} className="mt-0.5 shrink-0" />
-                Answers are saved as you go. In this preview they stay in your browser.
+                {copy.practice.saved}
               </p>
             </div>
           </div>
 
           <div className="card mt-3 p-4">
-            <p className="text-[11.5px] font-medium">How the label works</p>
+            <p className="text-[11.5px] font-medium">{copy.practice.howLabel}</p>
             <p className="mt-1 text-[11px] leading-relaxed text-muted">
-              A chapter is called “practise next” only after three attempts. One missed question is
-              never enough to label a chapter weak.
+              {copy.practice.howLabelBody}
             </p>
           </div>
         </aside>

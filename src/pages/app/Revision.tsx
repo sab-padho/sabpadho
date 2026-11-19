@@ -16,6 +16,13 @@ import { chapterById, subjectById } from '../../data/subjects'
 import { questionById } from '../../data/questions'
 import { useExtraRevision, useRevisionDone } from '../../lib/shelf'
 import { useLang } from '../../lib/lang'
+import {
+  useCopy,
+  chapterHindi,
+  lastSeenLabel,
+  subjectShortByLabel,
+  weekdayShort,
+} from '../../lib/ui-copy'
 import { useToast } from '../../lib/toast'
 import { usePageTitle } from '../../lib/hooks'
 import { cn } from '../../lib/utils'
@@ -29,9 +36,10 @@ type QueueItem = {
 }
 
 export function Revision() {
-  usePageTitle('Revision')
   const { done, markDone } = useRevisionDone()
   const { lang } = useLang()
+  const copy = useCopy()
+  usePageTitle(copy.nav.revision)
   const extra = useExtraRevision()
   const { notify } = useToast()
   const [selectedDay, setSelectedDay] = useState('19')
@@ -47,14 +55,18 @@ export function Revision() {
         const subject = chapter ? subjectById[chapter.subjectId] : undefined
         return {
           questionId: id,
-          chapter: chapter?.title.en ?? 'Practice',
-          subject: subject?.short ?? 'Mixed',
-          lastSeen: 'From today’s sprint',
+          chapter: chapter?.title[lang] ?? copy.revision.practiceWord,
+          subject: subject
+            ? lang === 'hi'
+              ? subjectShortByLabel(lang, subject.short)
+              : subject.short
+            : copy.revision.mixedWord,
+          lastSeen: copy.revision.fromSprint,
           extra: true,
         }
       })
     return [...extras, ...base].filter((item) => !done.includes(item.questionId))
-  }, [done, extra.ids])
+  }, [done, extra.ids, copy.revision.fromSprint, copy.revision.mixedWord, copy.revision.practiceWord, lang])
 
   const today = revisionWeek.find((day) => day.today)!
   const activeDay = revisionWeek.find((day) => day.date === selectedDay) ?? today
@@ -63,34 +75,28 @@ export function Revision() {
   function handleReviewed(questionId: string, correct: boolean) {
     markDone(questionId)
     setRetryId(null)
-    notify(
-      correct
-        ? 'Correct — next review moves out by 7 days'
-        : 'Missed again — this question returns tomorrow',
-      correct ? 'success' : 'default',
-    )
+    notify(correct ? copy.revision.correctToast : copy.revision.missedToast, correct ? 'success' : 'default')
   }
 
   return (
     <div className="space-y-5">
       <header className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
         <div>
-          <SectionLabel>Recall calendar</SectionLabel>
+          <SectionLabel>{copy.revision.label}</SectionLabel>
           <h1 className="mt-1.5 text-[26px] font-semibold leading-tight sm:text-[30px]">
-            Today’s revision
+            {copy.revision.title}
           </h1>
           <p className="mt-1.5 max-w-xl text-[13px] leading-relaxed text-muted">
-            Meet your earlier questions again. Your previous choice stays hidden until you answer,
-            so this is a real second attempt.
+            {copy.revision.intro}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Badge tone="neutral">
-            <Clock size={11} /> {queue.length} due today
+            <Clock size={11} /> {copy.revision.dueBadge(queue.length)}
           </Badge>
           {queue.length ? (
             <Button size="sm" onClick={() => setRetryId(queue[0].questionId)}>
-              <RotateCcw size={13} /> Start revision
+              <RotateCcw size={13} /> {copy.revision.startRevision}
             </Button>
           ) : null}
         </div>
@@ -100,8 +106,8 @@ export function Revision() {
         <div className="space-y-4">
           <section className="card p-3 sm:p-4">
             <div className="flex items-center justify-between px-1">
-              <p className="text-[11.5px] font-medium text-ink-soft">This week</p>
-              <span className="text-[10px] text-muted">Due count per day</span>
+              <p className="text-[11.5px] font-medium text-ink-soft">{copy.revision.thisWeek}</p>
+              <span className="text-[10px] text-muted">{copy.revision.duePerDay}</span>
             </div>
             <div className="mt-2.5 grid grid-cols-6 gap-1.5">
               {revisionWeek.map((day) => {
@@ -125,7 +131,7 @@ export function Revision() {
                         active ? 'text-brand-ink/70' : 'text-muted',
                       )}
                     >
-                      {day.day}
+                      {weekdayShort(lang, day.day)}
                     </span>
                     <span className="num text-[15px] font-semibold leading-none">{day.date}</span>
                     <span
@@ -134,14 +140,14 @@ export function Revision() {
                         day.due === 0 ? 'text-muted' : active ? 'text-brand-ink' : 'text-ink-soft',
                       )}
                     >
-                      {day.due === 0 ? 'clear' : `${day.due} due`}
+                      {day.due === 0 ? copy.revision.clear : copy.revision.dueN(day.due)}
                     </span>
                   </button>
                 )
               })}
             </div>
             <p className="mt-2 px-1 text-[10px] text-muted">
-              Today is Thursday, 19 November. Reviews are scheduled from your last attempt.
+              {copy.revision.todayLine}
             </p>
           </section>
 
@@ -149,26 +155,26 @@ export function Revision() {
             <section className="card overflow-hidden">
               <div className="flex items-center justify-between border-b border-line px-4 py-3 sm:px-5">
                 <div>
-                  <p className="text-[14px] font-semibold">Due today</p>
+                  <p className="text-[14px] font-semibold">{copy.revision.dueToday}</p>
                   <p className="mt-0.5 text-[11px] text-muted">
-                    Original prompts, no hints. Retry one at a time.
+                    {copy.revision.origPrompts}
                   </p>
                 </div>
-                <Badge tone="brand">{queue.length} questions</Badge>
+                <Badge tone="brand">{copy.revision.questionsN(queue.length)}</Badge>
               </div>
 
               {queue.length === 0 ? (
                 <EmptyState
                   icon={<CalendarCheck size={18} />}
-                  title="All caught up"
-                  body="Your next review is Friday, 20 November. Start a fresh practice set while you wait — a short sprint is usually enough."
+                  title={copy.revision.caughtUp}
+                  body={copy.revision.caughtUpBody}
                   action={
                     <div className="flex flex-wrap justify-center gap-2">
                       <ButtonLink to="/app/practice" size="sm">
-                        Start a sprint <ArrowRight size={13} />
+                        {copy.revision.startSprint} <ArrowRight size={13} />
                       </ButtonLink>
                       <Button variant="secondary" size="sm" onClick={() => setSelectedDay('20')}>
-                        See Friday’s queue
+                        {copy.revision.seeFriday}
                       </Button>
                     </div>
                   }
@@ -182,31 +188,37 @@ export function Revision() {
                         <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
-                            <p className="text-[12.5px] font-medium text-ink">{item.chapter}</p>
-                            <span className="text-[10px] text-muted">{item.subject}</span>
+                            <p className="text-[12.5px] font-medium text-ink">
+                              {lang === 'hi' && !item.extra ? chapterHindi(item.chapter) : item.chapter}
+                            </p>
+                            <span className="text-[10px] text-muted">
+                              {item.extra ? item.subject : subjectShortByLabel(lang, item.subject)}
+                            </span>
                             {item.extra ? (
-                              <Badge tone="brand">New</Badge>
+                              <Badge tone="brand">{copy.revision.new}</Badge>
                             ) : null}
                           </div>
                           <p className="mt-1 line-clamp-2 text-[11.5px] leading-relaxed text-muted">
-                            {question ? question.prompt[lang] : 'Question preview unavailable.'}
+                            {question ? question.prompt[lang] : copy.revision.previewMissing}
                           </p>
                           <p className="mt-1 text-[10px] text-muted">
-                            {item.lastSeen} · previous answer hidden
+                            {copy.revision.prevHidden(
+                              item.extra ? item.lastSeen : lastSeenLabel(lang, item.lastSeen),
+                            )}
                           </p>
                         </div>
                         <div className="flex shrink-0 items-center gap-1.5">
                           <Button size="sm" variant="secondary" onClick={() => setRetryId(item.questionId)}>
-                            Retry <ArrowRight size={12} />
+                            {copy.revision.retry} <ArrowRight size={12} />
                           </Button>
                           <button
                             type="button"
                             onClick={() => {
                               markDone(item.questionId)
-                              notify('Marked as reviewed')
+                              notify(copy.revision.markedReviewed)
                             }}
                             className="grid h-8 w-8 place-items-center rounded-md text-muted transition hover:bg-surface-2 hover:text-ink"
-                            aria-label={`Mark ${item.chapter} as reviewed`}
+                            aria-label={copy.revision.markReviewed(item.chapter)}
                           >
                             <Check size={14} />
                           </button>
@@ -220,14 +232,14 @@ export function Revision() {
               {queue.length ? (
                 <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line bg-surface-2/40 px-4 py-3 sm:px-5">
                   <p className="text-[10.5px] text-muted">
-                    A retry is graded immediately; the next due date is set from the result.
+                    {copy.revision.gradedNote}
                   </p>
                   <ButtonLink
                     to={`/app/practice/${chapterById(questionById(queue[0].questionId)?.chapterId ?? '')?.slug ?? 'percentages'}`}
                     variant="ghost"
                     size="sm"
                   >
-                    Open in practice <ArrowRight size={12} />
+                    {copy.revision.openPractice} <ArrowRight size={12} />
                   </ButtonLink>
                 </div>
               ) : null}
@@ -236,23 +248,21 @@ export function Revision() {
             <section className="card p-5">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="label">Scheduled · {activeDay.day} {activeDay.date} Nov</p>
+                  <p className="label">{copy.revision.scheduled(weekdayShort(lang, activeDay.day), activeDay.date)}</p>
                   <p className="mt-2 text-[15px] font-semibold">
                     {activeDay.due === 0
-                      ? 'Nothing due on this day'
-                      : `${activeDay.due} questions are queued for this day`}
+                      ? copy.revision.nothingDue
+                      : copy.revision.queuedFor(activeDay.due)}
                   </p>
                   <p className="mt-1.5 max-w-md text-[12.5px] leading-relaxed text-muted">
-                    {activeDay.due === 0
-                      ? 'A clear day is a good sign. Use it for a new chapter or a mock paper instead.'
-                      : 'Only today’s queue can be attempted, so the interval still means something. Come back on the day.'}
+                    {activeDay.due === 0 ? copy.revision.clearDay : copy.revision.onlyToday}
                   </p>
                 </div>
                 <CalendarCheck size={20} className="shrink-0 text-muted" />
               </div>
               <div className="mt-4 flex flex-wrap gap-2">
                 <Button size="sm" variant="secondary" onClick={() => setSelectedDay(today.date)}>
-                  Back to today
+                  {copy.revision.backToday}
                 </Button>
                 <ButtonLink to="/app/practice" size="sm" variant="ghost">
                   Start a sprint <ArrowRight size={13} />
@@ -264,21 +274,21 @@ export function Revision() {
 
         <aside className="space-y-3">
           <div className="card p-4">
-            <p className="label">How reviews are scheduled</p>
+            <p className="label">{copy.revision.howScheduled}</p>
             <ul className="mt-3 space-y-2.5 text-[12px] text-ink-soft">
               <li className="flex items-start gap-2">
                 <CheckCircle2 size={14} className="mt-0.5 shrink-0 text-positive" />
-                Correct retry → next review moves further out
+                {copy.revision.correctRetry}
               </li>
               <li className="flex items-start gap-2">
                 <RotateCcw size={14} className="mt-0.5 shrink-0 text-negative" />
-                Missed retry → it returns sooner
+                {copy.revision.missedRetry}
               </li>
             </ul>
             <div className="mt-3 border-t border-line pt-3">
-              <p className="text-[10.5px] text-muted">A typical interval</p>
+              <p className="text-[10.5px] text-muted">{copy.revision.typical}</p>
               <div className="mt-2 flex items-center gap-1 text-[10px]">
-                {['1 day', '3 days', '7 days', '16 days'].map((step, index) => (
+                {(lang === 'hi' ? ['1 दिन', '3 दिन', '7 दिन', '16 दिन'] : ['1 day', '3 days', '7 days', '16 days']).map((step, index) => (
                   <span key={step} className="flex items-center gap-1">
                     <span className="rounded-md border border-line bg-surface-2 px-1.5 py-0.5 text-ink-soft">
                       {step}
@@ -289,13 +299,12 @@ export function Revision() {
               </div>
             </div>
             <p className="mt-3 text-[10.5px] leading-relaxed text-muted">
-              Intervals grow only after a correct retry. A single wrong answer never labels a chapter
-              weak.
+              {copy.revision.intervalsGrow}
             </p>
           </div>
 
           <div className="card p-4">
-            <p className="label">Coming up</p>
+            <p className="label">{copy.revision.comingUp}</p>
             <ul className="mt-2.5 space-y-2">
               {revisionWeek
                 .filter((day) => !day.today && day.due > 0)
@@ -303,22 +312,21 @@ export function Revision() {
                 .map((day) => (
                   <li key={day.date} className="flex items-center justify-between gap-2">
                     <span className="text-[11.5px] text-ink-soft">
-                      {day.day}, {day.date} Nov
+                      {copy.revision.dayDue(weekdayShort(lang, day.day), day.date)}
                     </span>
-                    <span className="text-[10.5px] text-muted">{day.due} due</span>
+                    <span className="text-[10.5px] text-muted">{copy.revision.dueN(day.due)}</span>
                   </li>
                 ))}
             </ul>
             <p className="mt-3 border-t border-line pt-2.5 text-[10.5px] leading-relaxed text-muted">
-              An empty day is not a failure. It is the system saying you are on top of this chapter.
+              {copy.revision.emptyDay}
             </p>
           </div>
 
           <div className="rounded-xl border border-dashed border-line bg-surface-2/40 p-4">
-            <p className="text-[11.5px] font-medium">Why the previous answer is hidden</p>
+            <p className="text-[11.5px] font-medium">{copy.revision.whyHidden}</p>
             <p className="mt-1 text-[10.5px] leading-relaxed text-muted">
-              Seeing your last choice turns a recall attempt into recognition. The solution is shown
-              only after you answer.
+              {copy.revision.whyHiddenBody}
             </p>
           </div>
         </aside>
@@ -333,8 +341,8 @@ export function Revision() {
       ) : null}
 
       <p className="px-1 text-[10px] text-muted">
-        Preview queue · {revisionQueue.length} scheduled questions plus anything missed in today’s
-        sprints. {done.length ? `${done.length} marked reviewed in this browser.` : ''}
+        {copy.revision.previewQueue(revisionQueue.length)}{' '}
+        {done.length ? copy.revision.markedN(done.length) : ''}
       </p>
     </div>
   )
@@ -350,6 +358,7 @@ function RetryDialog({
   onReviewed: (correct: boolean) => void
 }) {
   const { lang } = useLang()
+  const copy = useCopy()
   const question = questionById(questionId)
   const chapter = question ? chapterById(question.chapterId) : undefined
   const [picked, setPicked] = useState<number | null>(null)
@@ -362,12 +371,12 @@ function RetryDialog({
     <Dialog
       open
       onClose={onClose}
-      title={chapter ? `Retry · ${chapter.title.en}` : 'Retry question'}
-      description="Your earlier answer is hidden. Answer again to see the reasoning."
+      title={chapter ? copy.revision.retryTitle(chapter.title[lang]) : copy.revision.retryFallback}
+      description={copy.revision.retryDesc}
       width="max-w-lg"
     >
       <div className="flex items-center justify-between">
-        <Badge tone="outline">Revision retry</Badge>
+        <Badge tone="outline">{copy.revision.retryBadge}</Badge>
         <LangToggle />
       </div>
 
@@ -424,7 +433,7 @@ function RetryDialog({
         >
           <p className={cn('flex items-center gap-1.5 text-[11.5px] font-semibold', correct ? 'text-positive' : 'text-negative')}>
             {correct ? <Check size={12} /> : <X size={12} />}
-            {correct ? 'Correct this time' : `Not yet — the answer is ${question.options[lang][question.correct]}`}
+            {correct ? copy.revision.correctThisTime : copy.revision.notYet(question.options[lang][question.correct])}
           </p>
           <p className="mt-1 text-[11.5px] leading-relaxed text-ink-soft">
             {question.explanation[lang]}
@@ -436,15 +445,15 @@ function RetryDialog({
         {!checked ? (
           <>
             <Button variant="ghost" onClick={onClose}>
-              Leave for now
+              {copy.revision.leaveNow}
             </Button>
             <Button disabled={picked === null} onClick={() => setChecked(true)}>
-              Check answer
+              {copy.revision.checkAnswer}
             </Button>
           </>
         ) : (
           <Button onClick={() => onReviewed(correct)}>
-            Mark reviewed <ArrowRight size={14} />
+            {copy.revision.markReviewedBtn} <ArrowRight size={14} />
           </Button>
         )}
       </div>

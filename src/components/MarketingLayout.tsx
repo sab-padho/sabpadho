@@ -2,16 +2,17 @@ import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { ArrowRight, Menu, X } from 'lucide-react'
 import { Logo, LangToggle, ThemeToggle } from './brand'
+import { useCopy } from '../lib/ui-copy'
 import { ButtonLink } from './ui'
 import { cn } from '../lib/utils'
 
-const navLinks = [
-  { to: '/subjects', label: 'Subjects' },
-  { to: '/mocks', label: 'Mock tests' },
-  { to: '/how-it-works', label: 'How it works' },
-]
-
 export function MarketingLayout() {
+  const copy = useCopy()
+  const navLinks = [
+    { to: '/subjects', label: copy.marketing.subjects },
+    { to: '/mocks', label: copy.marketing.mocks },
+    { to: '/how-it-works', label: copy.marketing.how },
+  ]
   const [open, setOpen] = useState(false)
   const { pathname, hash } = useLocation()
 
@@ -32,7 +33,7 @@ export function MarketingLayout() {
         <div className="container-page flex h-16 items-center justify-between gap-3">
           <Logo withTagline />
 
-          <nav className="hidden items-center gap-0.5 md:flex" aria-label="Main">
+          <nav className="hidden items-center gap-0.5 md:flex" aria-label={copy.a11y.mainNav}>
             {navLinks.map((link) => (
               <NavLink
                 key={link.to}
@@ -56,10 +57,10 @@ export function MarketingLayout() {
               to="/signin"
               className="hidden rounded-lg px-3 py-2 text-[13.5px] font-medium text-ink-soft transition hover:text-ink sm:inline-flex"
             >
-              Sign in
+              {copy.marketing.signIn}
             </Link>
             <ButtonLink to="/app" size="sm" className="hidden sm:inline-flex">
-              Open study desk
+              {copy.marketing.openDesk}
               <ArrowRight size={15} />
             </ButtonLink>
             <button
@@ -68,7 +69,7 @@ export function MarketingLayout() {
               onClick={() => setOpen((value) => !value)}
               aria-expanded={open}
               aria-controls="mobile-nav"
-              aria-label={open ? 'Close menu' : 'Open menu'}
+              aria-label={open ? copy.shell.closeMenu : copy.shell.openMenu}
             >
               {open ? <X size={18} /> : <Menu size={18} />}
             </button>
@@ -77,7 +78,7 @@ export function MarketingLayout() {
 
         {open ? (
           <div id="mobile-nav" className="animate-fade border-t border-line bg-surface md:hidden">
-            <nav className="container-page flex flex-col py-3" aria-label="Mobile">
+            <nav className="container-page flex flex-col py-3" aria-label={copy.a11y.mobileNav}>
               {navLinks.map((link) => (
                 <NavLink
                   key={link.to}
@@ -94,14 +95,14 @@ export function MarketingLayout() {
               ))}
               <div className="mt-3 flex flex-col gap-2 border-t border-line pt-4">
                 <ButtonLink to="/app" size="lg" className="w-full">
-                  Open study desk
+                  {copy.marketing.openDesk}
                   <ArrowRight size={16} />
                 </ButtonLink>
                 <ButtonLink to="/signin" variant="secondary" size="lg" className="w-full">
-                  Sign in
+                  {copy.marketing.signIn}
                 </ButtonLink>
                 <div className="mt-1 flex items-center justify-between px-1">
-                  <span className="text-xs text-muted">Question language</span>
+                  <span className="text-xs text-muted">{copy.marketing.questionLanguage}</span>
                   <LangToggle />
                 </div>
               </div>
@@ -128,53 +129,53 @@ function FooterLink({ to, children }: { to: string; children: React.ReactNode })
 }
 
 export function Footer() {
+  const copy = useCopy()
   return (
     <footer className="mt-20 border-t border-line bg-surface/60">
       <div className="container-page grid gap-10 py-12 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
         <div>
           <Logo />
           <p className="mt-4 max-w-xs text-[13px] leading-relaxed text-muted">
-            Short, honest practice for SSC aspirants — built around the time you actually have
-            between college, work and the evening bus home.
+            {copy.footer.tagline}
           </p>
           <p className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-2.5 py-1 text-[11px] text-muted">
             <span className="h-1.5 w-1.5 rounded-full bg-positive" />
-            Beta · 2026 cohort
+            {copy.home.beta}
           </p>
         </div>
 
         <div className="flex flex-col gap-2.5">
-          <p className="label mb-1">Learn</p>
-          <FooterLink to="/subjects">Chapter primers</FooterLink>
-          <FooterLink to="/app/practice">Topic sprints</FooterLink>
-          <FooterLink to="/mocks">Mock tests</FooterLink>
-          <FooterLink to="/app/revision">Revision queue</FooterLink>
+          <p className="label mb-1">{copy.footer.learn}</p>
+          <FooterLink to="/subjects">{copy.footer.primers}</FooterLink>
+          <FooterLink to="/app/practice">{copy.footer.sprints}</FooterLink>
+          <FooterLink to="/mocks">{copy.footer.mocks}</FooterLink>
+          <FooterLink to="/app/revision">{copy.footer.queue}</FooterLink>
         </div>
 
         <div className="flex flex-col gap-2.5">
-          <p className="label mb-1">Exam</p>
-          <FooterLink to="/how-it-works">Tier-I pattern</FooterLink>
-          <FooterLink to="/how-it-works#marking">Marking scheme</FooterLink>
-          <FooterLink to="/how-it-works#bilingual">Bilingual papers</FooterLink>
-          <FooterLink to="/how-it-works#faq">Common questions</FooterLink>
+          <p className="label mb-1">{copy.footer.exam}</p>
+          <FooterLink to="/how-it-works">{copy.footer.pattern}</FooterLink>
+          <FooterLink to="/how-it-works#marking">{copy.footer.marking}</FooterLink>
+          <FooterLink to="/how-it-works#bilingual">{copy.footer.bilingual}</FooterLink>
+          <FooterLink to="/how-it-works#faq">{copy.footer.common}</FooterLink>
         </div>
 
         <div className="flex flex-col gap-2.5">
-          <p className="label mb-1">SabPadho</p>
-          <FooterLink to="/how-it-works">How it works</FooterLink>
-          <FooterLink to="/signin">Sign in</FooterLink>
+          <p className="label mb-1">{copy.footer.brand}</p>
+          <FooterLink to="/how-it-works">{copy.footer.how}</FooterLink>
+          <FooterLink to="/signin">{copy.marketing.signIn}</FooterLink>
           <a href="mailto:hello@sabpadho.in" className="text-[13px] text-muted transition hover:text-ink">
             hello@sabpadho.in
           </a>
-          <span className="text-[13px] text-muted">Nagpur, Maharashtra</span>
+          <span className="text-[13px] text-muted">{copy.footer.city}</span>
         </div>
       </div>
 
       <div className="border-t border-line">
         <div className="container-page flex flex-col gap-2 py-5 text-[11.5px] leading-relaxed text-muted sm:flex-row sm:items-center sm:justify-between">
-          <p>© 2026 SabPadho. Sample data shown while the question bank is under review.</p>
+          <p>{copy.footer.copyright}</p>
           <p>
-            An independent study platform. Not affiliated with the Staff Selection Commission.
+            {copy.footer.independent}
           </p>
         </div>
       </div>

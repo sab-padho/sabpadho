@@ -20,6 +20,7 @@ import { tintTile } from '../../components/subject-tint'
 import { cn, clamp } from '../../lib/utils'
 import { useLocalStorage, usePageTitle } from '../../lib/hooks'
 import { useLang } from '../../lib/lang'
+import { useCopy, subjectShortHindi } from '../../lib/ui-copy'
 import { useShelf, useExtraRevision, formatSavedOn } from '../../lib/shelf'
 import { useToast } from '../../lib/toast'
 import { LangToggle } from '../../components/brand'
@@ -28,6 +29,7 @@ export function PracticeSession() {
   const { chapterSlug = '' } = useParams()
   const [searchParams] = useSearchParams()
   const { lang } = useLang()
+  const copy = useCopy()
   const { notify } = useToast()
   const shelf = useShelf()
   const extraRevision = useExtraRevision()
@@ -36,7 +38,7 @@ export function PracticeSession() {
     (item) => item.slug === chapterSlug && questionsForChapter(item.id).length > 0,
   )
   const subject = chapter ? subjectById[chapter.subjectId] : undefined
-  usePageTitle(chapter ? `${chapter.title.en} · Practice` : 'Practice')
+  usePageTitle(chapter ? `${chapter.title[lang]} · ${copy.practice.backPractice}` : copy.practice.backPractice)
 
   const pool = useMemo(() => (chapter ? questionsForChapter(chapter.id) : []), [chapter])
   const requested = Number(searchParams.get('len')) || 5
@@ -110,12 +112,12 @@ export function PracticeSession() {
   if (!chapter || !subject || !question) {
     return (
       <div className="card mx-auto max-w-md p-6 text-center">
-        <p className="text-[15px] font-semibold">This practice set is not available</p>
+        <p className="text-[15px] font-semibold">{copy.practice.notAvailableTitle}</p>
         <p className="mt-1.5 text-[12.5px] text-muted">
-          The chapter may still be in review, or the link is out of date.
+          {copy.practice.notAvailableBody}
         </p>
         <ButtonLink to="/app/practice" className="mt-4">
-          Choose a chapter
+          {copy.practice.chooseChapter}
         </ButtonLink>
       </div>
     )
@@ -129,7 +131,7 @@ export function PracticeSession() {
             to="/app/practice"
             className="inline-flex items-center gap-1.5 text-[12px] text-muted hover:text-ink"
           >
-            <ArrowLeft size={14} /> Practice setup
+            <ArrowLeft size={14} /> {copy.practice.backSetup}
           </Link>
           <LangToggle />
         </div>
@@ -137,13 +139,13 @@ export function PracticeSession() {
         <div className="card overflow-hidden">
           <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-3.5">
             <div>
-              <p className="label">Sprint complete</p>
+              <p className="label">{copy.practice.sprintComplete}</p>
               <p className="mt-1 text-[13px] font-medium">
-                {chapter.title.en} · {subject.short}
+                {chapter.title[lang]} · {lang === 'hi' ? subjectShortHindi(subject.id) : subject.short}
               </p>
             </div>
             <Badge tone={accuracy >= 70 ? 'positive' : accuracy >= 40 ? 'warning' : 'negative'}>
-              {accuracy >= 70 ? 'Holding up' : accuracy >= 40 ? 'Needs another look' : 'Rough start'}
+              {accuracy >= 70 ? copy.practice.holdingUp : accuracy >= 40 ? copy.practice.needsLook : copy.practice.roughStart}
             </Badge>
           </div>
 
@@ -151,7 +153,7 @@ export function PracticeSession() {
             <div className="flex justify-center">
               <AccuracyRing
                 value={accuracy}
-                label="this sprint"
+                label={copy.practice.thisSprint}
                 size={132}
                 tone={accuracy >= 70 ? 'positive' : 'brand'}
               />
@@ -159,10 +161,10 @@ export function PracticeSession() {
             <div>
               <dl className="grid grid-cols-3 gap-2">
                 {[
-                  { label: 'Correct', value: correctCount, tone: 'text-positive' },
-                  { label: 'Wrong', value: missed.length, tone: 'text-negative' },
+                  { label: copy.practice.correctLabel, value: correctCount, tone: 'text-positive' },
+                  { label: copy.practice.wrong, value: missed.length, tone: 'text-negative' },
                   {
-                    label: 'Unattempted',
+                    label: copy.practice.unattempted,
                     value: session.length - answeredCount,
                     tone: 'text-muted',
                   },
@@ -178,17 +180,17 @@ export function PracticeSession() {
               <p className="mt-3 flex items-start gap-2 text-[11.5px] leading-relaxed text-muted">
                 <RotateCcw size={13} className="mt-0.5 shrink-0 text-brand" />
                 {missed.length
-                  ? `${missed.length} missed ${missed.length === 1 ? 'question has' : 'questions have'} a return date in your revision queue.`
-                  : 'Nothing to revisit from this set. The next review will come from your earlier mistakes.'}
+                  ? copy.practice.missedReturn(missed.length)
+                  : copy.practice.nothingRevisit}
                 {accuracy < 40 ? (
                   <Link to={`/subjects/${subject.slug}/${chapter.slug}`} className="link-underline shrink-0 text-brand-ink">
-                    Read the primer
+                    {copy.practice.readPrimerLink}
                   </Link>
                 ) : null}
               </p>
               <div className="mt-3 flex flex-wrap gap-1.5">
                 <Button size="sm" onClick={() => setShowReview((value) => !value)}>
-                  {showReview ? 'Hide answers' : 'Review answers'}
+                  {showReview ? copy.practice.hideAnswers : copy.practice.reviewAnswers}
                 </Button>
                 <Button
                   variant="secondary"
@@ -202,10 +204,10 @@ export function PracticeSession() {
                     setShowReview(false)
                   }}
                 >
-                  Try again
+                  {copy.practice.tryAgain}
                 </Button>
                 <ButtonLink to="/app/revision" variant="secondary" size="sm">
-                  Revision queue
+                  {copy.practice.queue}
                 </ButtonLink>
               </div>
             </div>
@@ -220,16 +222,16 @@ export function PracticeSession() {
                       {item.question.prompt[lang]}
                     </p>
                     <Badge tone={item.correct ? 'positive' : item.attempted ? 'negative' : 'neutral'}>
-                      {item.correct ? 'Correct' : item.attempted ? 'Wrong' : 'Left blank'}
+                      {item.correct ? copy.practice.correct : item.attempted ? copy.practice.wrong : copy.practice.leftBlank}
                     </Badge>
                   </div>
                   <p className="mt-2 text-[11.5px] text-muted">
-                    Correct answer:{' '}
+                    {copy.practice.correctAnswer}:{' '}
                     <span className="font-medium text-ink-soft">
                       {item.question.options[lang][item.question.correct]}
                     </span>
                     {item.attempted && !item.correct ? (
-                      <> · you picked {item.question.options[lang][item.pick as number]}</>
+                      <>{copy.practice.youPicked(item.question.options[lang][item.pick as number])}</>
                     ) : null}
                   </p>
                   <p className="mt-1.5 rounded-lg bg-surface-2/70 px-2.5 py-2 text-[11.5px] leading-relaxed text-muted">
@@ -243,10 +245,10 @@ export function PracticeSession() {
 
         <div className="flex flex-wrap items-center justify-between gap-2">
           <ButtonLink to="/app" variant="ghost" size="sm">
-            <ChevronLeft size={14} /> Study desk
+            <ChevronLeft size={14} /> {copy.practice.studyDesk}
           </ButtonLink>
           <ButtonLink to="/app/practice" size="sm">
-            Start another sprint <ArrowRight size={14} />
+            {copy.practice.anotherSprint} <ArrowRight size={14} />
           </ButtonLink>
         </div>
       </div>
@@ -260,11 +262,11 @@ export function PracticeSession() {
           to="/app/practice"
           className="inline-flex items-center gap-1.5 text-muted transition hover:text-ink"
         >
-          <ArrowLeft size={14} /> Practice
+          <ArrowLeft size={14} /> {copy.practice.backPractice}
         </Link>
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center gap-1 text-positive">
-            <Check size={12} /> {answeredCount > 0 ? 'Answer saved' : 'Answers save themselves'}
+            <Check size={12} /> {answeredCount > 0 ? copy.practice.answerSaved : copy.practice.answersSave}
           </span>
           <LangToggle />
         </div>
@@ -280,27 +282,27 @@ export function PracticeSession() {
           {subject.code}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[13.5px] font-medium">{chapter.title.en} · sprint</p>
+          <p className="truncate text-[13.5px] font-medium">{chapter.title[lang]} · {copy.practice.sprintWord}</p>
           <p className="text-[11px] text-muted">
-            Question {index + 1} of {session.length} · {subject.name.en}
+            {copy.practice.questionOf(index + 1, session.length, subject.name[lang])}
           </p>
         </div>
         <Link
           to={`/subjects/${subject.slug}/${chapter.slug}`}
           className="hidden text-[11px] text-muted hover:text-ink sm:inline"
         >
-          Primer
+          {copy.practice.examPrimer}
         </Link>
       </div>
 
       <div className="mt-2.5">
-        <ProgressBar value={(answeredCount / session.length) * 100} height={4} label="Sprint progress" />
+        <ProgressBar value={(answeredCount / session.length) * 100} height={4} label={copy.practice.sprintProgress} />
       </div>
 
       <div className="card mt-4 overflow-hidden">
         <div className="flex items-start justify-between gap-3 border-b border-line px-4 py-3 sm:px-5">
           <p className="label">
-            {chapter.title.en} · question {index + 1} of {session.length}
+            {copy.practice.question(index + 1, session.length)} · {chapter.title[lang]}
           </p>
           <div className="flex items-center gap-2">
             <span className="text-[10px] text-muted">{question.difficulty}</span>
@@ -352,7 +354,7 @@ export function PracticeSession() {
                   </span>
                   <span className="flex-1">{option}</span>
                   {isSelected && !isChecked ? (
-                    <span className="text-[10px] font-medium text-brand-ink">Your answer</span>
+                    <span className="text-[10px] font-medium text-brand-ink">{copy.practice.yourAnswer}</span>
                   ) : null}
                 </button>
               )
@@ -376,10 +378,10 @@ export function PracticeSession() {
               >
                 {isCorrect ? <Check size={13} /> : <X size={13} />}
                 {isCorrect
-                  ? 'Correct'
+                  ? copy.practice.correct
                   : selected === undefined
-                    ? 'Not attempted'
-                    : `Not quite — the answer is ${'ABCD'[question.correct]}`}
+                    ? copy.practice.attempted
+                    : copy.practice.notQuiteAnswer('ABCD'[question.correct])}
                 <span className="font-normal text-ink-soft">
                   · {question.options[lang][question.correct]}
                 </span>
@@ -394,12 +396,12 @@ export function PracticeSession() {
                   onClick={() => setRevealReasoning(true)}
                   className="mt-2 inline-flex items-center gap-1.5 rounded-md border border-line bg-surface px-2 py-1 text-[11px] font-medium text-ink-soft transition hover:border-line-strong"
                 >
-                  <Lightbulb size={12} /> Show reasoning
+                  <Lightbulb size={12} /> {copy.practice.showReasoning}
                 </button>
               )}
               {!isCorrect && selected !== undefined ? (
                 <p className="mt-2 inline-flex items-center gap-1.5 rounded-md bg-surface/70 px-2 py-1 text-[10.5px] text-muted">
-                  <RotateCcw size={11} /> Added to your revision queue
+                  <RotateCcw size={11} /> {copy.practice.addedRevision}
                 </p>
               ) : null}
             </div>
@@ -412,7 +414,9 @@ export function PracticeSession() {
                 onClick={() => {
                   shelf.toggle(question.id)
                   notify(
-                    shelf.has(question.id) ? 'Removed from your shelf' : `Saved · ${formatSavedOn()}`,
+                    shelf.has(question.id)
+                      ? copy.practice.removedShelf
+                      : copy.practice.savedOn(formatSavedOn()),
                     shelf.has(question.id) ? 'default' : 'success',
                   )
                 }}
@@ -422,7 +426,7 @@ export function PracticeSession() {
                 )}
               >
                 {shelf.has(question.id) ? <BookmarkCheck size={13} /> : <Bookmark size={13} />}
-                {shelf.has(question.id) ? 'Saved to shelf' : 'Save to shelf'}
+                {shelf.has(question.id) ? copy.practice.savedShelf : copy.practice.saveShelf}
               </button>
               <span className="hidden text-[10px] text-muted sm:inline">·</span>
               <button
@@ -440,14 +444,14 @@ export function PracticeSession() {
                 )}
               >
                 <Flag size={13} />
-                {marked.includes(question.id) ? 'Marked for review' : 'Mark for review'}
+                {marked.includes(question.id) ? copy.practice.marked : copy.practice.markReview}
               </button>
             </div>
 
             <div className="flex items-center gap-2">
               {index > 0 ? (
                 <Button variant="ghost" size="sm" onClick={() => setIndex((current) => current - 1)}>
-                  <ChevronLeft size={14} /> Back
+                  <ChevronLeft size={14} /> {copy.practice.back}
                 </Button>
               ) : null}
 
@@ -459,7 +463,7 @@ export function PracticeSession() {
                     setChecked((current) => ({ ...current, [question.id]: true }))
                   }
                 >
-                  Check answer <Lightbulb size={14} />
+                  {copy.practice.check} <Lightbulb size={14} />
                 </Button>
               ) : lastQuestion ? (
                 <Button
@@ -468,11 +472,11 @@ export function PracticeSession() {
                     setFinished(true)
                   }}
                 >
-                  Finish sprint <Check size={14} />
+                  {copy.practice.finish} <Check size={14} />
                 </Button>
               ) : (
                 <Button size="sm" onClick={() => setIndex((current) => current + 1)}>
-                  Next question <ArrowRight size={14} />
+                  {copy.practice.next} <ArrowRight size={14} />
                 </Button>
               )}
             </div>
@@ -495,7 +499,7 @@ export function PracticeSession() {
                 key={item.id}
                 type="button"
                 onClick={() => setIndex(sessionIndex)}
-                aria-label={`Go to question ${sessionIndex + 1}`}
+                aria-label={copy.practice.goTo(sessionIndex + 1)}
                 aria-current={sessionIndex === index}
                 className={cn(
                   'grid h-6 w-6 place-items-center rounded-[5px] border text-[10px] font-medium transition',
@@ -511,15 +515,10 @@ export function PracticeSession() {
             )
           })}
         </div>
-        <p className="text-[10.5px] text-muted">
-          Tip: press 1–4 to pick an option, Enter to check or move on.
-        </p>
+        <p className="text-[10.5px] text-muted">{copy.practice.tip}</p>
       </div>
 
-      <p className="mt-5 text-[10.5px] leading-relaxed text-muted">
-        Preview data · explanations are written for this sample bank. Anything you save stays in this
-        browser.
-      </p>
+      <p className="mt-5 text-[10.5px] leading-relaxed text-muted">{copy.practice.previewNote}</p>
     </div>
   )
 }

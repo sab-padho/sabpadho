@@ -217,8 +217,8 @@ const reasoning: Question[] = [
     ],
     correct: 2,
     explanation: [
-      'The differences are 5, 7, 9, 11 — odd numbers increasing by 2. The next difference is 13, so 39 + 13 = 52.',
-      'अंतर 5, 7, 9, 11 हैं — विषम संख्याएँ जो 2 से बढ़ती हैं। अगला अंतर 13 है, इसलिए 39 + 13 = 52.',
+      'The differences are 5, 7, 9, 11, odd numbers increasing by 2. The next difference is 13, so 39 + 13 = 52.',
+      'अंतर 5, 7, 9, 11 हैं, विषम संख्याएँ जो 2 से बढ़ती हैं। अगला अंतर 13 है, इसलिए 39 + 13 = 52.',
     ],
   }),
   q({
@@ -299,7 +299,7 @@ const english: Question[] = [
       ['Careless', 'Thorough', 'Hasty', 'Vague'],
     ],
     correct: 1,
-    explanation: ['Meticulous describes someone who gives great attention to detail — thorough is the closest option.', 'Meticulous उस व्यक्ति के लिए है जो बारीकी पर ध्यान देता है — thorough सबसे निकट विकल्प है।'],
+    explanation: ['Meticulous describes someone who gives great attention to detail, thorough is the closest option.', 'Meticulous उस व्यक्ति के लिए है जो बारीकी पर ध्यान देता है, thorough सबसे निकट विकल्प है।'],
   }),
   q({
     id: 'en-idiom-1',
@@ -471,7 +471,7 @@ const gk: Question[] = [
       ['6', '7', '8', '9'],
     ],
     correct: 2,
-    explanation: ['It crosses eight states, from Gujarat in the west to Mizoram in the east.', 'यह आठ राज्यों से गुजरती है — पश्चिम में गुजरात से पूर्व में मिज़ोरम तक।'],
+    explanation: ['It crosses eight states, from Gujarat in the west to Mizoram in the east.', 'यह आठ राज्यों से गुजरती है, पश्चिम में गुजरात से पूर्व में मिज़ोरम तक।'],
   }),
   q({
     id: 'ga-history-1',
@@ -527,8 +527,8 @@ const hindi: Question[] = [
     ],
     correct: 1,
     explanation: [
-      '“अंधे की लाठी” का अर्थ है एकमात्र सहारा — जैसे अंधे को केवल लाठी का सहारा होता है।',
-      '“अंधे की लाठी” का अर्थ है एकमात्र सहारा — जैसे अंधे को केवल लाठी का सहारा होता है।',
+      '“अंधे की लाठी” का अर्थ है एकमात्र सहारा, जैसे अंधे को केवल लाठी का सहारा होता है।',
+      '“अंधे की लाठी” का अर्थ है एकमात्र सहारा, जैसे अंधे को केवल लाठी का सहारा होता है।',
     ],
   }),
   q({
@@ -536,7 +536,7 @@ const hindi: Question[] = [
     subjectId: 'hindi',
     chapterId: 'hindi-paryayvachi',
     difficulty: 'Easy',
-    prompt: ['“सूर्य” का पर्यायवाची शब्द नहीं है —', '“सूर्य” का पर्यायवाची शब्द नहीं है —'],
+    prompt: ['“सूर्य” का पर्यायवाची शब्द नहीं है…', '“सूर्य” का पर्यायवाची शब्द नहीं है…'],
     options: [
       ['दिनकर', 'रवि', 'भास्कर', 'निशाकर'],
       ['दिनकर', 'रवि', 'भास्कर', 'निशाकर'],
@@ -549,7 +549,7 @@ const hindi: Question[] = [
     subjectId: 'hindi',
     chapterId: 'hindi-vakya-shuddhi',
     difficulty: 'Easy',
-    prompt: ['शुद्ध वाक्य चुनिए —', 'शुद्ध वाक्य चुनिए —'],
+    prompt: ['शुद्ध वाक्य चुनिए…', 'शुद्ध वाक्य चुनिए…'],
     options: [
       [
         'वह अपने घर को जा रहा है।',
@@ -591,7 +591,7 @@ const hindi: Question[] = [
       ['द्वंद्व समास', 'बहुव्रीहि समास', 'तत्पुरुष समास', 'अव्ययीभाव समास'],
     ],
     correct: 1,
-    explanation: ['चतुर्भुज का विग्रह है “चार भुजाओं वाला” — जिसमें कोई भी पद प्रधान नहीं, इसलिए यह बहुव्रीहि समास है।', 'चतुर्भुज का विग्रह है “चार भुजाओं वाला” — जिसमें कोई भी पद प्रधान नहीं, इसलिए यह बहुव्रीहि समास है।'],
+    explanation: ['चतुर्भुज का विग्रह है “चार भुजाओं वाला”, जिसमें कोई भी पद प्रधान नहीं, इसलिए यह बहुव्रीहि समास है।', 'चतुर्भुज का विग्रह है “चार भुजाओं वाला”, जिसमें कोई भी पद प्रधान नहीं, इसलिए यह बहुव्रीहि समास है।'],
   }),
 ]
 

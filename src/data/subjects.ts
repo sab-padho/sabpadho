@@ -20,7 +20,7 @@ export type Subject = {
   name: Bilingual
   short: string
   code: string
-  tint: 'violet' | 'blue' | 'teal' | 'amber' | 'rose'
+  tint: 'violet' | 'plum' | 'teal' | 'amber' | 'rose'
   tagline: string
   description: string
   chapters: Chapter[]
@@ -146,7 +146,7 @@ export const subjects: Subject[] = [
     name: { en: 'General Intelligence & Reasoning', hi: 'तर्कशक्ति' },
     short: 'Reasoning',
     code: 'GI',
-    tint: 'blue',
+    tint: 'plum',
     tagline: 'Syllogisms, coding, series and relations',
     description:
       'Draw the diagram, test every conclusion, and stop guessing between two options that look similar.',
@@ -156,7 +156,7 @@ export const subjects: Subject[] = [
       chapter(
         'reasoning',
         'syllogisms',
-        { en: 'Syllogisms', hi: 'न्याय-निगमन' },
+        { en: 'Syllogisms', hi: 'न्यायवाक्य' },
         'Venn diagrams that settle “some” and “no” conclusions.',
         [
           'Reading “all”, “some” and “no” statements precisely',
@@ -419,7 +419,7 @@ export const subjects: Subject[] = [
     tint: 'rose',
     tagline: 'व्याकरण, मुहावरे और वाक्य शुद्धि',
     description:
-      'हिंदी की तैयारी के लिए छोटे-छोटे अभ्यास — व्याकरण के नियम, मुहावरे और शब्द भंडार।',
+      'हिंदी की तैयारी के लिए छोटे-छोटे अभ्यास, व्याकरण के नियम, मुहावरे और शब्द भंडार।',
     accuracy: 81,
     paperSection: 'Hindi Language (CHSL)',
     chapters: [

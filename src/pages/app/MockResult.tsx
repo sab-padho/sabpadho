@@ -19,6 +19,13 @@ import { allChapters, chapterById, subjectById } from '../../data/subjects'
 import { formatClock } from '../../lib/utils'
 import { usePageTitle } from '../../lib/hooks'
 import { useLang } from '../../lib/lang'
+import {
+  useCopy,
+  chapterHindi,
+  localDate,
+  sectionName,
+  subjectShortByLabel,
+} from '../../lib/ui-copy'
 
 function formatScore(value: number) {
   return Number.isInteger(value) ? String(value) : value.toFixed(1)
@@ -29,15 +36,16 @@ export function MockResult() {
   const paper = getMock(mockId)
   const stored = loadResult(mockId)
   const { lang } = useLang()
+  const copy = useCopy()
   const isDemoFullMock = mockId === 'mock-03'
-  usePageTitle(paper ? `${paper.title} · Result` : 'Result')
+  usePageTitle(paper ? copy.result.title(paper.title) : copy.result.fallback)
 
   if (!paper) {
     return (
       <div className="card mx-auto max-w-md p-6 text-center">
-        <p className="text-[15px] font-semibold">This result is not available</p>
+        <p className="text-[15px] font-semibold">{copy.result.notAvailable}</p>
         <ButtonLink to="/app/mocks" className="mt-4">
-          Back to mocks
+          {copy.result.backToMocks}
         </ButtonLink>
       </div>
     )
@@ -49,13 +57,12 @@ export function MockResult() {
         <span className="mx-auto grid h-10 w-10 place-items-center rounded-xl bg-surface-2 text-muted">
           <Trophy size={18} />
         </span>
-        <p className="mt-3 text-[15px] font-semibold">No submission yet</p>
+        <p className="mt-3 text-[15px] font-semibold">{copy.result.noSubmission}</p>
         <p className="mt-1.5 text-[12.5px] leading-relaxed text-muted">
-          Submit {paper.title} to see a section score, the time you used and the questions to
-          revise.
+          {copy.result.noSubmissionBody(paper.title)}
         </p>
         <ButtonLink to={`/app/mocks/${paper.id}/instructions`} className="mt-4">
-          Open the paper <ArrowRight size={14} />
+          {copy.result.openPaper} <ArrowRight size={14} />
         </ButtonLink>
       </div>
     )
@@ -79,12 +86,12 @@ export function MockResult() {
         total: section.total,
       }))
   const submittedOn = stored
-    ? new Date(stored.submittedAt).toLocaleDateString('en-GB', {
+    ? new Date(stored.submittedAt).toLocaleDateString(lang === 'hi' ? 'hi-IN' : 'en-GB', {
         day: 'numeric',
         month: 'short',
         year: 'numeric',
       })
-    : completedMockResult.submittedOn
+    : localDate(lang, completedMockResult.submittedOn)
 
   const reviewItems = stored
     ? paper.sections
@@ -117,7 +124,7 @@ export function MockResult() {
         }))
 
   const firstWeakChapter = wrongChapterIds.length
-    ? chapterById(wrongChapterIds[0])?.title.en
+    ? chapterById(wrongChapterIds[0])?.title[lang]
     : undefined
 
   return (
@@ -127,10 +134,10 @@ export function MockResult() {
           to="/app/mocks"
           className="inline-flex items-center gap-1.5 text-[12px] text-muted transition hover:text-ink"
         >
-          <ArrowLeft size={14} /> Mock tests
+          <ArrowLeft size={14} /> {copy.mock.label}
         </Link>
         <Badge tone="positive">
-          <Check size={11} /> Finalised result
+          <Check size={11} /> {copy.result.finalised}
         </Badge>
       </div>
 
@@ -145,19 +152,16 @@ export function MockResult() {
         <div className="relative p-4 sm:p-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0">
-              <SectionLabel>
-                {paper.exam} · Tier I · submitted {submittedOn}
-              </SectionLabel>
+              <SectionLabel>{copy.result.submittedMeta(paper.exam, submittedOn)}</SectionLabel>
               <h1 className="mt-2 text-[24px] font-semibold leading-tight sm:text-[28px]">
                 {paper.title}
               </h1>
               <p className="mt-1.5 max-w-md text-[12px] leading-relaxed text-muted">
-                Scored from the paper version pinned when you started. A repeat submit returns this
-                same result.
+                {copy.result.scoredFrom}
               </p>
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <Badge tone={accuracy >= 70 ? 'positive' : accuracy >= 50 ? 'warning' : 'negative'}>
-                  {accuracy}% accuracy
+                  {copy.result.accuracyN(accuracy)}
                 </Badge>
               </div>
             </div>
@@ -168,7 +172,7 @@ export function MockResult() {
                   {formatScore(score)}
                   <span className="text-[16px] font-normal text-muted"> / {maxScore}</span>
                 </p>
-                <p className="mt-1 text-[10.5px] text-muted">marks</p>
+                <p className="mt-1 text-[10.5px] text-muted">{copy.result.marksWord}</p>
               </div>
               <AccuracyRing value={accuracy} size={76} label="" />
             </div>
@@ -177,17 +181,17 @@ export function MockResult() {
           <div className="mt-5 border-t border-line pt-4">
             <ScoreSplitBar correct={correct} wrong={wrong} unattempted={unattempted} />
             <p className="mt-2.5 text-[11.5px] leading-relaxed text-muted">
-              {correct} correct, {wrong} wrong, {unattempted} left blank. A wrong answer costs 0.5
-              marks, so {wrong * 0.5} {wrong === 1 ? 'mark was' : 'marks were'} lost to negatives.
+              {copy.result.splitBody(correct, wrong, unattempted)}{' '}
+              {copy.result.negativesLost(wrong * 0.5)}
             </p>
           </div>
 
           <dl className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
             {[
-              { label: 'Correct', value: correct, tone: 'text-positive' },
-              { label: 'Wrong', value: wrong, tone: 'text-negative' },
-              { label: 'Unattempted', value: unattempted, tone: 'text-muted' },
-              { label: 'Time used', value: timeUsed, tone: 'text-ink' },
+              { label: copy.result.correct, value: correct, tone: 'text-positive' },
+              { label: copy.result.wrong, value: wrong, tone: 'text-negative' },
+              { label: copy.result.unattempted, value: unattempted, tone: 'text-muted' },
+              { label: copy.result.timeUsed, value: timeUsed, tone: 'text-ink' },
             ].map((item) => (
               <div key={item.label} className="rounded-lg border border-line bg-surface/70 px-2.5 py-2">
                 <dt className="text-[10px] text-muted">{item.label}</dt>
@@ -204,27 +208,26 @@ export function MockResult() {
         <div className="space-y-4">
           <section className="card p-4 sm:p-5">
             <div className="flex items-center justify-between">
-              <p className="label">By section</p>
-              <span className="text-[10px] text-muted">correct / questions</span>
+              <p className="label">{copy.result.bySection}</p>
+              <span className="text-[10px] text-muted">{copy.result.correctPerQ}</span>
             </div>
             <div className="mt-4">
-              <SectionScoreBars sections={sections} />
+              <SectionScoreBars sections={sections.map((section) => ({ ...section, name: sectionName(lang, section.name) }))} />
             </div>
             <p className="mt-4 border-t border-line pt-3 text-[11px] leading-relaxed text-muted">
-              Section scores are additive: 2 marks per correct answer and 0.5 deducted per wrong
-              answer within that section.
+              {copy.result.additive}
             </p>
           </section>
 
           <section className="card overflow-hidden">
             <div className="flex items-center justify-between border-b border-line px-4 py-3 sm:px-5">
               <div>
-                <p className="text-[14px] font-semibold">Review incorrect answers</p>
+                <p className="text-[14px] font-semibold">{copy.result.reviewTitle}</p>
                 <p className="mt-0.5 text-[11px] text-muted">
-                  The solution is shown only after a submitted attempt
+                  {copy.result.reviewSub}
                 </p>
               </div>
-              <Badge tone="neutral">{reviewItems.length} to review</Badge>
+              <Badge tone="neutral">{copy.result.toReview(reviewItems.length)}</Badge>
             </div>
 
             {reviewItems.length ? (
@@ -238,10 +241,11 @@ export function MockResult() {
                     <li key={`${item.questionId}-${item.picked}`} className="px-4 py-3.5 sm:px-5">
                       <div className="flex flex-wrap items-center gap-2">
                         <Badge tone="negative">
-                          <X size={10} /> Wrong
+                          <X size={10} /> {copy.result.wrongBadge}
                         </Badge>
                         <span className="text-[10.5px] text-muted">
-                          {subject?.short} · {chapter?.title.en}
+                          {subject ? subjectShortByLabel(lang, subject.short) : null} ·{' '}
+                          {chapter?.title[lang]}
                         </span>
                       </div>
                       <p className="mt-2 text-[12.5px] leading-relaxed text-ink">
@@ -249,13 +253,13 @@ export function MockResult() {
                       </p>
                       <div className="mt-1.5 grid gap-1 text-[11.5px] sm:grid-cols-2">
                         <p className="text-negative">
-                          Your answer:{' '}
+                          {copy.result.yourAnswer}:{' '}
                           <span className="text-ink-soft">
-                            {item.picked !== undefined ? question.options[lang][item.picked] : '—'}
+                            {item.picked !== undefined ? question.options[lang][item.picked] : copy.result.missing}
                           </span>
                         </p>
                         <p className="text-positive">
-                          Correct:{' '}
+                          {copy.result.correctWord}:{' '}
                           <span className="text-ink-soft">
                             {question.options[lang][question.correct]}
                           </span>
@@ -263,7 +267,7 @@ export function MockResult() {
                       </div>
                       <details className="group mt-2">
                         <summary className="cursor-pointer text-[11px] font-medium text-brand-ink marker:hidden [&::-webkit-details-marker]:hidden">
-                          Show reasoning
+                          {copy.result.showReasoning}
                         </summary>
                         <p className="mt-1.5 rounded-lg bg-surface-2/70 px-2.5 py-2 text-[11.5px] leading-relaxed text-muted">
                           {question.explanation[lang]}
@@ -275,9 +279,9 @@ export function MockResult() {
               </ul>
             ) : (
               <div className="px-5 py-6 text-center">
-                <p className="text-[12.5px] font-medium text-positive">No incorrect answers to review</p>
+                <p className="text-[12.5px] font-medium text-positive">{copy.result.noneIncorrect}</p>
                 <p className="mt-1 text-[11.5px] text-muted">
-                  Every attempted question was correct. Try a longer paper next.
+                  {copy.result.noneIncorrectBody}
                 </p>
               </div>
             )}
@@ -286,86 +290,95 @@ export function MockResult() {
 
         <aside className="space-y-3">
           <section className="card p-4">
-            <p className="label">Chapter pulse</p>
+            <p className="label">{copy.result.pulse}</p>
             <p className="mt-1 text-[10.5px] leading-relaxed text-muted">
-              Accuracy shown with the attempts behind it
+              {copy.result.pulseSub}
             </p>
             <ul className="mt-3 space-y-2.5">
               {pulse.map((item) => (
                 <li key={item.chapter} className="flex items-center justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="truncate text-[12px] text-ink-soft">{item.chapter}</p>
+                    <p className="truncate text-[12px] text-ink-soft">
+                      {lang === 'hi' ? chapterHindi(item.chapter) : item.chapter}
+                    </p>
                     <p className="text-[10px] text-muted">
-                      {item.attempts} {item.attempts === 1 ? 'attempt' : 'attempts'}
+                      {item.attempts} {item.attempts === 1 ? copy.result.attempt1 : copy.result.attemptsN}
                     </p>
                   </div>
                   <div className="text-right">
                     <p className="num text-[12px] font-medium">
-                      {item.accuracy === null ? '—' : `${item.accuracy}%`}
+                      {item.accuracy === null ? copy.result.missing : `${item.accuracy}%`}
                     </p>
-                    <p className="text-[9.5px] text-muted">{item.status}</p>
+                    <p className="text-[9.5px] text-muted">
+                      {item.status === 'Practise next'
+                        ? copy.result.practiseNext
+                        : item.status === 'Steady'
+                          ? copy.progress.steady
+                          : item.status === 'Too early to tell'
+                            ? copy.progress.earlyTell
+                            : item.status}
+                    </p>
                   </div>
                 </li>
               ))}
               {!isDemoFullMock && wrongChapterIds.length === 0 ? (
-                <li className="text-[11.5px] text-muted">No chapter needs another look.</li>
+                <li className="text-[11.5px] text-muted">{copy.result.noChapter}</li>
               ) : null}
             </ul>
             <Link
               to="/app/progress"
               className="mt-3 inline-flex items-center gap-1 text-[11.5px] font-medium text-brand-ink hover:underline"
             >
-              All chapter detail <ArrowRight size={12} />
+              {copy.result.allDetail} <ArrowRight size={12} />
             </Link>
           </section>
 
           <section className="card p-4">
             <p className="flex items-center gap-2 text-[12px] font-medium">
-              <Flag size={13} className="text-brand" /> What to do next
+              <Flag size={13} className="text-brand" /> {copy.result.nextTitle}
             </p>
             <ul className="mt-2 space-y-2 text-[11px] leading-relaxed text-muted">
               <li className="flex gap-2">
                 <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-brand" />
-                Spend ten minutes on {firstWeakChapter ?? 'Percentages'} before the next paper.
+                {copy.result.nextSpend(firstWeakChapter ?? (lang === 'hi' ? chapterHindi('Percentages') : 'Percentages'))}
               </li>
               <li className="flex gap-2">
                 <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-brand" />
-                Re-attempt missed questions from the revision queue tomorrow.
+                {copy.result.nextReattempt}
               </li>
               <li className="flex gap-2">
                 <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-brand" />
-                Try a sectional paper to hold the section you scored lowest in.
+                {copy.result.nextSectional}
               </li>
             </ul>
             <ButtonLink to="/app/practice" variant="secondary" size="sm" className="mt-3 w-full">
-              <RotateCcw size={13} /> Practise weak chapters
+              <RotateCcw size={13} /> {copy.result.practiseWeak}
             </ButtonLink>
           </section>
 
           <section className="rounded-xl border border-line bg-surface-2/50 p-4">
             <p className="flex items-center gap-2 text-[11.5px] font-medium">
-              <Clock size={13} className="text-muted" /> Time check
+              <Clock size={13} className="text-muted" /> {copy.result.timeCheck}
             </p>
             <p className="mt-1.5 text-[11px] leading-relaxed text-muted">
-              You used {timeUsed} of {paper.durationMinutes} minutes
-              {paper.kind === 'Full length' ? ' — about 32 seconds a question.' : '.'}
+              {copy.result.timeUsedOf(timeUsed, paper.durationMinutes)}{' '}
+              {paper.kind === 'Full length' ? copy.result.perQuestion : '.'}
             </p>
           </section>
 
           <div className="flex flex-col gap-2">
             <ButtonLink to="/app/mocks" size="sm">
-              <Target size={13} /> Back to the mock series
+              <Target size={13} /> {copy.result.backSeries}
             </ButtonLink>
             <ButtonLink to="/app" variant="ghost" size="sm">
-              Study desk
+              {copy.result.studyDesk}
             </ButtonLink>
           </div>
         </aside>
       </div>
 
       <p className="px-1 text-[10px] text-muted">
-        {paperQuestionCount(paper)} questions · {paper.sections.length} sections · sample marking
-        scheme (+2 / −0.5). Result stays on this device in the preview.
+        {copy.result.footer(paperQuestionCount(paper), paper.sections.length)}
       </p>
     </div>
   )

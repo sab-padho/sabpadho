@@ -2,16 +2,13 @@ import { Link } from 'react-router-dom'
 import {
   ArrowRight,
   ArrowUpRight,
-  Bookmark,
   CalendarDays,
   ClipboardList,
   Clock,
   RotateCcw,
-  Timer,
   TrendingUp,
 } from 'lucide-react'
 import { Badge, ButtonLink, SectionLabel } from '../../components/ui'
-import type { LucideIcon } from 'lucide-react'
 import { WeeklyActivityChart, AccuracyRing } from '../../components/charts'
 import {
   accuracyTrend,
@@ -21,104 +18,166 @@ import {
   revisionQueue,
   weeklyActivity,
 } from '../../data/learner'
-import { subjects, allChapters } from '../../data/subjects'
+import { subjects, allChapters, chapterById } from '../../data/subjects'
 import { questionById, questionsForChapter } from '../../data/questions'
 import { mockPapers } from '../../data/mocks'
 import { tintDot, tintTile } from '../../components/subject-tint'
 import { cn } from '../../lib/utils'
 import { usePageTitle } from '../../lib/hooks'
+import { useLang } from '../../lib/lang'
+import { useCopy, chapterHindi, localDate, mockKindLabel, subjectLabel } from '../../lib/ui-copy'
 
-function greeting() {
+function greeting(copy: ReturnType<typeof useCopy>) {
   const hour = new Date().getHours()
-  if (hour < 12) return 'Good morning'
-  if (hour < 17) return 'Good afternoon'
-  return 'Good evening'
+  if (hour < 12) return copy.dashboard.morning
+  if (hour < 17) return copy.dashboard.afternoon
+  return copy.dashboard.evening
 }
 
 export function Dashboard() {
-  usePageTitle('Study desk')
+  const { lang } = useLang()
+  const copy = useCopy()
+  usePageTitle(copy.nav.desk)
   const nextPaper = mockPapers.find((paper) => paper.status === 'scheduled')
   const availablePaper = mockPapers.find((paper) => paper.id === 'mini-06')
   const weekAccuracy = accuracyTrend[accuracyTrend.length - 1].value
   const resumeQuestions = questionsForChapter('maths-percentages').length
+  const resumeChapter =
+    lang === 'hi' ? chapterHindi(resumeSprint.chapterTitle) : resumeSprint.chapterTitle
+  const resumeSubject =
+    subjects.find((subject) => subject.name.en === resumeSprint.subjectTitle)?.name[lang] ??
+    resumeSprint.subjectTitle
+  const resumePct = Math.round((resumeSprint.answered / resumeSprint.total) * 100)
 
   return (
     <div className="space-y-5">
       <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <SectionLabel>{greeting()}, {learner.firstName}</SectionLabel>
-            <Badge tone="outline">Preview data</Badge>
+            <SectionLabel>
+              {greeting(copy)}, {lang === 'hi' ? 'आरव' : learner.firstName}
+            </SectionLabel>
+            <Badge tone="outline">{copy.dashboard.preview}</Badge>
           </div>
           <h1 className="mt-1.5 text-[26px] font-semibold leading-tight sm:text-[30px]">
-            Your study desk
+            {copy.dashboard.title}
           </h1>
           <p className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[12.5px] text-muted">
             <span className="inline-flex items-center gap-1.5">
-              <CalendarDays size={13} /> Thursday, 19 November
+              <CalendarDays size={13} /> {copy.dashboard.date}
             </span>
             <span className="hidden h-1 w-1 rounded-full bg-line-strong sm:block" />
             <span>{learner.target}</span>
             <span className="hidden h-1 w-1 rounded-full bg-line-strong sm:block" />
-            <span className="font-medium text-ink-soft">{learner.daysToExam} days to go</span>
+            <span className="font-medium text-ink-soft">
+              {copy.dashboard.daysToGo(learner.daysToExam)}
+            </span>
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <ButtonLink to="/app/practice" size="sm">
-            <span className="hidden sm:inline">Start a sprint</span>
-            <span className="sm:hidden">Sprint</span>
+            <span className="hidden sm:inline">{copy.dashboard.startSprint}</span>
+            <span className="sm:hidden">{copy.dashboard.sprintShort}</span>
             <ArrowRight size={14} />
           </ButtonLink>
           <ButtonLink to="/app/mocks" variant="secondary" size="sm">
-            <ClipboardList size={14} /> Mocks
+            <ClipboardList size={14} /> {copy.dashboard.mocks}
           </ButtonLink>
         </div>
       </header>
 
-      <section className="grid grid-cols-2 gap-2.5 xl:grid-cols-4">
-        <StatCard
-          icon={RotateCcw}
-          label="Questions due today"
+      <section className="card border-brand/20 bg-brand-soft p-4 sm:p-5">
+        <div className="grid items-center gap-5 lg:grid-cols-[1.6fr_1fr]">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-[9.5px] font-semibold uppercase tracking-[0.13em] text-brand-ink/75">
+                {copy.dashboard.continueLabel}
+              </p>
+              <span className="rounded-full bg-white/60 px-1.5 py-0.5 text-[9.5px] font-medium text-brand-ink dark:bg-black/25">
+                {copy.dashboard.sprintBadge}
+              </span>
+            </div>
+            <h2 className="mt-2 font-display text-[19px] font-semibold leading-snug text-brand-ink sm:text-[22px]">
+              {copy.dashboard.resumeTitle(resumeChapter, resumeSprint.answered, resumeSprint.total)}
+            </h2>
+            <p className="mt-1 text-[12px] text-brand-ink/75">
+              {copy.dashboard.resumeSub(resumeSubject, resumeSprint.minutesLeft, resumeQuestions)}
+            </p>
+            <div className="mt-3.5 flex flex-wrap gap-1.5">
+              <Link to="/app/practice/percentages" className="btn btn-sm btn-primary">
+                {copy.dashboard.resume} <ArrowRight size={13} />
+              </Link>
+              <Link
+                to="/app/practice"
+                className="btn btn-sm border border-brand/20 bg-white/50 text-brand-ink hover:bg-white/80 dark:bg-black/20 dark:hover:bg-black/30"
+              >
+                {copy.dashboard.newSprint}
+              </Link>
+            </div>
+          </div>
+          <div className="lg:w-full lg:max-w-[260px] lg:justify-self-end">
+            <div className="flex items-baseline justify-between gap-2">
+              <p className="text-[11px] font-medium text-brand-ink/75">
+                {copy.dashboard.sprintProgress}
+              </p>
+              <p className="num font-display text-[26px] font-semibold leading-none text-brand-ink">
+                {resumePct}%
+              </p>
+            </div>
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/60 dark:bg-black/25">
+              <div className="h-full rounded-full bg-brand" style={{ width: `${resumePct}%` }} />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="grid grid-cols-2 gap-px overflow-hidden rounded-card border border-line bg-line xl:grid-cols-4">
+        <StatCell
+          label={copy.dashboard.dueToday}
           value={String(revisionQueue.length)}
+          hint={copy.dashboard.fromYesterday}
           foot={
-            <Link to="/app/revision" className="inline-flex items-center gap-1 text-brand-ink hover:underline">
-              Open revision <ArrowRight size={11} />
+            <Link
+              to="/app/revision"
+              className="inline-flex items-center gap-1 font-medium text-brand-ink hover:underline"
+            >
+              {copy.dashboard.openRevision} <ArrowRight size={11} />
             </Link>
           }
-          hint="Includes 2 from yesterday"
         />
-        <StatCard
-          icon={TrendingUp}
-          label="Accuracy this week"
+        <StatCell
+          label={copy.dashboard.accuracy}
           value={`${weekAccuracy}%`}
+          hint={copy.dashboard.acrossAnswers}
           foot={
-            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-positive">
-              <TrendingUp size={11} /> +3 pts vs last week
+            <span className="inline-flex items-center gap-1 font-medium text-positive">
+              <TrendingUp size={11} /> {copy.dashboard.pts}
             </span>
           }
-          hint="Across 54 checked answers"
         />
-        <StatCard
-          icon={Timer}
-          label="Mocks taken"
+        <StatCell
+          label={copy.dashboard.mocksTaken}
           value="2"
+          hint={copy.dashboard.oneFull}
           foot={
-            <span className="text-[11px] text-muted">
-              Best <span className="font-medium text-ink-soft">133.5 / 200</span>
+            <span className="text-muted">
+              {copy.dashboard.best}{' '}
+              <span className="font-medium text-ink-soft">133.5 / 200</span>
             </span>
           }
-          hint="One full, one sectional"
         />
-        <StatCard
-          icon={Bookmark}
-          label="Saved questions"
+        <StatCell
+          label={copy.dashboard.saved}
           value="8"
+          hint={copy.dashboard.filtered}
           foot={
-            <Link to="/app/shelf" className="inline-flex items-center gap-1 text-brand-ink hover:underline">
-              Open shelf <ArrowRight size={11} />
+            <Link
+              to="/app/shelf"
+              className="inline-flex items-center gap-1 font-medium text-brand-ink hover:underline"
+            >
+              {copy.dashboard.openShelf} <ArrowRight size={11} />
             </Link>
           }
-          hint="Filtered by 4 subjects"
         />
       </section>
 
@@ -127,16 +186,15 @@ export function Dashboard() {
           <section className="card p-4 sm:p-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <h2 className="text-[15px] font-semibold">Practice activity</h2>
-                <p className="mt-0.5 text-[11.5px] text-muted">
-                  Questions checked in the last seven days
-                </p>
+                <h2 className="text-[15px] font-semibold">{copy.dashboard.activity}</h2>
+                <p className="mt-0.5 text-[11.5px] text-muted">{copy.dashboard.activitySub}</p>
               </div>
               <div className="flex items-center gap-2">
                 <Badge tone="neutral">
-                  <span className="h-1.5 w-1.5 rounded-full bg-positive" /> {learner.streak}-day streak
+                  <span className="h-1.5 w-1.5 rounded-full bg-positive" />{' '}
+                  {copy.shell.streak(learner.streak)}
                 </Badge>
-                <Badge tone="brand">{learner.questionsThisWeek} this week</Badge>
+                <Badge tone="brand">{copy.dashboard.weekChip(learner.questionsThisWeek)}</Badge>
               </div>
             </div>
 
@@ -148,17 +206,15 @@ export function Dashboard() {
               <div className="flex items-center gap-2.5">
                 <AccuracyRing value={weekAccuracy} size={60} label="" />
                 <div>
-                  <p className="text-[12px] font-medium">Weekly accuracy</p>
-                  <p className="text-[11px] text-muted">
-                    Highest on Reasoning · lowest on Percentages
-                  </p>
+                  <p className="text-[12px] font-medium">{copy.dashboard.weeklyAccuracy}</p>
+                  <p className="text-[11px] text-muted">{copy.dashboard.highestLowest}</p>
                 </div>
               </div>
               <Link
                 to="/app/progress"
                 className="inline-flex items-center gap-1 text-[12px] font-medium text-brand-ink hover:underline"
               >
-                Full progress <ArrowRight size={13} />
+                {copy.dashboard.fullProgress} <ArrowRight size={13} />
               </Link>
             </div>
           </section>
@@ -166,24 +222,22 @@ export function Dashboard() {
           <section className="card overflow-hidden">
             <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3.5 sm:px-5">
               <div>
-                <h2 className="text-[15px] font-semibold">Recent attempts</h2>
-                <p className="mt-0.5 text-[11.5px] text-muted">
-                  Scores are stored against the paper version you attempted
-                </p>
+                <h2 className="text-[15px] font-semibold">{copy.dashboard.attempts}</h2>
+                <p className="mt-0.5 text-[11.5px] text-muted">{copy.dashboard.attemptsSub}</p>
               </div>
               <Link
                 to="/app/mocks"
                 className="hidden items-center gap-1 text-[12px] font-medium text-brand-ink hover:underline sm:inline-flex"
               >
-                All mocks <ArrowRight size={13} />
+                {copy.dashboard.allMocks} <ArrowRight size={13} />
               </Link>
             </div>
 
             <div className="hidden grid-cols-[1.6fr_1fr_0.8fr_1fr_auto] gap-3 border-b border-line px-5 py-2 text-[10.5px] font-medium uppercase tracking-[0.08em] text-muted sm:grid">
-              <span>Paper</span>
-              <span>Section</span>
-              <span>Date</span>
-              <span>Score</span>
+              <span>{copy.dashboard.paper}</span>
+              <span>{copy.dashboard.section}</span>
+              <span>{copy.dashboard.dateLabel}</span>
+              <span>{copy.dashboard.score}</span>
               <span className="sr-only">Open</span>
             </div>
             <ul className="divide-y divide-line">
@@ -198,13 +252,15 @@ export function Dashboard() {
                         {attempt.paper}
                       </span>
                       <span className="mt-0.5 block text-[11px] text-muted sm:hidden">
-                        {attempt.date} · {attempt.score}
+                        {localDate(lang, attempt.date)} · {attempt.score}
                       </span>
                     </span>
                     <span className="hidden truncate text-[11.5px] text-muted sm:block">
-                      {attempt.subjectLabel}
+                      {mockKindLabel(lang, attempt.subjectLabel)}
                     </span>
-                    <span className="hidden text-[11.5px] text-muted sm:block">{attempt.date}</span>
+                    <span className="hidden text-[11.5px] text-muted sm:block">
+                      {localDate(lang, attempt.date)}
+                    </span>
                     <span className="hidden items-center gap-2 sm:flex">
                       <span className="num text-[12px] font-medium">{attempt.score}</span>
                       <span className="hidden h-1 w-10 overflow-hidden rounded-full bg-surface-3 lg:block">
@@ -226,51 +282,11 @@ export function Dashboard() {
         </div>
 
         <div className="space-y-4">
-          <section className="card border-brand/20 bg-brand-soft p-4">
-            <div className="flex items-center justify-between">
-              <p className="text-[9.5px] font-semibold uppercase tracking-[0.13em] text-brand-ink/75">
-                Continue where you left off
-              </p>
-              <span className="rounded-full bg-white/60 px-1.5 py-0.5 text-[9.5px] font-medium text-brand-ink dark:bg-black/25">
-                Sprint
-              </span>
-            </div>
-            <h2 className="mt-2 font-display text-[17px] font-semibold text-brand-ink">
-              {resumeSprint.chapterTitle} · question {resumeSprint.answered} of {resumeSprint.total}
-            </h2>
-            <p className="mt-1 text-[11.5px] text-brand-ink/75">
-              {resumeSprint.subjectTitle} · about {resumeSprint.minutesLeft} minutes left ·{' '}
-              {resumeQuestions} in this chapter
-            </p>
-            <div className="mt-3 flex items-center gap-2">
-              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/60 dark:bg-black/25">
-                <div
-                  className="h-full rounded-full bg-brand"
-                  style={{ width: `${Math.round((resumeSprint.answered / resumeSprint.total) * 100)}%` }}
-                />
-              </div>
-              <span className="num text-[10.5px] font-medium text-brand-ink">
-                {Math.round((resumeSprint.answered / resumeSprint.total) * 100)}%
-              </span>
-            </div>
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              <Link to="/app/practice/percentages" className="btn btn-sm btn-primary">
-                Resume sprint <ArrowRight size={13} />
-              </Link>
-              <Link
-                to="/app/practice"
-                className="btn btn-sm border border-brand/20 bg-white/50 text-brand-ink hover:bg-white/80 dark:bg-black/20 dark:hover:bg-black/30"
-              >
-                New sprint
-              </Link>
-            </div>
-          </section>
-
           <section className="card p-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-[14.5px] font-semibold">Your subjects</h2>
+              <h2 className="text-[14.5px] font-semibold">{copy.dashboard.subjects}</h2>
               <Link to="/app/practice" className="text-[11px] text-muted hover:text-ink">
-                Practise
+                {copy.dashboard.practise}
               </Link>
             </div>
             <ul className="mt-3 space-y-2.5">
@@ -290,7 +306,9 @@ export function Dashboard() {
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="flex items-baseline justify-between gap-2">
-                        <span className="truncate text-[12px] text-ink-soft">{subject.short}</span>
+                        <span className="truncate text-[12px] text-ink-soft">
+                          {subjectLabel(lang, subject)}
+                        </span>
                         <span className="num text-[11px] font-medium text-ink">
                           {subject.accuracy}%
                         </span>
@@ -303,7 +321,7 @@ export function Dashboard() {
                           />
                         </span>
                         <span className="text-[9.5px] text-muted">
-                          {subject.chapters.length} ch
+                          {copy.dashboard.chapterCount(subject.chapters.length)}
                         </span>
                       </span>
                     </span>
@@ -315,8 +333,10 @@ export function Dashboard() {
 
           <section className="card p-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-[14.5px] font-semibold">Today’s revision</h2>
-              <span className="num text-[11px] text-muted">{revisionQueue.length} due</span>
+              <h2 className="text-[14.5px] font-semibold">{copy.dashboard.revision}</h2>
+              <span className="num text-[11px] text-muted">
+                {copy.dashboard.dueCount(revisionQueue.length)}
+              </span>
             </div>
             <ul className="mt-2.5 divide-y divide-line">
               {revisionQueue.slice(0, 3).map((item) => {
@@ -326,21 +346,24 @@ export function Dashboard() {
                     <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[12px] text-ink-soft">
-                        {question ? truncate(item.chapter, 34) : item.chapter}
+                        {question && lang === 'hi'
+                          ? (chapterById(question.chapterId)?.title.hi ?? item.chapter)
+                          : truncate(item.chapter, 34)}
                       </span>
                       <span className="text-[10.5px] text-muted">
-                        {item.subject} · {item.lastSeen}
+                        {lang === 'hi' ? subjectHindi(item.subject) : item.subject} ·{' '}
+                        {lang === 'hi' ? lastSeenHindi(item.lastSeen) : item.lastSeen}
                       </span>
                     </span>
                     <span className="rounded-full bg-brand-soft px-1.5 py-0.5 text-[9px] font-medium text-brand-ink">
-                      Due
+                      {copy.dashboard.due}
                     </span>
                   </li>
                 )
               })}
             </ul>
             <ButtonLink to="/app/revision" variant="secondary" size="sm" className="mt-2 w-full">
-              <RotateCcw size={13} /> Open revision queue
+              <RotateCcw size={13} /> {copy.dashboard.openQueue}
             </ButtonLink>
           </section>
 
@@ -351,20 +374,21 @@ export function Dashboard() {
                   <ClipboardList size={15} />
                 </span>
                 <div className="min-w-0">
-                  <p className="text-[12.5px] font-medium">Ready when you are</p>
+                  <p className="text-[12.5px] font-medium">{copy.dashboard.ready}</p>
                   <p className="truncate text-[11px] text-muted">{availablePaper.title}</p>
                 </div>
               </div>
               <p className="mt-2 text-[11px] leading-relaxed text-muted">
-                {availablePaper.sections.length} sections ·{' '}
-                {availablePaper.sections.reduce((sum, section) => sum + section.questionIds.length, 0)}{' '}
-                questions · {availablePaper.durationMinutes} min
+                {copy.dashboard.readySub(
+                  availablePaper.sections.length,
+                  availablePaper.sections.reduce((sum, section) => sum + section.questionIds.length, 0),
+                )}
               </p>
               <Link
                 to={`/app/mocks/${availablePaper.id}/instructions`}
                 className="mt-2.5 inline-flex items-center gap-1 text-[12px] font-medium text-brand-ink hover:underline"
               >
-                Start mini mock <ArrowRight size={12} />
+                {copy.dashboard.openPaper} <ArrowRight size={12} />
               </Link>
             </section>
           ) : null}
@@ -378,21 +402,21 @@ export function Dashboard() {
               <Clock size={16} />
             </span>
             <div>
-              <p className="text-[13px] font-medium">Next full rehearsal: {nextPaper.title}</p>
+              <p className="text-[13px] font-medium">{copy.dashboard.nextRehearsal}: {nextPaper.title}</p>
               <p className="mt-0.5 text-[11.5px] text-muted">
-                Opens {nextPaper.opensOn} · 100 questions · 60 minutes
+                {nextPaper.opensOn ? copy.dashboard.opensLine(localDate(lang, nextPaper.opensOn)) : null}
               </p>
             </div>
           </div>
           <ButtonLink to="/app/mocks" variant="secondary" size="sm">
-            View series <ArrowRight size={13} />
+            {copy.dashboard.viewSeries} <ArrowRight size={13} />
           </ButtonLink>
         </section>
       ) : null}
 
       <p className="px-1 text-[10.5px] leading-relaxed text-muted">
-        Preview profile with sample data · {allChapters.length} chapters across {subjects.length}{' '}
-        subjects. Answers and bookmarks stay in this browser.
+        {copy.dashboard.preview} · {copy.dashboard.chaptersAcross(allChapters.length, subjects.length)}{' '}
+        {copy.dashboard.footerTail}
       </p>
     </div>
   )
@@ -402,30 +426,40 @@ function truncate(value: string, max: number) {
   return value.length > max ? `${value.slice(0, max - 1)}…` : value
 }
 
-function StatCard({
-  icon: Icon,
+const subjectHindi = (subject: string) =>
+  ({
+    Maths: 'गणित',
+    Reasoning: 'तर्कशक्ति',
+    English: 'अंग्रेज़ी',
+    GK: 'सामान्य ज्ञान',
+    Hindi: 'हिंदी',
+  })[subject] ?? subject
+
+const lastSeenHindi = (value: string) => {
+  if (value === 'Yesterday') return 'कल'
+  const match = value.match(/^(\d+) days ago$/)
+  return match ? `${match[1]} दिन पहले` : value
+}
+
+function StatCell({
   label,
   value,
   hint,
   foot,
 }: {
-  icon: LucideIcon
   label: string
   value: string
   hint: string
   foot: React.ReactNode
 }) {
   return (
-    <div className="card p-4">
-      <div className="flex items-start justify-between gap-2">
-        <p className="text-[11.5px] text-muted">{label}</p>
-        <span className="grid h-7 w-7 place-items-center rounded-md border border-line bg-surface-2 text-ink-soft">
-          <Icon size={14} strokeWidth={1.9} />
-        </span>
+    <div className="flex min-h-[138px] flex-col bg-surface p-4">
+      <p className="num font-display text-[27px] font-semibold leading-none">{value}</p>
+      <p className="mt-1.5 text-[11.5px] leading-snug text-muted">{label}</p>
+      <div className="mt-auto pt-2.5">
+        <div className="text-[11px]">{foot}</div>
+        <p className="mt-1.5 truncate text-[10px] text-muted">{hint}</p>
       </div>
-      <p className="num mt-2 font-display text-[27px] font-semibold leading-none">{value}</p>
-      <div className="mt-1 flex items-center justify-between gap-2">{foot}</div>
-      <p className="mt-2 border-t border-line pt-2 text-[10.5px] text-muted">{hint}</p>
     </div>
   )
 }

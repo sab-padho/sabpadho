@@ -2,6 +2,7 @@ import { useEffect, useId, type ButtonHTMLAttributes, type ReactNode } from 'rea
 import { Link } from 'react-router-dom'
 import { X } from 'lucide-react'
 import { cn } from '../lib/utils'
+import { useCopy } from '../lib/ui-copy'
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'dark'
 type Size = 'sm' | 'md' | 'lg'
@@ -214,6 +215,7 @@ export function Dialog({
   width?: string
 }) {
   const titleId = useId()
+  const copy = useCopy()
 
   useEffect(() => {
     if (!open) return
@@ -236,7 +238,7 @@ export function Dialog({
       <button
         type="button"
         className="absolute inset-0 bg-[#0b0814]/55 backdrop-blur-[2px] animate-fade"
-        aria-label="Close dialog"
+        aria-label={copy.a11y.closeDialog}
         onClick={onClose}
       />
       <div
@@ -259,7 +261,7 @@ export function Dialog({
             type="button"
             onClick={onClose}
             className="-mr-1 -mt-1 rounded-lg p-1.5 text-muted transition hover:bg-surface-3 hover:text-ink"
-            aria-label="Close"
+            aria-label={copy.a11y.close}
           >
             <X size={16} />
           </button>

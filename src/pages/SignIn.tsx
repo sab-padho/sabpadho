@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { ArrowRight, Check, KeyRound, Lock, Mail } from 'lucide-react'
+import { ArrowRight, Check, Lock, Mail } from 'lucide-react'
 import { Button, SectionLabel } from '../components/ui'
 import { learner } from '../data/learner'
 import { useToast } from '../lib/toast'
@@ -116,27 +116,6 @@ export function SignIn() {
                 {busy ? null : <ArrowRight size={16} />}
               </Button>
             </form>
-
-            <div className="mt-4 rounded-lg border border-line bg-surface-2/60 px-3 py-2.5">
-              <p className="flex items-center gap-1.5 text-[11.5px] font-medium text-ink">
-                <KeyRound size={13} className="text-brand" /> {copy.auth.demoLogin}
-              </p>
-              <p className="mt-0.5 text-[11px] text-muted">{copy.auth.demoLoginBody}</p>
-              <p className="num mt-1.5 text-[12px] text-ink-soft">
-                {PREVIEW_EMAIL} · test@123
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  setEmail(PREVIEW_EMAIL)
-                  setPassword('test@123')
-                  setError(null)
-                }}
-                className="mt-1.5 text-[11.5px] font-medium text-brand-ink hover:underline"
-              >
-                {copy.auth.fillLogin}
-              </button>
-            </div>
 
             <p className="mt-4 rounded-lg border border-line bg-surface-2/60 px-3 py-2 text-[11px] leading-relaxed text-muted">
               {copy.auth.previewNote}

@@ -198,7 +198,7 @@ export function SettingsPage() {
                 <p className="text-[13.5px] font-semibold">{copy.settings.planPro}</p>
                 <p className="text-[17px] font-semibold tracking-tight">
                   {copy.settings.planPrice(51)}
-                  <span className="text-[10.5px] font-normal text-muted">{copy.settings.planPerMonth}</span>
+                  <span className="text-[10.5px] font-normal text-muted">{copy.settings.planPerYear}</span>
                 </p>
               </div>
               <p className="mt-1 text-[11px] leading-relaxed text-muted">{copy.settings.planProBody}</p>

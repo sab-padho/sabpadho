@@ -23,7 +23,7 @@ export function Overview({ onNavigate }: { onNavigate: (page: Page) => void }) {
   const publishedQuestions = data.questions.filter(question => question.status === 'Published').length
   const pro = data.plans.find(plan => plan.id === 'pro')
   const free = data.plans.find(plan => plan.id === 'free')
-  const mrr = (pro?.learners ?? 0) * (pro?.price ?? 0)
+  const yearly = (pro?.learners ?? 0) * (pro?.price ?? 0)
 
   const attemptsSeries = data.daily.map(point => point.attempts)
   const learnerSeries = data.daily.map(point => point.learners)
@@ -53,7 +53,7 @@ export function Overview({ onNavigate }: { onNavigate: (page: Page) => void }) {
           <strong>{number(pro?.learners ?? 0)}</strong>
           <Delta value={11} label="vs last week" />
           <Progress value={Math.round(((pro?.learners ?? 0) / TOTAL_LEARNERS) * 100)} />
-          <span className="stat-foot">₹{number(mrr)} per month at ₹{pro?.price ?? 51}</span>
+          <span className="stat-foot">₹{number(yearly)} a year at ₹{pro?.price ?? 51}</span>
         </button>
         <button className="panel stat" onClick={() => onNavigate('Questions')}>
           <span className="stat-label">Practice attempts</span>

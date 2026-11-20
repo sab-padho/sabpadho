@@ -4,7 +4,7 @@ import { useAdmin } from '../store'
 import { Badge, PageHeader, Progress, Toggle, number, statusTone, useToast } from '../ui'
 
 const priceLabel = (plan: Plan) => (plan.price === 0 ? 'Free' : `₹${plan.price}`)
-const periodLabel = (plan: Plan) => (plan.period === 'month' ? '/month' : '')
+const periodLabel = (plan: Plan) => (plan.period === 'year' ? '/year' : '')
 
 export function Plans() {
   const { data, setPlanStatus } = useAdmin()
@@ -14,7 +14,7 @@ export function Plans() {
   const pro = data.plans.find(plan => plan.id === 'pro')
   const free = data.plans.find(plan => plan.id === 'free')
   const paying = pro?.learners ?? 0
-  const mrr = paying * (pro?.price ?? 0)
+  const yearly = paying * (pro?.price ?? 0)
   const conversions = total ? Math.round((paying / total) * 100) : 0
 
   return (
@@ -22,7 +22,7 @@ export function Plans() {
       <PageHeader
         eyebrow="ADMIN PORTAL"
         title="Plans"
-        description={`${number(TOTAL_LEARNERS)} learners on ${data.plans.length} plans · Pro is ₹${pro?.price ?? 51} per month`}
+        description={`${number(TOTAL_LEARNERS)} learners on ${data.plans.length} plans · Pro is ₹${pro?.price ?? 51} per year`}
         actions={<Badge tone="brand">Static demo figures</Badge>}
       />
 
@@ -43,9 +43,9 @@ export function Plans() {
           <span className="stat-foot">{conversions}% conversion</span>
         </div>
         <div className="panel stat">
-          <span className="stat-label">Monthly revenue</span>
-          <strong>₹{number(mrr)}</strong>
-          <span className="stat-foot">{number(paying)} × ₹{pro?.price ?? 51} per month</span>
+          <span className="stat-label">Annual revenue</span>
+          <strong>₹{number(yearly)}</strong>
+          <span className="stat-foot">{number(paying)} × ₹{pro?.price ?? 51} billed yearly</span>
         </div>
       </div>
 

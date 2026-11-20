@@ -804,7 +804,7 @@ const en = {
     planFreeBody: 'Chapter primers, 5-question sprints and the recall calendar.',
     planPro: 'Pro',
     planPrice: (price: number) => `₹${price}`,
-    planPerMonth: '/month',
+    planPerYear: '/year',
     planProBody: 'Everything in Free, plus unlimited sprints, full-length mocks and bilingual explanations.',
     planProFeatures: [
       'Unlimited 10 and 15-question sprints',
@@ -813,7 +813,7 @@ const en = {
       'Bilingual explanations',
     ],
     planUpgrade: 'Upgrade to Pro',
-    planNote: 'Plans are illustrative in this preview. Nothing is charged and no card is collected.',
+    planNote: '₹51 is billed once a year. Plans are illustrative in this preview — nothing is charged and no card is collected.',
     planUpgraded: 'Pro upgrades are not live in this preview',
   },
   auth: {
@@ -1926,7 +1926,7 @@ const hi: typeof en = {
     planFreeBody: 'अध्याय प्राइमर, 5-प्रश्न स्प्रिंट और दोहराव कैलेंडर।',
     planPro: 'प्रो',
     planPrice: (price: number) => `₹${price}`,
-    planPerMonth: '/माह',
+    planPerYear: '/वर्ष',
     planProBody: 'फ्री की सभी सुविधाएँ, साथ में असीमित स्प्रिंट, पूर्ण-लंबाई मॉक और द्विभाषी व्याख्याएँ।',
     planProFeatures: [
       '10 और 15 प्रश्नों के असीमित स्प्रिंट',
@@ -1935,7 +1935,7 @@ const hi: typeof en = {
       'द्विभाषी व्याख्याएँ',
     ],
     planUpgrade: 'प्रो में अपग्रेड करें',
-    planNote: 'इस प्रीव्यू में योजनाएँ उदाहरण हैं। कोई शुल्क नहीं लिया जाता और कोई कार्ड नहीं माँगा जाता।',
+    planNote: '₹51 साल में एक बार लिया जाता है। इस प्रीव्यू में योजनाएँ उदाहरण हैं — कोई शुल्क नहीं लिया जाता और कोई कार्ड नहीं माँगा जाता।',
     planUpgraded: 'इस प्रीव्यू में प्रो अपग्रेड उपलब्ध नहीं है',
   },
   auth: {

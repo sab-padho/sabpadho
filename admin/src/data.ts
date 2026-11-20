@@ -90,7 +90,7 @@ export type Plan = {
   id: 'free' | 'pro'
   name: string
   price: number
-  period: 'forever' | 'month'
+  period: 'forever' | 'year'
   tagline: string
   learners: number
   status: PublishStatus
@@ -281,8 +281,8 @@ const plans: Plan[] = [
     id: 'pro',
     name: 'Pro',
     price: 51,
-    period: 'month',
-    tagline: 'Unlimited practice, full-length mocks and analytics.',
+    period: 'year',
+    tagline: 'Unlimited practice, full-length mocks and analytics — one payment a year.',
     learners: 43,
     status: 'Published',
     featured: true,

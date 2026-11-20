@@ -92,6 +92,7 @@ export type Plan = {
   price: number
   period: 'forever' | 'year'
   tagline: string
+  learners: number
   status: PublishStatus
   featured: boolean
   features: string[]
@@ -266,6 +267,7 @@ const plans: Plan[] = [
     price: 0,
     period: 'forever',
     tagline: 'Chapter primers, sprints and the recall calendar.',
+    learners: 198,
     status: 'Published',
     featured: false,
     features: [
@@ -281,6 +283,7 @@ const plans: Plan[] = [
     price: 51,
     period: 'year',
     tagline: 'Unlimited practice, full-length mocks and analytics — one payment a year.',
+    learners: 43,
     status: 'Published',
     featured: true,
     features: [

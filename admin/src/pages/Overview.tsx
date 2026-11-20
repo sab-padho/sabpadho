@@ -21,6 +21,9 @@ export function Overview({ onNavigate }: { onNavigate: (page: Page) => void }) {
   const accuracy = active.length ? Math.round(active.reduce((sum, learner) => sum + learner.accuracy, 0) / active.length) : 0
   const mockAttempts = data.mocks.reduce((sum, mock) => sum + mock.attempts, 0)
   const publishedQuestions = data.questions.filter(question => question.status === 'Published').length
+  const pro = data.plans.find(plan => plan.id === 'pro')
+  const free = data.plans.find(plan => plan.id === 'free')
+  const yearly = (pro?.learners ?? 0) * (pro?.price ?? 0)
 
   const attemptsSeries = data.daily.map(point => point.attempts)
   const learnerSeries = data.daily.map(point => point.learners)
@@ -43,7 +46,14 @@ export function Overview({ onNavigate }: { onNavigate: (page: Page) => void }) {
           <strong>{number(TOTAL_LEARNERS)}</strong>
           <Delta value={6} label="vs last week" />
           <Sparkline values={learnerSeries} tone="positive" />
-          <span className="stat-foot">{data.learners.length} accounts in the sample table</span>
+          <span className="stat-foot">{number(free?.learners ?? 0)} free · {number(pro?.learners ?? 0)} pro</span>
+        </button>
+        <button className="panel stat" onClick={() => onNavigate('Plans')}>
+          <span className="stat-label">Pro subscribers</span>
+          <strong>{number(pro?.learners ?? 0)}</strong>
+          <Delta value={11} label="vs last week" />
+          <Progress value={Math.round(((pro?.learners ?? 0) / TOTAL_LEARNERS) * 100)} />
+          <span className="stat-foot">₹{number(yearly)} a year at ₹{pro?.price ?? 51}</span>
         </button>
         <button className="panel stat" onClick={() => onNavigate('Questions')}>
           <span className="stat-label">Practice attempts</span>

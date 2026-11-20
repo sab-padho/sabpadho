@@ -223,6 +223,47 @@ const en = {
       { title: 'Ten-minute sets', body: 'Practice that fits between two lectures.' },
       { title: 'Mistakes come back', body: 'A due date for every wrong answer.' },
     ],
+    proof: {
+      learners: 'learners already practising',
+      body: 'They are working through SSC CGL and CHSL chapters on SabPadho — in English or Hindi, on the phone already in their pocket.',
+      chapters: 'chapters with worked answers',
+      languages: 'languages, same questions',
+      sprint: 'minute sprints',
+    },
+    pricing: {
+      eyebrow: 'Plans',
+      title: 'Start free. Go Pro for ₹51 a year.',
+      body: 'Chapter primers and short sprints are free. Pro unlocks unlimited practice, every full-length paper and section-wise analytics — one payment a year, and no card is stored in this preview.',
+      free: {
+        name: 'Free',
+        price: '₹0',
+        period: 'forever',
+        body: 'Everything you need to build a daily habit.',
+        features: [
+          'Chapter primers and outlines',
+          '5-question topic sprints',
+          'Recall calendar and revision queue',
+          'Progress overview',
+        ],
+        cta: 'Start free',
+      },
+      pro: {
+        badge: 'Most popular',
+        name: 'Pro',
+        price: '₹51',
+        period: '/year',
+        body: 'Unlimited practice and every paper in the series.',
+        features: [
+          'Everything in Free',
+          'Unlimited 10 and 15-question sprints',
+          'All full-length mock papers',
+          'Section-wise analytics',
+          'Bilingual explanations',
+        ],
+        cta: 'Go Pro',
+      },
+      note: 'Plans are illustrative in this preview — nothing is charged and no card is collected.',
+    },
     howEyebrow: 'How a session works',
     howTitle: 'One goal, one session, one honest review.',
     howBody:
@@ -798,6 +839,23 @@ const en = {
     withPaper: 'with the paper name and what you saw. A person replies, usually the same day.',
     signOut: 'Sign out',
     howWorks: 'How SabPadho works',
+    planCard: 'Plan',
+    planCurrent: 'Current plan',
+    planFree: 'Free',
+    planFreeBody: 'Chapter primers, 5-question sprints and the recall calendar.',
+    planPro: 'Pro',
+    planPrice: (price: number) => `₹${price}`,
+    planPerYear: '/year',
+    planProBody: 'Everything in Free, plus unlimited sprints, full-length mocks and bilingual explanations.',
+    planProFeatures: [
+      'Unlimited 10 and 15-question sprints',
+      'All full-length mock papers',
+      'Section-wise analytics',
+      'Bilingual explanations',
+    ],
+    planUpgrade: 'Upgrade to Pro',
+    planNote: '₹51 is billed once a year. Plans are illustrative in this preview — nothing is charged and no card is collected.',
+    planUpgraded: 'Pro upgrades are not live in this preview',
   },
   auth: {
     welcome: 'Welcome back',
@@ -1336,6 +1394,47 @@ const hi: typeof en = {
       { title: 'दस मिनट के सेट', body: 'दो लेक्चर के बीच का अभ्यास।' },
       { title: 'गलतियाँ लौटती हैं', body: 'हर गलत उत्तर की देय तारीख।' },
     ],
+    proof: {
+      learners: 'शिक्षार्थी पहले से अभ्यास कर रहे हैं',
+      body: 'वे SabPadho पर SSC CGL और CHSL के अध्याय हल कर रहे हैं — अंग्रेज़ी या हिंदी में, उसी फ़ोन पर जो उनके पास है।',
+      chapters: 'अध्याय, हल किए गए उत्तरों के साथ',
+      languages: 'भाषाएँ, वही प्रश्न',
+      sprint: 'मिनट के स्प्रिंट',
+    },
+    pricing: {
+      eyebrow: 'योजनाएँ',
+      title: 'फ्री से शुरू करें। ₹51 साल में प्रो लें।',
+      body: 'अध्याय प्राइमर और छोटे स्प्रिंट फ्री हैं। प्रो में असीमित अभ्यास, सभी पूर्ण-लंबाई पेपर और अनुभाग-वार विश्लेषण — साल में एक भुगतान, और इस प्रीव्यू में कोई कार्ड नहीं।',
+      free: {
+        name: 'फ्री',
+        price: '₹0',
+        period: 'हमेशा',
+        body: 'रोज़ की आदत बनाने के लिए सब कुछ।',
+        features: [
+          'अध्याय प्राइमर और रूपरेखा',
+          '5-प्रश्न विषय स्प्रिंट',
+          'दोहराव कैलेंडर और कतार',
+          'प्रगति अवलोकन',
+        ],
+        cta: 'फ्री शुरू करें',
+      },
+      pro: {
+        badge: 'सबसे लोकप्रिय',
+        name: 'प्रो',
+        price: '₹51',
+        period: '/वर्ष',
+        body: 'असीमित अभ्यास और सीरीज़ के सभी पेपर।',
+        features: [
+          'फ्री की सभी सुविधाएँ',
+          '10 और 15 प्रश्नों के असीमित स्प्रिंट',
+          'सभी पूर्ण-लंबाई मॉक पेपर',
+          'अनुभाग-वार विश्लेषण',
+          'द्विभाषी व्याख्याएँ',
+        ],
+        cta: 'प्रो लें',
+      },
+      note: 'इस प्रीव्यू में योजनाएँ उदाहरण हैं — कोई शुल्क नहीं लिया जाता और कोई कार्ड नहीं माँगा जाता।',
+    },
     howEyebrow: 'एक सत्र कैसे चलता है',
     howTitle: 'एक लक्ष्य, एक सत्र, एक ईमानदार समीक्षा।',
     howBody:
@@ -1903,6 +2002,23 @@ const hi: typeof en = {
     withPaper: 'पेपर का नाम और जो दिखा उसके साथ। कोई जवाब देता है, आमतौर पर उसी दिन।',
     signOut: 'साइन आउट',
     howWorks: 'SabPadho कैसे काम करता है',
+    planCard: 'योजना',
+    planCurrent: 'वर्तमान योजना',
+    planFree: 'फ्री',
+    planFreeBody: 'अध्याय प्राइमर, 5-प्रश्न स्प्रिंट और दोहराव कैलेंडर।',
+    planPro: 'प्रो',
+    planPrice: (price: number) => `₹${price}`,
+    planPerYear: '/वर्ष',
+    planProBody: 'फ्री की सभी सुविधाएँ, साथ में असीमित स्प्रिंट, पूर्ण-लंबाई मॉक और द्विभाषी व्याख्याएँ।',
+    planProFeatures: [
+      '10 और 15 प्रश्नों के असीमित स्प्रिंट',
+      'सभी पूर्ण-लंबाई मॉक पेपर',
+      'अनुभाग-वार विश्लेषण',
+      'द्विभाषी व्याख्याएँ',
+    ],
+    planUpgrade: 'प्रो में अपग्रेड करें',
+    planNote: '₹51 साल में एक बार लिया जाता है। इस प्रीव्यू में योजनाएँ उदाहरण हैं — कोई शुल्क नहीं लिया जाता और कोई कार्ड नहीं माँगा जाता।',
+    planUpgraded: 'इस प्रीव्यू में प्रो अपग्रेड उपलब्ध नहीं है',
   },
   auth: {
     welcome: 'वापसी पर स्वागत',
@@ -2368,9 +2484,14 @@ export function subjectTagline(lang: Lang, id: string, fallback: string) {
   return lang === 'hi' ? (TAGLINE_HI[id] ?? fallback) : fallback
 }
 
+const PLAN_LABELS_HI: Record<string, string> = {
+  'Preview plan': 'प्रीव्यू योजना',
+  'Free plan': 'फ्री योजना',
+  'Pro plan': 'प्रो योजना',
+}
+
 export function planLabel(lang: Lang, plan: string) {
-  if (lang === 'hi' && plan === 'Preview plan') return 'प्रीव्यू योजना'
-  return plan
+  return lang === 'hi' ? (PLAN_LABELS_HI[plan] ?? plan) : plan
 }
 
 export function chapterHindi(titleEn: string) {

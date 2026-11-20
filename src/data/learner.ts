@@ -1,3 +1,6 @@
+/** Public social-proof figure shown on the landing page. Update when the real count changes. */
+export const communitySize = 241
+
 export const learner = {
   name: 'Aarav Deshmukh',
   firstName: 'Aarav',
@@ -7,7 +10,7 @@ export const learner = {
   target: 'SSC CGL 2027 · Tier I',
   targetDate: '11 March 2027',
   daysToExam: 112,
-  plan: 'Preview plan',
+  plan: 'Free plan',
   joined: 'August 2026',
   streak: 9,
   weeklyGoal: 300,

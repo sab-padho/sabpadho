@@ -16,6 +16,8 @@ import {
 } from 'lucide-react'
 import { HeroPreview, PracticePreview, PalettePreview, DuePreview } from '../components/previews'
 import { Badge, ButtonLink, SectionLabel } from '../components/ui'
+import { communitySize } from '../data/learner'
+import { allChapters } from '../data/subjects'
 import { LogoMark } from '../components/brand'
 import { questionsForSubject, questionById } from '../data/questions'
 import { subjects } from '../data/subjects'
@@ -36,6 +38,8 @@ export function Home() {
   return (
     <>
       <Hero />
+
+      <ProofBand />
 
       <section className="border-y border-line bg-surface/50">
         <div className="container-page grid gap-4 py-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -96,6 +100,8 @@ export function Home() {
       <MockBand papers={availableMocks} />
 
       <Testimonials />
+
+      <Pricing />
 
       <Faq />
 
@@ -178,6 +184,57 @@ function Hero() {
         <div className="animate-rise lg:pl-2" style={{ animationDelay: '80ms' }}>
           <HeroPreview />
         </div>
+      </div>
+    </section>
+  )
+}
+
+function ProofBand() {
+  const copy = useCopy()
+  const stats = [
+    { value: allChapters.length, label: copy.home.proof.chapters },
+    { value: 2, label: copy.home.proof.languages },
+    { value: 10, label: copy.home.proof.sprint },
+  ]
+
+  return (
+    <section className="border-t border-line bg-surface/70">
+      <div className="container-page grid gap-7 py-8 md:grid-cols-[1.15fr_1fr] md:items-center md:gap-12">
+        <div className="flex items-center gap-4">
+          <div className="flex -space-x-2.5" aria-hidden>
+            {['A', 'M', 'R', 'K', 'S'].map((initial) => (
+              <span
+                key={initial}
+                className="grid h-10 w-10 place-items-center rounded-full border-2 border-surface bg-brand-soft text-[12px] font-semibold text-brand-ink"
+              >
+                {initial}
+              </span>
+            ))}
+            <span className="grid h-10 w-10 place-items-center rounded-full border-2 border-surface bg-brand text-[11px] font-semibold text-white">
+              +{communitySize - 5}
+            </span>
+          </div>
+          <div className="min-w-0">
+            <p className="font-display text-[24px] font-semibold leading-none tracking-[-0.02em] text-ink sm:text-[27px]">
+              {communitySize}{' '}
+              <span className="text-[14px] font-medium leading-snug text-muted sm:text-[15px]">
+                {copy.home.proof.learners}
+              </span>
+            </p>
+            <p className="mt-1.5 max-w-[440px] text-[12px] leading-relaxed text-muted">
+              {copy.home.proof.body}
+            </p>
+          </div>
+        </div>
+
+        <dl className="grid grid-cols-3 gap-4 md:gap-6">
+          {stats.map((stat) => (
+            <div key={stat.label}>
+              <dd className="font-display text-[22px] font-semibold leading-none tracking-tight text-brand">{stat.value}</dd>
+              <dt className="mt-1.5 text-[11px] leading-snug text-muted">{stat.label}</dt>
+            </div>
+          ))}
+        </dl>
       </div>
     </section>
   )
@@ -488,6 +545,80 @@ function MockBand({ papers }: { papers: typeof mockPapers }) {
             {copy.home.sundayNote}
           </p>
         </div>
+      </div>
+    </section>
+  )
+}
+
+function Pricing() {
+  const copy = useCopy()
+  const { free, pro } = copy.home.pricing
+  type PlanCard = typeof free & { badge?: string; featured: boolean; to: string }
+  const plans: PlanCard[] = [
+    { ...free, featured: false, to: '/app/practice' },
+    { ...pro, featured: true, to: '/app/settings' },
+  ]
+
+  return (
+    <section className="border-t border-line bg-surface/40" id="pricing">
+      <div className="container-page py-16 md:py-24">
+        <div className="max-w-[620px]">
+          <SectionLabel>{copy.home.pricing.eyebrow}</SectionLabel>
+          <h2 className="mt-3 text-[26px] font-semibold leading-tight tracking-[-0.03em] sm:text-[34px]">
+            {copy.home.pricing.title}
+          </h2>
+          <p className="mt-3 text-[14px] leading-relaxed text-muted sm:text-[15px]">
+            {copy.home.pricing.body}
+          </p>
+        </div>
+
+        <div className="mt-8 grid gap-4 md:grid-cols-2 md:gap-5">
+          {plans.map((plan) => (
+            <article
+              key={plan.name}
+              className={cn(
+                'card flex flex-col p-5 sm:p-6',
+                plan.featured && 'border-brand/45 bg-brand-soft/25 ring-1 ring-brand/15',
+              )}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-[16px] font-semibold">{plan.name}</h3>
+                {plan.badge ? <Badge tone="brand">{plan.badge}</Badge> : null}
+              </div>
+
+              <p className="mt-3 flex items-baseline gap-1.5">
+                <span className="font-display text-[34px] font-semibold leading-none tracking-[-0.03em]">
+                  {plan.price}
+                </span>
+                <span className="text-[12.5px] text-muted">{plan.period}</span>
+              </p>
+
+              <p className="mt-2 text-[12.5px] leading-relaxed text-muted">{plan.body}</p>
+
+              <ul className="mt-4 space-y-2 border-t border-line pt-4">
+                {plan.features.map((feature) => (
+                  <li key={feature} className="flex gap-2 text-[12.5px] leading-relaxed">
+                    <Check size={13} className="mt-0.5 shrink-0 text-positive" />
+                    <span className="text-ink-soft">{feature}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <div className="mt-auto pt-5">
+                <ButtonLink
+                  to={plan.to}
+                  variant={plan.featured ? 'primary' : 'secondary'}
+                  className="w-full justify-center"
+                >
+                  {plan.cta}
+                  <ArrowRight size={15} />
+                </ButtonLink>
+              </div>
+            </article>
+          ))}
+        </div>
+
+        <p className="mt-4 text-[11.5px] leading-relaxed text-muted">{copy.home.pricing.note}</p>
       </div>
     </section>
   )

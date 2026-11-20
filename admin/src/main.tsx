@@ -1,11 +1,20 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createClient } from '@supabase/supabase-js'
-import { ArrowRight, BookOpen, ClipboardList, Eye, EyeOff, LayoutDashboard, LockKeyhole, LogOut, Users } from 'lucide-react'
+import { ArrowRight, BookOpen, ClipboardList, Eye, EyeOff, History, LayoutDashboard, ListChecks, LockKeyhole, LogOut, Megaphone, RotateCcw, Users } from 'lucide-react'
 import logo from '../../public/brand/sabpadho-mark.png'
 import '../../src/index.css'
 import './style.css'
-import { sections, type Section } from './data'
+import { navigationPages, type Page } from './data'
+import { AdminProvider, useAdmin } from './store'
+import { ToastProvider, useToast } from './ui'
+import { ActivityPage } from './pages/Activity'
+import { Announcements } from './pages/Announcements'
+import { Learners } from './pages/Learners'
+import { Mocks } from './pages/Mocks'
+import { Overview } from './pages/Overview'
+import { Questions } from './pages/Questions'
+import { Subjects } from './pages/Subjects'
 
 const { VITE_SUPABASE_URL: url, VITE_SUPABASE_PUBLISHABLE_KEY: key } = import.meta.env
 const supabase = url && key ? createClient(url, key) : null
@@ -20,8 +29,15 @@ const SESSION_KEY = 'sabpadho-admin'
 type Admin = { username: string; permissionid: number }
 type LoginIssue = { message: string; detail?: string }
 
-const navigation = { Overview: LayoutDashboard, Learners: Users, Subjects: BookOpen, 'Mock tests': ClipboardList }
-type Page = keyof typeof navigation
+const navigation: Record<Page, typeof LayoutDashboard> = {
+  Overview: LayoutDashboard,
+  Learners: Users,
+  Subjects: BookOpen,
+  Questions: ListChecks,
+  'Mock tests': ClipboardList,
+  Announcements: Megaphone,
+  Activity: History,
+}
 
 function readSession(): Admin | null {
   try {
@@ -100,14 +116,11 @@ function PasswordField({ value, onChange }: { value: string; onChange: (next: st
   )
 }
 
-function App() {
-  const [admin, setAdmin] = useState<Admin | null>(readSession)
+function SignIn({ onSignedIn }: { onSignedIn: (admin: Admin) => void }) {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [issue, setIssue] = useState<LoginIssue | null>(null)
-  const [page, setPage] = useState<Page>('Overview')
-  const [query, setQuery] = useState('')
 
   async function signIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -135,9 +148,8 @@ function App() {
       } catch {
         /* ignore storage errors */
       }
-      setAdmin(next)
       setPassword('')
-      setPage('Overview')
+      onSignedIn(next)
     } catch {
       setIssue({ message: 'Could not reach Supabase. Check the project URL in admin/.env.local and your connection, then try again.' })
     } finally {
@@ -145,27 +157,8 @@ function App() {
     }
   }
 
-  function signOut() {
-    try {
-      sessionStorage.removeItem(SESSION_KEY)
-    } catch {
-      /* ignore */
-    }
-    setAdmin(null)
-    setUsername('')
-    setPassword('')
-    setIssue(null)
-    setPage('Overview')
-    setQuery('')
-  }
-
-  function navigate(next: Page) {
-    setPage(next)
-    setQuery('')
-  }
-
-  if (!admin) return <main className="login-layout">
-    <section className="login-intro"><Brand /><div><span className="eyebrow">SABPADHO WORKSPACE</span><h1>Manage the learning experience.</h1><p>One place to review learners, subjects, and mock tests.</p></div><small>Restricted to authorized staff</small></section>
+  return <main className="login-layout">
+    <section className="login-intro"><Brand /><div><span className="eyebrow">SABPADHO WORKSPACE</span><h1>Manage the learning experience.</h1><p>Learners, chapters, the question bank, mock papers, and announcements in one place.</p></div><small>Restricted to authorized staff</small></section>
     <section className="login-main"><div className="panel login-card"><div className="icon-tile"><LockKeyhole size={22} /></div><h2>Admin sign in</h2><p>Use your staff username and password to continue.</p>
       <form onSubmit={signIn}>
         <div className="field-group">
@@ -195,23 +188,78 @@ function App() {
       </form>
     </div></section>
   </main>
+}
 
-  const section = page === 'Overview' ? null : sections[page]
-  const rows = section?.rows.filter(row => row.some(value => value.toLowerCase().includes(query.trim().toLowerCase())))
+function Workspace({ admin, onSignOut }: { admin: Admin; onSignOut: () => void }) {
+  const [page, setPage] = useState<Page>('Overview')
+  const { reset } = useAdmin()
+  const notify = useToast()
+
+  useEffect(() => {
+    window.scrollTo({ top: 0 })
+  }, [page])
+
+  function resetDemo() {
+    if (!window.confirm('Reset all demo changes and restore the sample data?')) return
+    reset()
+    notify('Demo data restored')
+  }
+
   return <div className="workspace">
-    <aside className="rail"><Brand /><nav aria-label="Admin navigation">{(Object.keys(navigation) as Page[]).map(item => {
-      const Icon = navigation[item]
-      return <button key={item} aria-current={page === item ? 'page' : undefined} onClick={() => navigate(item)}><Icon size={19} />{item}</button>
-    })}</nav><button className="logout" onClick={signOut} disabled={busy}><LogOut size={18} />Sign out</button></aside>
-    <div className="workspace-body"><header className="topbar"><strong>Admin workspace</strong><span>{admin.username} · permission {admin.permissionid}</span></header>
-      <main className="content"><div className="page-heading"><div><span className="eyebrow">ADMIN PORTAL</span><h1>{page}</h1><p>{section?.description ?? 'A snapshot of your SabPadho workspace.'}</p></div><span className="badge">Sample data</span></div>
-      {issue && <p className="notice" role="alert">{issue.message}</p>}
-      {section ? <section className="panel table-panel"><label className="search">Filter {page.toLowerCase()}<input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search records" /></label><div className="table-scroll"><table aria-label={page}><thead><tr>{section.columns.map(col => <th key={col} scope="col">{col}</th>)}</tr></thead><tbody>{rows?.length ? rows.map(row => <tr key={row[0]}>{row.map((cell, i) => <td key={i}>{i === 2 ? <span className="badge status">{cell}</span> : cell}</td>)}</tr>) : <tr><td colSpan={section.columns.length}>No matching records.</td></tr>}</tbody></table></div></section> : <>
-        <div className="stat-grid">{(Object.keys(sections) as Section[]).map(item => { const Icon = navigation[item]; return <button className="panel stat" key={item} onClick={() => navigate(item)}><span className="icon-tile"><Icon size={21} /></span><strong>{sections[item].rows.length}</strong><span>{item}</span><ArrowRight className="stat-arrow" size={18} /></button> })}</div>
-        <section className="panel info"><h2>About this workspace</h2><p>Sign-in is checked against <code>public.admin_users</code> by the <code>admin_login</code> function, so passwords never reach the browser. Learners, subjects, and mock tests are read-only examples and do not represent live site activity.</p></section>
-      </>}
-      </main></div>
+    <aside className="rail">
+      <Brand />
+      <nav aria-label="Admin navigation">
+        {navigationPages.map(item => {
+          const Icon = navigation[item]
+          return <button key={item} aria-current={page === item ? 'page' : undefined} onClick={() => setPage(item)}><Icon size={19} />{item}</button>
+        })}
+      </nav>
+      <div className="rail-foot">
+        <button className="rail-utility" onClick={resetDemo}><RotateCcw size={16} />Reset demo data</button>
+        <button className="logout" onClick={onSignOut}><LogOut size={18} />Sign out</button>
+      </div>
+    </aside>
+
+    <div className="workspace-body">
+      <header className="topbar">
+        <strong>Admin workspace</strong>
+        <span className="topbar-meta">
+          <span className="badge">Demo data</span>
+          {admin.username} · permission {admin.permissionid}
+        </span>
+      </header>
+      <main className="content">
+        {page === 'Overview' && <Overview onNavigate={setPage} />}
+        {page === 'Learners' && <Learners />}
+        {page === 'Subjects' && <Subjects />}
+        {page === 'Questions' && <Questions />}
+        {page === 'Mock tests' && <Mocks />}
+        {page === 'Announcements' && <Announcements />}
+        {page === 'Activity' && <ActivityPage />}
+      </main>
+    </div>
   </div>
+}
+
+function App() {
+  const [admin, setAdmin] = useState<Admin | null>(readSession)
+
+  function signOut() {
+    try {
+      sessionStorage.removeItem(SESSION_KEY)
+    } catch {
+      /* ignore */
+    }
+    setAdmin(null)
+  }
+
+  if (!admin) return <SignIn onSignedIn={setAdmin} />
+
+  return <AdminProvider actor={admin.username}>
+    <ToastProvider>
+      <Workspace admin={admin} onSignOut={signOut} />
+    </ToastProvider>
+  </AdminProvider>
 }
 
 createRoot(document.getElementById('root')!).render(<App />)

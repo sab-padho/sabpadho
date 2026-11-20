@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createClient, type Session } from '@supabase/supabase-js'
-import { ArrowRight, BookOpen, ClipboardList, LayoutDashboard, LockKeyhole, LogOut, Users } from 'lucide-react'
+import { ArrowRight, BookOpen, ClipboardList, Eye, EyeOff, LayoutDashboard, LockKeyhole, LogOut, Users } from 'lucide-react'
 import logo from '../../public/brand/sabpadho-mark.png'
 import '../../src/index.css'
 import './style.css'
@@ -9,11 +9,110 @@ import { sections, type Section } from './data'
 
 const { VITE_SUPABASE_URL: url, VITE_SUPABASE_PUBLISHABLE_KEY: key } = import.meta.env
 const supabase = url && key ? createClient(url, key) : null
+
+/** Host of the project the portal is talking to, e.g. `abcdefgh.supabase.co`. */
+const projectHost = (() => {
+  try {
+    return url ? new URL(url).hostname : ''
+  } catch {
+    return ''
+  }
+})()
+
 const navigation = { Overview: LayoutDashboard, Learners: Users, Subjects: BookOpen, 'Mock tests': ClipboardList }
 type Page = keyof typeof navigation
 
+type AuthFailure = { message: string; code?: string; status?: number }
+type SignInIssue = { message: string; code?: string; canResend?: boolean }
+
+/**
+ * Turns a Supabase Auth error into something an admin can act on. "Invalid login
+ * credentials" is deliberately vague on the server (it must not reveal whether an
+ * email exists), so the portal spells out the likely causes here.
+ */
+function describeSignInFailure(failure: AuthFailure): SignInIssue {
+  const code = failure.code ?? ''
+  const message = failure.message.toLowerCase()
+  const issue = (text: string, canResend = false): SignInIssue => ({ message: text, code: code || undefined, canResend })
+
+  if (code === 'email_not_confirmed' || message.includes('email not confirmed')) {
+    return issue('This account exists, but its email address has not been confirmed yet. Open the confirmation link Supabase emailed, or confirm the user in Authentication → Users.', true)
+  }
+  if (code === 'invalid_credentials' || message.includes('invalid login credentials')) {
+    return issue('Supabase did not match that email and password. Use Show password to check for stray spaces or autocorrect, and make sure the account exists in this project’s Authentication → Users list.')
+  }
+  if (code === 'user_banned' || message.includes('banned')) {
+    return issue('This account is banned. Unban it in Authentication → Users before signing in again.')
+  }
+  if (code === 'over_request_rate_limit' || code === 'over_email_send_rate_limit' || failure.status === 429 || message.includes('rate limit')) {
+    return issue('Too many sign-in attempts. Wait a minute and try again.')
+  }
+  if (code === 'email_provider_disabled' || code === 'provider_disabled') {
+    return issue('Email and password sign-in is disabled for this project. Enable the Email provider in Authentication → Providers.')
+  }
+  if (message.includes('failed to fetch') || message.includes('network')) {
+    return issue('Could not reach the sign-in service. Check the Supabase URL in admin/.env.local and your connection, then try again.')
+  }
+  return issue('Sign-in failed. Check your credentials and try again.')
+}
+
+/** Membership-check failures are database/config problems, not credential problems. */
+function describeMembershipFailure(failure: AuthFailure | null): string {
+  if (!failure) return 'This account does not have admin access.'
+  if (failure.code === '42703' || failure.message.includes('column')) {
+    return 'The admin_users table has an outdated shape. Run database/migrations/20261120_002_align_admin_users_with_auth.sql, then try again.'
+  }
+  if (failure.code === '42P01' || failure.message.includes('does not exist')) {
+    return 'The admin_users table is missing. Run the migrations in database/migrations/ against this project, then try again.'
+  }
+  if (failure.code === '42501' || failure.code === 'PGRST301' || failure.message.toLowerCase().includes('permission')) {
+    return 'The portal is not allowed to read admin memberships. Re-run the admin_users migration to restore its row-level security policy.'
+  }
+  return 'Could not verify admin access. Please try again.'
+}
+
 function Brand() {
   return <div className="brand-lockup"><img src={logo} alt="" /><div><strong>SabPadho</strong><small>Admin portal</small></div></div>
+}
+
+/** Password input with a show/hide toggle so a typo or stray space is visible. */
+function PasswordField({ value, onChange }: { value: string; onChange: (next: string) => void }) {
+  const [visible, setVisible] = useState(false)
+  const [capsLock, setCapsLock] = useState(false)
+
+  return (
+    <div className="field-group">
+      <label htmlFor="password">Password</label>
+      <div className="field">
+        <input
+          id="password"
+          name="password"
+          type={visible ? 'text' : 'password'}
+          autoComplete="current-password"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+          value={value}
+          onChange={event => onChange(event.target.value)}
+          onKeyUp={event => setCapsLock(event.getModifierState?.('CapsLock') ?? false)}
+          onBlur={() => setCapsLock(false)}
+          aria-describedby={capsLock ? 'caps-lock-hint' : undefined}
+          required
+        />
+        <button
+          type="button"
+          className="reveal"
+          aria-label={visible ? 'Hide password' : 'Show password'}
+          aria-pressed={visible}
+          title={visible ? 'Hide password' : 'Show password'}
+          onClick={() => setVisible(current => !current)}
+        >
+          {visible ? <EyeOff size={17} /> : <Eye size={17} />}
+        </button>
+      </div>
+      {capsLock && <small className="field-hint" id="caps-lock-hint">Caps Lock is on.</small>}
+    </div>
+  )
 }
 
 function App() {
@@ -21,9 +120,12 @@ function App() {
   const [verifiedToken, setVerifiedToken] = useState<string | null>(null)
   const [loading, setLoading] = useState(Boolean(supabase))
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState('')
+  const [issue, setIssue] = useState<SignInIssue | null>(null)
   const [page, setPage] = useState<Page>('Overview')
   const [query, setQuery] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [resend, setResend] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle')
   const token = session?.access_token
   const userId = session?.user.id
 
@@ -48,10 +150,10 @@ function App() {
           setVerifiedToken(token)
           return
         }
-        setError(error ? 'Could not verify admin access. Please try again.' : 'This account does not have admin access.')
+        setIssue({ message: describeMembershipFailure(error) })
       } catch {
         if (!current) return
-        setError('Could not verify admin access. Please try again.')
+        setIssue({ message: describeMembershipFailure(null) })
       }
       await client.auth.signOut({ scope: 'local' })
     })()
@@ -61,29 +163,46 @@ function App() {
   async function signIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!supabase) return
-    const fields = new FormData(event.currentTarget)
     setBusy(true)
-    setError('')
+    setIssue(null)
+    setResend('idle')
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email: String(fields.get('email')).trim(), password: String(fields.get('password')) })
-      if (error) setError('Sign-in failed. Check your credentials and try again.')
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        // Passwords are sent exactly as typed: trimming one would break valid ones.
+        password,
+      })
+      if (error) setIssue(describeSignInFailure(error))
     } catch {
-      setError('Could not reach the sign-in service. Please try again.')
+      setIssue({ message: 'Could not reach the sign-in service. Check the Supabase URL in admin/.env.local and your connection, then try again.' })
     } finally {
       setBusy(false)
     }
   }
 
+  async function resendConfirmation() {
+    if (!supabase || !email.trim()) return
+    setResend('sending')
+    try {
+      const { error } = await supabase.auth.resend({ type: 'signup', email: email.trim() })
+      setResend(error ? 'failed' : 'sent')
+    } catch {
+      setResend('failed')
+    }
+  }
+
   async function signOut() {
     setBusy(true)
-    setError('')
+    setIssue(null)
+    setResend('idle')
     try {
       const { error } = await supabase!.auth.signOut({ scope: 'local' })
       if (error) throw error
       setVerifiedToken(null)
+      setPassword('')
       navigate('Overview')
     } catch {
-      setError('Could not sign out. Please try again.')
+      setIssue({ message: 'Could not sign out. Please try again.' })
     } finally {
       setBusy(false)
     }
@@ -94,18 +213,43 @@ function App() {
     setQuery('')
   }
 
-  if (!session || verifiedToken !== token) return <main className="login-layout">
-    <section className="login-intro"><Brand /><div><span className="eyebrow">SABPADHO WORKSPACE</span><h1>Manage the learning experience.</h1><p>One place to review learners, subjects, and mock tests.</p></div><small>Restricted to authorized staff</small></section>
-    <section className="login-main"><div className="panel login-card"><div className="icon-tile"><LockKeyhole size={22} /></div><h2>Admin sign in</h2><p>Use your SabPadho admin account to continue.</p>
-      {loading || (session && !error) ? <p role="status">Checking admin access…</p> : <form onSubmit={signIn}>
-        <label>Email address<input name="email" type="email" autoComplete="username" placeholder="you@sabpadho.com" required /></label>
-        <label>Password<input name="password" type="password" autoComplete="current-password" required /></label>
-        {!supabase && <p className="notice" role="status">Sign-in is not configured. Add the Supabase URL and publishable key to enable it.</p>}
-        {error && <p className="notice" role="alert">{error}</p>}
-        {session ? <button className="primary" type="button" disabled={busy} onClick={signOut}>Return to sign in</button> : <button className="primary" disabled={!supabase || busy}>{busy ? 'Signing in…' : 'Sign in'} <ArrowRight size={17} /></button>}
-      </form>}
-    </div></section>
-  </main>
+  if (!session || verifiedToken !== token) {
+    const checking = loading || Boolean(session && !issue)
+    return <main className="login-layout">
+      <section className="login-intro"><Brand /><div><span className="eyebrow">SABPADHO WORKSPACE</span><h1>Manage the learning experience.</h1><p>One place to review learners, subjects, and mock tests.</p></div><small>Restricted to authorized staff</small></section>
+      <section className="login-main"><div className="panel login-card"><div className="icon-tile"><LockKeyhole size={22} /></div><h2>Admin sign in</h2><p>Use your SabPadho admin account to continue.</p>
+        {checking ? <p role="status">Checking admin access…</p> : <form onSubmit={signIn}>
+          <div className="field-group">
+            <label htmlFor="email">Email address</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="username"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              placeholder="you@sabpadho.com"
+              value={email}
+              onChange={event => { setEmail(event.target.value); setResend('idle') }}
+              required
+            />
+          </div>
+          <PasswordField value={password} onChange={next => { setPassword(next); setResend('idle') }} />
+          {!supabase && <p className="notice" role="status">Sign-in is not configured. Add the Supabase URL and publishable key to enable it.</p>}
+          {issue && <div className="notice" role="alert">
+            <p>{issue.message}</p>
+            {issue.canResend && <button type="button" className="resend" disabled={resend === 'sending' || resend === 'sent'} onClick={resendConfirmation}>
+              {resend === 'sending' ? 'Sending…' : resend === 'sent' ? 'Confirmation email sent' : resend === 'failed' ? 'Could not send · retry' : 'Resend confirmation email'}
+            </button>}
+            {issue.code && <small>Supabase error code: {issue.code}</small>}
+          </div>}
+          {session ? <button className="primary" type="button" disabled={busy} onClick={signOut}>Return to sign in</button> : <button className="primary" disabled={!supabase || busy}>{busy ? 'Signing in…' : 'Sign in'} <ArrowRight size={17} /></button>}
+        </form>}
+        {projectHost && <small className="project-hint">Connected to {projectHost}. Accounts must exist in this project’s Authentication → Users.</small>}
+      </div></section>
+    </main>
+  }
 
   const section = page === 'Overview' ? null : sections[page]
   const rows = section?.rows.filter(row => row.some(value => value.toLowerCase().includes(query.trim().toLowerCase())))
@@ -116,7 +260,7 @@ function App() {
     })}</nav><button className="logout" onClick={signOut} disabled={busy}><LogOut size={18} />Sign out</button></aside>
     <div className="workspace-body"><header className="topbar"><strong>Admin workspace</strong><span>{session.user.email}</span></header>
       <main className="content"><div className="page-heading"><div><span className="eyebrow">ADMIN PORTAL</span><h1>{page}</h1><p>{section?.description ?? 'A snapshot of your SabPadho workspace.'}</p></div><span className="badge">Sample data</span></div>
-      {error && <p className="notice" role="alert">{error}</p>}
+      {issue && <p className="notice" role="alert">{issue.message}</p>}
       {section ? <section className="panel table-panel"><label className="search">Filter {page.toLowerCase()}<input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search records" /></label><div className="table-scroll"><table aria-label={page}><thead><tr>{section.columns.map(col => <th key={col} scope="col">{col}</th>)}</tr></thead><tbody>{rows?.length ? rows.map(row => <tr key={row[0]}>{row.map((cell, i) => <td key={i}>{i === 2 ? <span className="badge status">{cell}</span> : cell}</td>)}</tr>) : <tr><td colSpan={section.columns.length}>No matching records.</td></tr>}</tbody></table></div></section> : <>
         <div className="stat-grid">{(Object.keys(sections) as Section[]).map(item => { const Icon = navigation[item]; return <button className="panel stat" key={item} onClick={() => navigate(item)}><span className="icon-tile"><Icon size={21} /></span><strong>{sections[item].rows.length}</strong><span>{item}</span><ArrowRight className="stat-arrow" size={18} /></button> })}</div>
         <section className="panel info"><h2>About this workspace</h2><p>Sign-in and admin access are verified through Supabase. Learners, subjects, and mock tests are read-only examples and do not represent live site activity.</p></section>

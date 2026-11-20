@@ -101,6 +101,8 @@ export function Home() {
 
       <Testimonials />
 
+      <Pricing />
+
       <Faq />
 
       <FinalCta />
@@ -543,6 +545,80 @@ function MockBand({ papers }: { papers: typeof mockPapers }) {
             {copy.home.sundayNote}
           </p>
         </div>
+      </div>
+    </section>
+  )
+}
+
+function Pricing() {
+  const copy = useCopy()
+  const { free, pro } = copy.home.pricing
+  type PlanCard = typeof free & { badge?: string; featured: boolean; to: string }
+  const plans: PlanCard[] = [
+    { ...free, featured: false, to: '/app/practice' },
+    { ...pro, featured: true, to: '/app/settings' },
+  ]
+
+  return (
+    <section className="border-t border-line bg-surface/40" id="pricing">
+      <div className="container-page py-16 md:py-24">
+        <div className="max-w-[620px]">
+          <SectionLabel>{copy.home.pricing.eyebrow}</SectionLabel>
+          <h2 className="mt-3 text-[26px] font-semibold leading-tight tracking-[-0.03em] sm:text-[34px]">
+            {copy.home.pricing.title}
+          </h2>
+          <p className="mt-3 text-[14px] leading-relaxed text-muted sm:text-[15px]">
+            {copy.home.pricing.body}
+          </p>
+        </div>
+
+        <div className="mt-8 grid gap-4 md:grid-cols-2 md:gap-5">
+          {plans.map((plan) => (
+            <article
+              key={plan.name}
+              className={cn(
+                'card flex flex-col p-5 sm:p-6',
+                plan.featured && 'border-brand/45 bg-brand-soft/25 ring-1 ring-brand/15',
+              )}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-[16px] font-semibold">{plan.name}</h3>
+                {plan.badge ? <Badge tone="brand">{plan.badge}</Badge> : null}
+              </div>
+
+              <p className="mt-3 flex items-baseline gap-1.5">
+                <span className="font-display text-[34px] font-semibold leading-none tracking-[-0.03em]">
+                  {plan.price}
+                </span>
+                <span className="text-[12.5px] text-muted">{plan.period}</span>
+              </p>
+
+              <p className="mt-2 text-[12.5px] leading-relaxed text-muted">{plan.body}</p>
+
+              <ul className="mt-4 space-y-2 border-t border-line pt-4">
+                {plan.features.map((feature) => (
+                  <li key={feature} className="flex gap-2 text-[12.5px] leading-relaxed">
+                    <Check size={13} className="mt-0.5 shrink-0 text-positive" />
+                    <span className="text-ink-soft">{feature}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <div className="mt-auto pt-5">
+                <ButtonLink
+                  to={plan.to}
+                  variant={plan.featured ? 'primary' : 'secondary'}
+                  className="w-full justify-center"
+                >
+                  {plan.cta}
+                  <ArrowRight size={15} />
+                </ButtonLink>
+              </div>
+            </article>
+          ))}
+        </div>
+
+        <p className="mt-4 text-[11.5px] leading-relaxed text-muted">{copy.home.pricing.note}</p>
       </div>
     </section>
   )

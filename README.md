@@ -56,3 +56,11 @@ Bilingual content is stored per field (`{ en, hi }`). Option order is identical 
 Vite 8, React 19, TypeScript 7, React Router 7, Tailwind CSS 4 and lucide-react icons. No UI kit, no chart library, no state library.
 
 SabPadho is an independent study aid and is not affiliated with the Staff Selection Commission.
+
+## Admin portal
+
+See [admin/README.md](admin/README.md) for Supabase setup and separate build instructions.
+
+## Database migrations
+
+Keep all SQL migrations in [`database/migrations/`](database/migrations/), named `YYYYMMDD_NNN_description.sql`. Apply them in filename order. Add a new migration for schema changes instead of editing one that has already been applied.

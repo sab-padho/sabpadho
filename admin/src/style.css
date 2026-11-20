@@ -114,6 +114,27 @@ th { background: var(--surface-2); }
   .rail nav button, .rail-foot button { padding: 4px 10px; font-size: 12.5px; }
 }
 
+/* Stacked card layout for tables on small screens (tds carry their own column label via data-label) */
+@media (max-width: 700px) {
+  .table-scroll { overflow: visible; -webkit-overflow-scrolling: unset; padding: 10px; }
+  .table-scroll table, .table-scroll tbody, .table-scroll tr, .table-scroll td { display: block; width: 100%; }
+  .table-scroll thead { display: none; }
+  .table-scroll tr { border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); padding: 10px 12px; margin-bottom: 10px; }
+  .table-scroll tr:last-child { margin-bottom: 0; }
+  .table-scroll tr.clickable { cursor: pointer; }
+  .table-scroll td { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 0; border: 0; }
+  .table-scroll td::before { content: attr(data-label); flex: none; font-size: 10.5px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); }
+  .table-scroll td[data-label=""]::before { display: none; }
+  .table-scroll .chev-cell { display: none; }
+  .table-scroll tr.detail-row { padding: 12px; }
+  .table-scroll tr.detail-row td { display: block; padding: 0; }
+  .table-scroll tr.detail-row td:empty { display: none; }
+  .table-scroll tr.detail-row td::before { content: none; }
+  .table-scroll td > .cell-button, .table-scroll td > .cell-stack { flex: 1; }
+  .table-scroll .cell-meter { min-width: 0; flex: 1; justify-content: flex-end; }
+  .table-scroll .cell-meter .progress { flex: 1; width: auto; max-width: 140px; }
+  .table-scroll .row-actions { justify-content: flex-end; }
+}
 /* ---------------------------------------------------------------- utilities */
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .empty { color: var(--muted); padding: 20px; text-align: center; }
@@ -221,6 +242,7 @@ textarea:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
 tr.clickable { cursor: pointer; }
 tbody tr.clickable:hover, tbody tr:hover { background: var(--surface-2); }
 .cell-button { display: grid; gap: 2px; text-align: left; background: none; border: 0; padding: 0; color: inherit; font: inherit; }
+.cell-stack { display: grid; gap: 2px; }
 .cell-sub { display: block; font-size: 11.5px; color: var(--muted); font-weight: 500; }
 .cell-meter { display: flex; align-items: center; gap: 8px; min-width: 120px; }
 .cell-meter .progress { width: 70px; }

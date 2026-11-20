@@ -184,11 +184,11 @@ export function Overview({ onNavigate }: { onNavigate: (page: Page) => void }) {
             <tbody>
               {data.mocks.slice(0, 4).map(mock => (
                 <tr key={mock.id}>
-                  <td><strong>{mock.title}</strong><small className="cell-sub">{mock.sections} sections · {mock.minutes} min</small></td>
-                  <td>{mock.questions}</td>
-                  <td>{number(mock.attempts)}</td>
-                  <td>{mock.avgScore || '—'}</td>
-                  <td><Badge tone={statusTone(mock.status)}>{mock.status}</Badge></td>
+                  <td data-label="Paper"><span className="cell-stack"><strong>{mock.title}</strong><small className="cell-sub">{mock.sections} sections · {mock.minutes} min</small></span></td>
+                  <td data-label="Questions">{mock.questions}</td>
+                  <td data-label="Attempts">{number(mock.attempts)}</td>
+                  <td data-label="Avg score">{mock.avgScore || '—'}</td>
+                  <td data-label="Status"><Badge tone={statusTone(mock.status)}>{mock.status}</Badge></td>
                 </tr>
               ))}
             </tbody>

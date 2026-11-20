@@ -93,23 +93,23 @@ export function Learners() {
             <tbody>
               {rows.map(learner => (
                 <tr key={learner.id} className="clickable" onClick={() => setSelected(learner)}>
-                  <td>
+                  <td data-label="Learner">
                     <button className="cell-button" onClick={() => setSelected(learner)}>
                       <strong>{learner.name}</strong>
                       <small className="cell-sub">{learner.email}</small>
                     </button>
                   </td>
-                  <td>{learner.target}</td>
-                  <td><Badge tone={statusTone(learner.status)}>{learner.status}</Badge></td>
-                  <td>{number(learner.attempts)}</td>
-                  <td>
+                  <td data-label="Target">{learner.target}</td>
+                  <td data-label="Status"><Badge tone={statusTone(learner.status)}>{learner.status}</Badge></td>
+                  <td data-label="Attempts">{number(learner.attempts)}</td>
+                  <td data-label="Accuracy">
                     <div className="cell-meter">
                       <Progress value={learner.accuracy} tone={learner.accuracy >= 70 ? 'positive' : learner.accuracy >= 60 ? 'brand' : 'warning'} />
                       <span>{learner.accuracy}%</span>
                     </div>
                   </td>
-                  <td>{relativeTime(learner.lastActive)}</td>
-                  <td><ChevronRight size={16} className="row-chevron" /></td>
+                  <td data-label="Last active">{relativeTime(learner.lastActive)}</td>
+                  <td className="chev-cell" data-label=""><ChevronRight size={16} className="row-chevron" /></td>
                 </tr>
               ))}
             </tbody>

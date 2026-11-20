@@ -165,21 +165,23 @@ export function Coupons() {
                 const used = Math.round((coupon.redemptions / coupon.limit) * 100)
                 return (
                   <tr key={coupon.id}>
-                    <td>
-                      <span className="coupon-code">{coupon.code}</span>
-                      <small className="cell-sub">{coupon.id}</small>
+                    <td data-label="Code">
+                      <span className="cell-stack">
+                        <span className="coupon-code">{coupon.code}</span>
+                        <small className="cell-sub">{coupon.id}</small>
+                      </span>
                     </td>
-                    <td><strong>{coupon.kind === 'percent' ? `${coupon.discount}%` : `₹${coupon.discount}`}</strong> off</td>
-                    <td>{coupon.plan}</td>
-                    <td>
+                    <td data-label="Discount"><span className="cell-stack"><span><strong>{coupon.kind === 'percent' ? `${coupon.discount}%` : `₹${coupon.discount}`}</strong> off</span></span></td>
+                    <td data-label="Plan">{coupon.plan}</td>
+                    <td data-label="Redemptions">
                       <div className="cell-meter">
                         <span className="meter-track"><span className={used >= 100 ? 'full' : ''} style={{ width: `${Math.min(100, used)}%` }} /></span>
                         <span>{coupon.redemptions}/{coupon.limit}</span>
                       </div>
                     </td>
-                    <td title={formatDate(coupon.expires)}>{relativeTime(coupon.expires)}</td>
-                    <td><Badge tone={tone(coupon.status)}>{coupon.status}</Badge></td>
-                    <td>
+                    <td data-label="Expires" title={formatDate(coupon.expires)}>{relativeTime(coupon.expires)}</td>
+                    <td data-label="Status"><Badge tone={tone(coupon.status)}>{coupon.status}</Badge></td>
+                    <td data-label="Actions">
                       <div className="row-actions">
                         <button className="icon-button" title="Copy code" aria-label={`Copy ${coupon.code}`} onClick={() => copy(coupon.code)}>
                           <Copy size={15} />

@@ -59,22 +59,22 @@ export function Subjects() {
                 const published = item.chapters.filter(chapter => chapter.status === 'Published').length
                 return (
                   <tr key={item.id} className="clickable" onClick={() => setOpen(item.id)}>
-                    <td>
+                    <td data-label="Subject">
                       <button className="cell-button" onClick={() => setOpen(item.id)}>
                         <strong>{item.name}</strong>
                         <small className="cell-sub">{item.code} · {item.section}</small>
                       </button>
                     </td>
-                    <td>{published}/{item.chapters.length} published</td>
-                    <td>{number(item.chapters.reduce((sum, chapter) => sum + chapter.questions, 0))}</td>
-                    <td>
+                    <td data-label="Chapters">{published}/{item.chapters.length} published</td>
+                    <td data-label="Questions">{number(item.chapters.reduce((sum, chapter) => sum + chapter.questions, 0))}</td>
+                    <td data-label="Accuracy">
                       <div className="cell-meter">
                         <Progress value={item.accuracy} tone={item.accuracy >= 70 ? 'positive' : item.accuracy >= 60 ? 'brand' : 'warning'} />
                         <span>{item.accuracy}%</span>
                       </div>
                     </td>
-                    <td><Badge tone={statusTone(item.status)}>{item.status}</Badge></td>
-                    <td onClick={event => event.stopPropagation()}>
+                    <td data-label="Status"><Badge tone={statusTone(item.status)}>{item.status}</Badge></td>
+                    <td data-label="Live" onClick={event => event.stopPropagation()}>
                       <Toggle
                         checked={item.status === 'Published'}
                         label={`${item.status === 'Published' ? 'Unpublish' : 'Publish'} ${item.name}`}
@@ -84,7 +84,7 @@ export function Subjects() {
                         }}
                       />
                     </td>
-                    <td><ChevronRight size={16} className="row-chevron" /></td>
+                    <td className="chev-cell" data-label=""><ChevronRight size={16} className="row-chevron" /></td>
                   </tr>
                 )
               })}

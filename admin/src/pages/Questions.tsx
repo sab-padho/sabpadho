@@ -109,7 +109,7 @@ export function Questions() {
               {rows.map(question => (
                 <Fragment key={question.id}>
                   <tr className="clickable" onClick={() => setExpanded(current => (current === question.id ? null : question.id))}>
-                    <td className="check-cell" onClick={event => event.stopPropagation()}>
+                    <td className="check-cell" data-label="" onClick={event => event.stopPropagation()}>
                       <input
                         type="checkbox"
                         checked={selected.includes(question.id)}
@@ -117,7 +117,7 @@ export function Questions() {
                         aria-label={`Select ${question.id}`}
                       />
                     </td>
-                    <td>
+                    <td data-label="Question">
                       <button
                         type="button"
                         className="cell-button question-cell"
@@ -134,16 +134,16 @@ export function Questions() {
                         </span>
                       </button>
                     </td>
-                    <td>{question.chapter}</td>
-                    <td><Badge tone={question.difficulty === 'Easy' ? 'positive' : question.difficulty === 'Hard' ? 'negative' : 'warning'}>{question.difficulty}</Badge></td>
-                    <td>
+                    <td data-label="Chapter">{question.chapter}</td>
+                    <td data-label="Level"><Badge tone={question.difficulty === 'Easy' ? 'positive' : question.difficulty === 'Hard' ? 'negative' : 'warning'}>{question.difficulty}</Badge></td>
+                    <td data-label="Accuracy">
                       <div className="cell-meter">
                         <Progress value={question.accuracy} tone={question.accuracy >= 70 ? 'positive' : question.accuracy >= 55 ? 'brand' : 'warning'} />
                         <span>{question.accuracy}%</span>
                       </div>
                     </td>
-                    <td><Badge tone={statusTone(question.status)}>{question.status}</Badge></td>
-                    <td>{relativeTime(question.updated)}</td>
+                    <td data-label="Status"><Badge tone={statusTone(question.status)}>{question.status}</Badge></td>
+                    <td data-label="Updated">{relativeTime(question.updated)}</td>
                   </tr>
                   {expanded === question.id && (
                     <tr className="detail-row">

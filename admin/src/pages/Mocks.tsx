@@ -65,12 +65,12 @@ export function Mocks() {
             <tbody>
               {rows.map(mock => (
                 <tr key={mock.id}>
-                  <td><strong>{mock.title}</strong><small className="cell-sub">{mock.id}</small></td>
-                  <td>{mock.sections} sections · {mock.questions} Q · {mock.minutes} min</td>
-                  <td>{number(mock.attempts)}</td>
-                  <td>{mock.avgScore ? mock.avgScore.toFixed(1) : '—'}</td>
-                  <td><Badge tone={statusTone(mock.status)}>{mock.status}</Badge></td>
-                  <td>
+                  <td data-label="Paper"><span className="cell-stack"><strong>{mock.title}</strong><small className="cell-sub">{mock.id}</small></span></td>
+                  <td data-label="Pattern">{mock.sections} sections · {mock.questions} Q · {mock.minutes} min</td>
+                  <td data-label="Attempts">{number(mock.attempts)}</td>
+                  <td data-label="Avg score">{mock.avgScore ? mock.avgScore.toFixed(1) : '—'}</td>
+                  <td data-label="Status"><Badge tone={statusTone(mock.status)}>{mock.status}</Badge></td>
+                  <td data-label="Live">
                     <Toggle
                       checked={mock.status === 'Published'}
                       label={`${mock.status === 'Published' ? 'Unpublish' : 'Publish'} ${mock.title}`}
@@ -80,8 +80,8 @@ export function Mocks() {
                       }}
                     />
                   </td>
-                  <td>{relativeTime(mock.updated)}</td>
-                  <td>
+                  <td data-label="Updated">{relativeTime(mock.updated)}</td>
+                  <td data-label="Actions">
                     <div className="row-actions">
                       <button className="icon-button" title="Duplicate as draft" aria-label={`Duplicate ${mock.title}`} onClick={() => { duplicateMock(mock.id); notify(`${mock.title} duplicated as draft`) }}>
                         <Copy size={15} />

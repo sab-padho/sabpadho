@@ -1,7 +1,7 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createClient } from '@supabase/supabase-js'
-import { ArrowRight, BookOpen, ClipboardList, CreditCard, Eye, EyeOff, History, LayoutDashboard, ListChecks, LockKeyhole, LogOut, Megaphone, Moon, RotateCcw, Sun, Ticket, Users } from 'lucide-react'
+import { ArrowRight, BookOpen, ClipboardList, CreditCard, Eye, EyeOff, History, LayoutDashboard, ListChecks, LockKeyhole, LogOut, Megaphone, Menu, Moon, PanelLeftClose, PanelLeftOpen, RotateCcw, Sun, Ticket, Users, X } from 'lucide-react'
 import logo from '../../public/brand/sabpadho-mark.png'
 import '../../src/index.css'
 import './style.css'
@@ -94,8 +94,19 @@ function ThemeToggle() {
   )
 }
 
+/** Collapsed state of the admin rail. Persisted so it survives reloads. */
+const RAIL_KEY = 'sabpadho-admin-rail'
+
+function readRailCollapsed(): boolean {
+  try {
+    return localStorage.getItem(RAIL_KEY) === 'collapsed'
+  } catch {
+    return false
+  }
+}
+
 function Brand() {
-  return <div className="brand-lockup"><img src={logo} alt="" /><div><strong>SabPadho</strong><small>Admin portal</small></div></div>
+  return <div className="brand-lockup"><img src={logo} alt="" /><div className="rail-label"><strong>SabPadho</strong><small>Admin portal</small></div></div>
 }
 
 /** Password input with a show/hide toggle so a typo or stray space is visible. */
@@ -216,6 +227,10 @@ function SignIn({ onSignedIn }: { onSignedIn: (admin: Admin) => void }) {
 
 function Workspace({ admin, onSignOut }: { admin: Admin; onSignOut: () => void }) {
   const [page, setPage] = useState<Page>('Overview')
+  const [collapsed, setCollapsed] = useState(readRailCollapsed)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuButtonRef = useRef<HTMLButtonElement>(null)
+  const closeButtonRef = useRef<HTMLButtonElement>(null)
   const { reset } = useAdmin()
   const notify = useToast()
 
@@ -223,34 +238,112 @@ function Workspace({ admin, onSignOut }: { admin: Admin; onSignOut: () => void }
     window.scrollTo({ top: 0 })
   }, [page])
 
+  // Close the drawer and restore page scroll when resizing up to the desktop layout.
+  useEffect(() => {
+    const mql = window.matchMedia('(min-width: 701px)')
+    const close = () => {
+      if (mql.matches) setMenuOpen(false)
+    }
+    close()
+    mql.addEventListener('change', close)
+    return () => mql.removeEventListener('change', close)
+  }, [])
+
+  // Lock the page scroll, wire Escape and move focus while the mobile navigation drawer is open.
+  useEffect(() => {
+    if (!menuOpen) return
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMenuOpen(false)
+    }
+    document.addEventListener('keydown', onKey)
+    const previous = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    closeButtonRef.current?.focus()
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.body.style.overflow = previous
+      // Only restore focus when the menu button is actually visible (i.e. still on mobile).
+      if (menuButtonRef.current && menuButtonRef.current.offsetParent !== null) menuButtonRef.current.focus()
+    }
+  }, [menuOpen])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(RAIL_KEY, collapsed ? 'collapsed' : 'expanded')
+    } catch {
+      /* ignore storage errors */
+    }
+  }, [collapsed])
+
   function resetDemo() {
     if (!window.confirm('Reset all demo changes and restore the sample data?')) return
     reset()
+    setMenuOpen(false)
     notify('Demo data restored')
   }
 
-  return <div className="workspace">
-    <aside className="rail">
-      <Brand />
+  function goTo(next: Page) {
+    setPage(next)
+    setMenuOpen(false)
+  }
+
+  return <div className={`workspace${collapsed ? ' rail-collapsed' : ''}`}>
+    {menuOpen && <button className="rail-scrim" aria-label="Close navigation" onClick={() => setMenuOpen(false)} />}
+    <aside className={`rail${menuOpen ? ' open' : ''}`} aria-label="Admin sidebar">
+      <div className="rail-head">
+        <Brand />
+        <button
+          type="button"
+          className="rail-toggle"
+          onClick={() => setCollapsed(current => !current)}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          aria-expanded={!collapsed}
+          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+        </button>
+        <button
+          ref={closeButtonRef}
+          type="button"
+          className="rail-close"
+          onClick={() => setMenuOpen(false)}
+          aria-label="Close navigation"
+        >
+          <X size={18} />
+        </button>
+      </div>
       <nav aria-label="Admin navigation">
         {navigationPages.map(item => {
           const Icon = navigation[item]
-          return <button key={item} aria-current={page === item ? 'page' : undefined} onClick={() => setPage(item)}><Icon size={19} />{item}</button>
+          return <button key={item} aria-current={page === item ? 'page' : undefined} aria-label={collapsed ? item : undefined} title={collapsed ? item : undefined} onClick={() => goTo(item)}><Icon size={19} /><span className="rail-label">{item}</span></button>
         })}
       </nav>
       <div className="rail-foot">
-        <button className="rail-utility" onClick={resetDemo}><RotateCcw size={16} />Reset demo data</button>
-        <button className="logout" onClick={onSignOut}><LogOut size={18} />Sign out</button>
+        <button className="rail-utility" onClick={resetDemo} aria-label={collapsed ? 'Reset demo data' : undefined} title={collapsed ? 'Reset demo data' : undefined}><RotateCcw size={16} /><span className="rail-label">Reset demo data</span></button>
+        <button className="logout" onClick={onSignOut} aria-label={collapsed ? 'Sign out' : undefined} title={collapsed ? 'Sign out' : undefined}><LogOut size={18} /><span className="rail-label">Sign out</span></button>
       </div>
     </aside>
 
     <div className="workspace-body">
       <header className="topbar">
-        <strong>Admin workspace</strong>
+        <div className="topbar-left">
+          <button
+            ref={menuButtonRef}
+            type="button"
+            className="rail-menu"
+            onClick={() => setMenuOpen(true)}
+            aria-label="Open navigation"
+            aria-expanded={menuOpen}
+            title="Open navigation"
+          >
+            <Menu size={20} />
+          </button>
+          <strong>Admin workspace</strong>
+        </div>
         <span className="topbar-meta">
           <ThemeToggle />
           <span className="badge">Demo data</span>
-          {admin.username} · permission {admin.permissionid}
+          <span className="topbar-user">{admin.username} · permission {admin.permissionid}</span>
         </span>
       </header>
       <main className="content">

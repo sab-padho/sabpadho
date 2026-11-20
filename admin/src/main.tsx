@@ -1,13 +1,14 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createClient } from '@supabase/supabase-js'
-import { ArrowRight, BookOpen, ClipboardList, CreditCard, Eye, EyeOff, History, LayoutDashboard, ListChecks, LockKeyhole, LogOut, Megaphone, RotateCcw, Ticket, Users } from 'lucide-react'
+import { ArrowRight, BookOpen, ClipboardList, CreditCard, Eye, EyeOff, History, LayoutDashboard, ListChecks, LockKeyhole, LogOut, Megaphone, Moon, RotateCcw, Sun, Ticket, Users } from 'lucide-react'
 import logo from '../../public/brand/sabpadho-mark.png'
 import '../../src/index.css'
 import './style.css'
 import { navigationPages, type Page } from './data'
 import { AdminProvider, useAdmin } from './store'
 import { ToastProvider, useToast } from './ui'
+import { ThemeProvider, useTheme } from '../../src/lib/theme'
 import { ActivityPage } from './pages/Activity'
 import { Announcements } from './pages/Announcements'
 import { Learners } from './pages/Learners'
@@ -74,6 +75,23 @@ function describeLoginFailure(failure: { message: string; code?: string }): stri
     return 'Could not reach Supabase. Check the project URL in admin/.env.local and your connection, then try again.'
   }
   return 'Could not sign in right now. Please try again.'
+}
+
+/** Light/dark switch. Shares the `sabpadho-theme` key with the learner app. */
+function ThemeToggle() {
+  const { resolved, toggle } = useTheme()
+  const next = resolved === 'dark' ? 'light' : 'dark'
+  return (
+    <button
+      type="button"
+      className="theme-toggle"
+      onClick={toggle}
+      aria-label={`Switch to ${next} theme`}
+      title={`Switch to ${next} theme`}
+    >
+      {resolved === 'dark' ? <Moon size={16} /> : <Sun size={16} />}
+    </button>
+  )
 }
 
 function Brand() {
@@ -163,7 +181,9 @@ function SignIn({ onSignedIn }: { onSignedIn: (admin: Admin) => void }) {
 
   return <main className="login-layout">
     <section className="login-intro"><Brand /><div><span className="eyebrow">SABPADHO WORKSPACE</span><h1>Manage the learning experience.</h1><p>Learners, chapters, the question bank, mock papers, and announcements in one place.</p></div><small>Restricted to authorized staff</small></section>
-    <section className="login-main"><div className="panel login-card"><div className="icon-tile"><LockKeyhole size={22} /></div><h2>Admin sign in</h2><p>Use your staff username and password to continue.</p>
+    <section className="login-main"><div className="panel login-card">
+      <div className="login-card-head"><span className="icon-tile"><LockKeyhole size={22} /></span><ThemeToggle /></div>
+      <h2>Admin sign in</h2><p>Use your staff username and password to continue.</p>
       <form onSubmit={signIn}>
         <div className="field-group">
           <label htmlFor="username">Username</label>
@@ -228,6 +248,7 @@ function Workspace({ admin, onSignOut }: { admin: Admin; onSignOut: () => void }
       <header className="topbar">
         <strong>Admin workspace</strong>
         <span className="topbar-meta">
+          <ThemeToggle />
           <span className="badge">Demo data</span>
           {admin.username} · permission {admin.permissionid}
         </span>
@@ -268,4 +289,4 @@ function App() {
   </AdminProvider>
 }
 
-createRoot(document.getElementById('root')!).render(<App />)
+createRoot(document.getElementById('root')!).render(<ThemeProvider><App /></ThemeProvider>)

@@ -75,15 +75,18 @@ th { background: var(--surface-2); }
 @media (max-width: 700px) {
   .rail-scrim { display: block; position: fixed; inset: 0; z-index: 45; border: 0; background: rgba(23, 18, 36, .5); backdrop-filter: blur(1px); }
   .login-layout, .workspace, .workspace.rail-collapsed { grid-template-columns: minmax(0, 1fr); }
-  .rail { position: fixed; top: 0; bottom: 0; left: 0; z-index: 50; width: min(300px, 88vw); height: 100dvh; transform: translateX(-105%); visibility: hidden; transition: transform .22s ease, visibility .22s; padding: 16px 14px; overflow-y: auto; }
+  .rail { position: fixed; top: 0; bottom: 0; left: 0; z-index: 50; width: min(300px, 88vw); height: 100dvh; transform: translateX(-105%); visibility: hidden; transition: transform .22s ease, visibility .22s; padding: 12px 14px; gap: 14px; overflow-y: auto; }
   .rail.open { transform: none; visibility: visible; }
   .rail-toggle { display: none; }
+  .brand-lockup { gap: 10px; }
+  .brand-lockup img { width: 34px; height: 34px; }
+  .rail nav { display: grid; gap: 4px; }
+  .rail nav button, .rail-foot button { padding: 8px 10px; font-size: 13.5px; }
+  .rail-foot { margin-top: auto; grid-template-columns: minmax(0, 1fr); gap: 4px; }
   .rail-menu { display: grid; place-items: center; width: 36px; height: 36px; flex: none; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--muted); }
   .rail-menu:hover { color: var(--ink); border-color: var(--line-strong); }
   .rail-close { display: grid; place-items: center; flex: none; width: 34px; height: 34px; border: 0; border-radius: 8px; background: transparent; color: var(--rail-muted); }
   .rail-close:hover { background: var(--rail-active); color: var(--rail-ink); }
-  .rail nav { display: grid; }
-  .rail-foot { margin-top: auto; grid-template-columns: minmax(0, 1fr); }
   .topbar { padding: 10px 14px; }
   .topbar-user { display: none; }
   .login-layout { grid-template-rows: auto 1fr; }
@@ -91,6 +94,24 @@ th { background: var(--surface-2); }
   .login-intro h1 { font-size: clamp(28px, 7vw, 44px); margin: 10px 0; }
   .login-intro p { font-size: 14px; }
   .login-main { padding: 18px 14px; }
+}
+/* Short viewports (landscape phones, small windows): shrink the rail further so nothing scrolls. Applies at any width. */
+@media (max-height: 620px) {
+  .rail { gap: 8px; padding: 10px 12px; }
+  .brand-lockup img { width: 26px; height: 26px; border-radius: 8px; }
+  .brand-lockup strong { font-size: 14px; line-height: 1.2; }
+  .brand-lockup small { display: none; }
+  .rail-close { width: 30px; height: 30px; }
+  .rail nav { gap: 2px; }
+  .rail nav button, .rail-foot button { padding: 6px 10px; font-size: 13px; }
+  .rail-foot { gap: 2px; }
+}
+/* Landscape phones / very short windows: drop the brand row, shrink tap targets a notch. */
+@media (max-height: 430px) {
+  .rail { gap: 6px; padding: 8px 12px; }
+  .brand-lockup { display: none; }
+  .rail-head { justify-content: flex-end; }
+  .rail nav button, .rail-foot button { padding: 4px 10px; font-size: 12.5px; }
 }
 
 /* ---------------------------------------------------------------- utilities */

@@ -10,15 +10,6 @@ import { sections, type Section } from './data'
 const { VITE_SUPABASE_URL: url, VITE_SUPABASE_PUBLISHABLE_KEY: key } = import.meta.env
 const supabase = url && key ? createClient(url, key) : null
 
-/** Host of the project the portal is talking to, e.g. `abcdefgh.supabase.co`. */
-const projectHost = (() => {
-  try {
-    return url ? new URL(url).hostname : ''
-  } catch {
-    return ''
-  }
-})()
-
 /**
  * Username/password sign-in. `admin_login` compares the credentials against
  * `public.admin_users` server-side, so no password (or hash) ever reaches the browser.
@@ -202,7 +193,6 @@ function App() {
         </div>}
         <button className="primary" disabled={!supabase || busy}>{busy ? 'Signing in…' : 'Sign in'} <ArrowRight size={17} /></button>
       </form>
-      {projectHost && <small className="project-hint">Connected to {projectHost}. Accounts live in public.admin_users.</small>}
     </div></section>
   </main>
 

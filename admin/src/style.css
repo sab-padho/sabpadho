@@ -35,7 +35,6 @@ input { min-width: 0; border: 1px solid var(--line-strong); background: var(--su
 .reveal:hover { color: var(--ink); background: var(--surface-2); }
 .field-hint { font-size: 12px; font-weight: 600; color: var(--warning); }
 .field-note { font-size: 12px; line-height: 1.5; color: var(--muted); overflow-wrap: anywhere; }
-.project-hint { display: block; margin-top: 18px; font-size: 12px; line-height: 1.5; color: var(--muted); overflow-wrap: anywhere; }
 .icon-tile { background: var(--brand-soft); color: var(--brand-ink); width: 44px; height: 44px; display: grid; place-items: center; border-radius: 12px; }
 .workspace { display: grid; grid-template-columns: 230px minmax(0, 1fr); min-height: 100dvh; }
 .rail { background: var(--rail); color: var(--rail-ink); padding: 22px 16px; display: flex; flex-direction: column; gap: 28px; }

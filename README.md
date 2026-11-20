@@ -59,7 +59,7 @@ SabPadho is an independent study aid and is not affiliated with the Staff Select
 
 ## Admin portal
 
-See [admin/README.md](admin/README.md) for Supabase setup and separate build instructions.
+See [admin/README.md](admin/README.md).
 
 ## Database migrations
 

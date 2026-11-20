@@ -223,6 +223,13 @@ const en = {
       { title: 'Ten-minute sets', body: 'Practice that fits between two lectures.' },
       { title: 'Mistakes come back', body: 'A due date for every wrong answer.' },
     ],
+    proof: {
+      learners: 'learners already practising',
+      body: 'They are working through SSC CGL and CHSL chapters on SabPadho — in English or Hindi, on the phone already in their pocket.',
+      chapters: 'chapters with worked answers',
+      languages: 'languages, same questions',
+      sprint: 'minute sprints',
+    },
     howEyebrow: 'How a session works',
     howTitle: 'One goal, one session, one honest review.',
     howBody:
@@ -1353,6 +1360,13 @@ const hi: typeof en = {
       { title: 'दस मिनट के सेट', body: 'दो लेक्चर के बीच का अभ्यास।' },
       { title: 'गलतियाँ लौटती हैं', body: 'हर गलत उत्तर की देय तारीख।' },
     ],
+    proof: {
+      learners: 'शिक्षार्थी पहले से अभ्यास कर रहे हैं',
+      body: 'वे SabPadho पर SSC CGL और CHSL के अध्याय हल कर रहे हैं — अंग्रेज़ी या हिंदी में, उसी फ़ोन पर जो उनके पास है।',
+      chapters: 'अध्याय, हल किए गए उत्तरों के साथ',
+      languages: 'भाषाएँ, वही प्रश्न',
+      sprint: 'मिनट के स्प्रिंट',
+    },
     howEyebrow: 'एक सत्र कैसे चलता है',
     howTitle: 'एक लक्ष्य, एक सत्र, एक ईमानदार समीक्षा।',
     howBody:

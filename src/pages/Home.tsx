@@ -16,6 +16,8 @@ import {
 } from 'lucide-react'
 import { HeroPreview, PracticePreview, PalettePreview, DuePreview } from '../components/previews'
 import { Badge, ButtonLink, SectionLabel } from '../components/ui'
+import { communitySize } from '../data/learner'
+import { allChapters } from '../data/subjects'
 import { LogoMark } from '../components/brand'
 import { questionsForSubject, questionById } from '../data/questions'
 import { subjects } from '../data/subjects'
@@ -36,6 +38,8 @@ export function Home() {
   return (
     <>
       <Hero />
+
+      <ProofBand />
 
       <section className="border-y border-line bg-surface/50">
         <div className="container-page grid gap-4 py-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -178,6 +182,57 @@ function Hero() {
         <div className="animate-rise lg:pl-2" style={{ animationDelay: '80ms' }}>
           <HeroPreview />
         </div>
+      </div>
+    </section>
+  )
+}
+
+function ProofBand() {
+  const copy = useCopy()
+  const stats = [
+    { value: allChapters.length, label: copy.home.proof.chapters },
+    { value: 2, label: copy.home.proof.languages },
+    { value: 10, label: copy.home.proof.sprint },
+  ]
+
+  return (
+    <section className="border-t border-line bg-surface/70">
+      <div className="container-page grid gap-7 py-8 md:grid-cols-[1.15fr_1fr] md:items-center md:gap-12">
+        <div className="flex items-center gap-4">
+          <div className="flex -space-x-2.5" aria-hidden>
+            {['A', 'M', 'R', 'K', 'S'].map((initial) => (
+              <span
+                key={initial}
+                className="grid h-10 w-10 place-items-center rounded-full border-2 border-surface bg-brand-soft text-[12px] font-semibold text-brand-ink"
+              >
+                {initial}
+              </span>
+            ))}
+            <span className="grid h-10 w-10 place-items-center rounded-full border-2 border-surface bg-brand text-[11px] font-semibold text-white">
+              +{communitySize - 5}
+            </span>
+          </div>
+          <div className="min-w-0">
+            <p className="font-display text-[24px] font-semibold leading-none tracking-[-0.02em] text-ink sm:text-[27px]">
+              {communitySize}{' '}
+              <span className="text-[14px] font-medium leading-snug text-muted sm:text-[15px]">
+                {copy.home.proof.learners}
+              </span>
+            </p>
+            <p className="mt-1.5 max-w-[440px] text-[12px] leading-relaxed text-muted">
+              {copy.home.proof.body}
+            </p>
+          </div>
+        </div>
+
+        <dl className="grid grid-cols-3 gap-4 md:gap-6">
+          {stats.map((stat) => (
+            <div key={stat.label}>
+              <dd className="font-display text-[22px] font-semibold leading-none tracking-tight text-brand">{stat.value}</dd>
+              <dt className="mt-1.5 text-[11px] leading-snug text-muted">{stat.label}</dt>
+            </div>
+          ))}
+        </dl>
       </div>
     </section>
   )

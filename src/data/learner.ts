@@ -1,3 +1,6 @@
+/** Public social-proof figure shown on the landing page. Update when the real count changes. */
+export const communitySize = 241
+
 export const learner = {
   name: 'Aarav Deshmukh',
   firstName: 'Aarav',

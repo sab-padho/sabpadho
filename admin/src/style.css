@@ -37,14 +37,19 @@ input { min-width: 0; border: 1px solid var(--line-strong); background: var(--su
 .field-note { font-size: 12px; line-height: 1.5; color: var(--muted); overflow-wrap: anywhere; }
 .icon-tile { background: var(--brand-soft); color: var(--brand-ink); width: 44px; height: 44px; display: grid; place-items: center; border-radius: 12px; }
 .workspace { display: grid; grid-template-columns: 230px minmax(0, 1fr); min-height: 100dvh; }
-.rail { background: var(--rail); color: var(--rail-ink); padding: 22px 16px; display: flex; flex-direction: column; gap: 28px; }
+.workspace.rail-collapsed { grid-template-columns: 76px minmax(0, 1fr); }
+.rail { background: var(--rail); color: var(--rail-ink); padding: 22px 16px; display: flex; flex-direction: column; gap: 28px; position: sticky; top: 0; align-self: start; height: 100dvh; overflow-y: auto; overflow-x: hidden; }
+.rail-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.rail-toggle { display: grid; place-items: center; flex: none; width: 34px; height: 34px; border: 0; border-radius: 8px; background: transparent; color: var(--rail-muted); }
+.rail-toggle:hover { background: var(--rail-active); color: var(--rail-ink); }
 .rail nav { display: grid; gap: 6px; }
-.rail button { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 9px; text-align: left; font-size: 14px; }
-.rail button:hover, .rail button[aria-current] { background: var(--rail-active); }
+.rail nav button, .rail-foot button { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 9px; text-align: left; font-size: 14px; }
+.rail nav button:hover, .rail nav button[aria-current], .rail-foot button:hover { background: var(--rail-active); }
 .logout { margin-top: auto; }
 .rail .rail-foot .logout { margin-top: 0; }
-.topbar { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; padding: 16px clamp(16px, 4vw, 44px); border-bottom: 1px solid var(--line); background: var(--surface); font-size: 14px; }
+.topbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 12px clamp(16px, 4vw, 44px); border-bottom: 1px solid var(--line); background: var(--surface); font-size: 14px; position: sticky; top: 0; z-index: 30; }
 .topbar span { color: var(--muted); overflow-wrap: anywhere; }
+.topbar-left { display: flex; align-items: center; gap: 10px; }
 .content { max-width: 1200px; margin: auto; padding: clamp(16px, 4vw, 44px); }
 .page-heading { display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; }
 .page-heading h1 { font-size: clamp(28px, 4vw, 44px); letter-spacing: -.035em; }
@@ -63,12 +68,50 @@ input { min-width: 0; border: 1px solid var(--line-strong); background: var(--su
 table { width: 100%; text-align: left; font-size: 14px; }
 th, td { padding: 12px 16px; border-top: 1px solid var(--line); }
 th { background: var(--surface-2); }
+/* ---------------------------------------------------------------- mobile shell */
+.rail-menu { display: none; }
+.rail-close { display: none; }
+.rail-scrim { display: none; }
 @media (max-width: 700px) {
-  .login-layout, .workspace { grid-template-columns: minmax(0, 1fr); }
-  .login-intro { gap: 24px; }
-  .rail { gap: 10px; }
-  .rail nav { display: flex; flex-wrap: wrap; }
-  .logout { align-self: start; }
+  .rail-scrim { display: block; position: fixed; inset: 0; z-index: 45; border: 0; background: rgba(23, 18, 36, .5); backdrop-filter: blur(1px); }
+  .login-layout, .workspace, .workspace.rail-collapsed { grid-template-columns: minmax(0, 1fr); }
+  .rail { position: fixed; top: 0; bottom: 0; left: 0; z-index: 50; width: min(300px, 88vw); height: 100dvh; transform: translateX(-105%); visibility: hidden; transition: transform .22s ease, visibility .22s; padding: 12px 14px; gap: 14px; overflow-y: auto; }
+  .rail.open { transform: none; visibility: visible; }
+  .rail-toggle { display: none; }
+  .brand-lockup { gap: 10px; }
+  .brand-lockup img { width: 34px; height: 34px; }
+  .rail nav { display: grid; gap: 4px; }
+  .rail nav button, .rail-foot button { padding: 8px 10px; font-size: 13.5px; }
+  .rail-foot { margin-top: auto; grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .rail-menu { display: grid; place-items: center; width: 36px; height: 36px; flex: none; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--muted); }
+  .rail-menu:hover { color: var(--ink); border-color: var(--line-strong); }
+  .rail-close { display: grid; place-items: center; flex: none; width: 34px; height: 34px; border: 0; border-radius: 8px; background: transparent; color: var(--rail-muted); }
+  .rail-close:hover { background: var(--rail-active); color: var(--rail-ink); }
+  .topbar { padding: 10px 14px; }
+  .topbar-user { display: none; }
+  .login-layout { grid-template-rows: auto 1fr; }
+  .login-intro { padding: 22px 20px; gap: 16px; justify-content: start; }
+  .login-intro h1 { font-size: clamp(28px, 7vw, 44px); margin: 10px 0; }
+  .login-intro p { font-size: 14px; }
+  .login-main { padding: 18px 14px; }
+}
+/* Short viewports (landscape phones, small windows): shrink the rail further so nothing scrolls. Applies at any width. */
+@media (max-height: 620px) {
+  .rail { gap: 8px; padding: 10px 12px; }
+  .brand-lockup img { width: 26px; height: 26px; border-radius: 8px; }
+  .brand-lockup strong { font-size: 14px; line-height: 1.2; }
+  .brand-lockup small { display: none; }
+  .rail-close { width: 30px; height: 30px; }
+  .rail nav { gap: 2px; }
+  .rail nav button, .rail-foot button { padding: 6px 10px; font-size: 13px; }
+  .rail-foot { gap: 2px; }
+}
+/* Landscape phones / very short windows: drop the brand row, shrink tap targets a notch. */
+@media (max-height: 430px) {
+  .rail { gap: 6px; padding: 8px 12px; }
+  .brand-lockup { display: none; }
+  .rail-head { justify-content: flex-end; }
+  .rail nav button, .rail-foot button { padding: 4px 10px; font-size: 12.5px; }
 }
 
 /* ---------------------------------------------------------------- utilities */
@@ -250,6 +293,18 @@ tbody tr.detail-row td { border-top: 0; }
 .toast { margin: 0; background: var(--ink); color: var(--canvas); font-size: 12.5px; font-weight: 600; padding: 10px 14px; border-radius: 10px; box-shadow: var(--shadow-card); animation: toast-in .18s ease-out; }
 @keyframes toast-in { from { transform: translateY(6px); opacity: 0; } to { transform: none; opacity: 1; } }
 
+/* ---------------------------------------------------------------- collapsed rail (desktop only) */
+@media (min-width: 701px) {
+  .workspace { transition: grid-template-columns .18s ease; }
+  .rail-collapsed .rail { padding: 22px 12px; gap: 20px; align-items: stretch; }
+  .rail-collapsed .rail-head { flex-direction: column; gap: 10px; }
+  .rail-collapsed .brand-lockup { justify-content: center; }
+  .rail-collapsed .brand-lockup .rail-label { display: none; }
+  .rail-collapsed .rail-label { display: none; }
+  .rail-collapsed .rail nav button, .rail-collapsed .rail-foot button { justify-content: center; padding-left: 0; padding-right: 0; }
+  .rail-collapsed .rail-foot { margin-top: auto; }
+}
+
 /* ---------------------------------------------------------------- shell extras */
 .rail-foot { margin-top: auto; display: grid; gap: 6px; }
 .rail button.rail-utility { font-size: 13px; color: var(--rail-muted); }
@@ -261,18 +316,39 @@ tbody tr.detail-row td { border-top: 0; }
   .overview-grid, .overview-grid.wide-left, .announce-grid { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 700px) {
-  .rail-foot { margin-top: 0; grid-template-columns: auto auto; justify-content: space-between; align-items: center; margin-left: auto; }
-  .rail button.rail-utility { padding: 10px 4px; }
-  .content { padding: 16px 14px 32px; }
+  .content { padding: 18px 14px 40px; }
   .toolbar { flex-direction: column; align-items: stretch; }
+  .toolbar-group { width: 100%; }
+  .toolbar-group .select { flex: 1 1 140px; }
+  .toolbar-group .select select { width: 100%; }
   .search-input { width: 100%; }
-  .drawer { width: 100%; }
+  .drawer { width: 100%; height: 100dvh; }
   .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .bars { height: 140px; gap: 3px; }
+  .bars { height: 130px; gap: 3px; }
   .subject-row-metrics { min-width: 110px; }
   .subject-row-metrics .progress { width: 60px; }
-  .page-heading h1 { font-size: 30px; }
+  .page-heading { margin-bottom: 18px; }
+  .page-heading h1 { font-size: 28px; }
+  .chart-card, .queue-card, .list-card, .composer, .split-card, .plan-card, .info { padding: 16px; }
+  .stat { padding: 16px; }
+  .stat strong { font-size: 24px; }
+  .stat-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  .table-scroll { -webkit-overflow-scrolling: touch; }
   .toast-host { left: 14px; right: 14px; bottom: 14px; }
+}
+@media (max-width: 480px) {
+  .subject-rows li { flex-direction: column; align-items: stretch; gap: 8px; }
+  .subject-row-metrics { min-width: 0; }
+  .subject-row-metrics .progress { flex: 1; width: auto; }
+  .topbar-meta { gap: 6px; }
+  .badge { font-size: 11px; padding: 3px 8px; }
+  .heading-actions { width: 100%; }
+  .heading-actions .button { flex: 1 1 auto; }
+  .login-intro { padding: 20px; gap: 14px; }
+  .login-intro h1 { font-size: clamp(28px, 9vw, 40px); }
+  .login-intro p { font-size: 14px; }
+  .login-main { padding: 16px; }
+  .login-card { padding: 20px 18px; }
 }
 
 /* ---------------------------------------------------------------- plans */

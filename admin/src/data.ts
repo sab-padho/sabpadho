@@ -86,6 +86,35 @@ export type ActivityEntry = {
 
 export type DayPoint = { date: string; attempts: number; learners: number }
 
+export type Plan = {
+  id: 'free' | 'pro'
+  name: string
+  price: number
+  period: 'forever' | 'month'
+  tagline: string
+  learners: number
+  status: PublishStatus
+  featured: boolean
+  features: string[]
+}
+
+export type CouponStatus = 'Active' | 'Paused' | 'Expired'
+
+export type Coupon = {
+  id: string
+  code: string
+  discount: number
+  kind: 'percent' | 'flat'
+  plan: 'Free' | 'Pro'
+  redemptions: number
+  limit: number
+  expires: string
+  status: CouponStatus
+}
+
+/** Static headline figure for the demo: the tables below show a sample of accounts. */
+export const TOTAL_LEARNERS = 241
+
 export type AdminData = {
   learners: Learner[]
   subjects: Subject[]
@@ -94,6 +123,8 @@ export type AdminData = {
   announcements: Announcement[]
   activity: ActivityEntry[]
   daily: DayPoint[]
+  plans: Plan[]
+  coupons: Coupon[]
 }
 
 const iso = (daysAgo: number, hour = 9) => {
@@ -229,6 +260,51 @@ const activity: ActivityEntry[] = [
   { id: 'E-6', actor: 'admin', action: 'created', target: 'GA Weekly 03', at: iso(0, 8) },
 ]
 
+const plans: Plan[] = [
+  {
+    id: 'free',
+    name: 'Free',
+    price: 0,
+    period: 'forever',
+    tagline: 'Chapter primers, sprints and the recall calendar.',
+    learners: 198,
+    status: 'Published',
+    featured: false,
+    features: [
+      'Chapter primers and outlines',
+      '5-question topic sprints',
+      'Recall calendar and revision queue',
+      'Progress overview',
+    ],
+  },
+  {
+    id: 'pro',
+    name: 'Pro',
+    price: 51,
+    period: 'month',
+    tagline: 'Unlimited practice, full-length mocks and analytics.',
+    learners: 43,
+    status: 'Published',
+    featured: true,
+    features: [
+      'Everything in Free',
+      'Unlimited sprints, 10 and 15 question sets',
+      'All full-length mock papers with section analytics',
+      'Bilingual explanations for every question',
+      'Saved question shelf and exports',
+    ],
+  },
+]
+
+const coupons: Coupon[] = [
+  { id: 'C-01', code: 'WELCOME50', discount: 50, kind: 'percent', plan: 'Pro', redemptions: 62, limit: 200, expires: iso(-24), status: 'Active' },
+  { id: 'C-02', code: 'PROLAUNCH', discount: 25, kind: 'percent', plan: 'Pro', redemptions: 12, limit: 100, expires: iso(-40), status: 'Active' },
+  { id: 'C-03', code: 'EXAMPREP40', discount: 40, kind: 'percent', plan: 'Pro', redemptions: 88, limit: 100, expires: iso(-9), status: 'Active' },
+  { id: 'C-04', code: 'CHSL20', discount: 20, kind: 'percent', plan: 'Pro', redemptions: 5, limit: 50, expires: iso(-18), status: 'Paused' },
+  { id: 'C-05', code: 'SUMMER100', discount: 100, kind: 'flat', plan: 'Pro', redemptions: 200, limit: 200, expires: iso(12), status: 'Expired' },
+  { id: 'C-06', code: 'FIRSTPRO', discount: 51, kind: 'flat', plan: 'Pro', redemptions: 17, limit: 120, expires: iso(-3), status: 'Active' },
+]
+
 export const seed = (): AdminData => ({
   learners,
   subjects,
@@ -237,7 +313,9 @@ export const seed = (): AdminData => ({
   announcements,
   activity,
   daily,
+  plans,
+  coupons,
 })
 
-export const navigationPages = ['Overview', 'Learners', 'Subjects', 'Questions', 'Mock tests', 'Announcements', 'Activity'] as const
+export const navigationPages = ['Overview', 'Learners', 'Subjects', 'Questions', 'Mock tests', 'Plans', 'Coupons', 'Announcements', 'Activity'] as const
 export type Page = (typeof navigationPages)[number]

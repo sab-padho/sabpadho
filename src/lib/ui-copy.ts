@@ -798,6 +798,23 @@ const en = {
     withPaper: 'with the paper name and what you saw. A person replies, usually the same day.',
     signOut: 'Sign out',
     howWorks: 'How SabPadho works',
+    planCard: 'Plan',
+    planCurrent: 'Current plan',
+    planFree: 'Free',
+    planFreeBody: 'Chapter primers, 5-question sprints and the recall calendar.',
+    planPro: 'Pro',
+    planPrice: (price: number) => `₹${price}`,
+    planPerMonth: '/month',
+    planProBody: 'Everything in Free, plus unlimited sprints, full-length mocks and bilingual explanations.',
+    planProFeatures: [
+      'Unlimited 10 and 15-question sprints',
+      'All full-length mock papers',
+      'Section-wise analytics',
+      'Bilingual explanations',
+    ],
+    planUpgrade: 'Upgrade to Pro',
+    planNote: 'Plans are illustrative in this preview. Nothing is charged and no card is collected.',
+    planUpgraded: 'Pro upgrades are not live in this preview',
   },
   auth: {
     welcome: 'Welcome back',
@@ -1903,6 +1920,23 @@ const hi: typeof en = {
     withPaper: 'पेपर का नाम और जो दिखा उसके साथ। कोई जवाब देता है, आमतौर पर उसी दिन।',
     signOut: 'साइन आउट',
     howWorks: 'SabPadho कैसे काम करता है',
+    planCard: 'योजना',
+    planCurrent: 'वर्तमान योजना',
+    planFree: 'फ्री',
+    planFreeBody: 'अध्याय प्राइमर, 5-प्रश्न स्प्रिंट और दोहराव कैलेंडर।',
+    planPro: 'प्रो',
+    planPrice: (price: number) => `₹${price}`,
+    planPerMonth: '/माह',
+    planProBody: 'फ्री की सभी सुविधाएँ, साथ में असीमित स्प्रिंट, पूर्ण-लंबाई मॉक और द्विभाषी व्याख्याएँ।',
+    planProFeatures: [
+      '10 और 15 प्रश्नों के असीमित स्प्रिंट',
+      'सभी पूर्ण-लंबाई मॉक पेपर',
+      'अनुभाग-वार विश्लेषण',
+      'द्विभाषी व्याख्याएँ',
+    ],
+    planUpgrade: 'प्रो में अपग्रेड करें',
+    planNote: 'इस प्रीव्यू में योजनाएँ उदाहरण हैं। कोई शुल्क नहीं लिया जाता और कोई कार्ड नहीं माँगा जाता।',
+    planUpgraded: 'इस प्रीव्यू में प्रो अपग्रेड उपलब्ध नहीं है',
   },
   auth: {
     welcome: 'वापसी पर स्वागत',
@@ -2368,9 +2402,14 @@ export function subjectTagline(lang: Lang, id: string, fallback: string) {
   return lang === 'hi' ? (TAGLINE_HI[id] ?? fallback) : fallback
 }
 
+const PLAN_LABELS_HI: Record<string, string> = {
+  'Preview plan': 'प्रीव्यू योजना',
+  'Free plan': 'फ्री योजना',
+  'Pro plan': 'प्रो योजना',
+}
+
 export function planLabel(lang: Lang, plan: string) {
-  if (lang === 'hi' && plan === 'Preview plan') return 'प्रीव्यू योजना'
-  return plan
+  return lang === 'hi' ? (PLAN_LABELS_HI[plan] ?? plan) : plan
 }
 
 export function chapterHindi(titleEn: string) {

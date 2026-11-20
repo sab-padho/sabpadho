@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { seed, type AdminData, type Announcement, type LearnerStatus, type PublishStatus } from './data'
+import { seed, type AdminData, type Announcement, type Coupon, type CouponStatus, type LearnerStatus, type Plan, type PublishStatus } from './data'
 
 /** Demo edits are kept in the browser so a reload keeps them; "Reset demo data" clears them. */
 const KEY = 'sabpadho-admin-demo-v1'
@@ -14,6 +14,9 @@ type AdminStore = {
   duplicateMock: (id: string) => void
   setQuestionStatus: (ids: string[], status: PublishStatus) => void
   addAnnouncement: (draft: Pick<Announcement, 'title' | 'body' | 'audience'>) => void
+  setPlanStatus: (id: Plan['id'], status: PublishStatus) => void
+  setCouponStatus: (id: string, status: CouponStatus) => void
+  addCoupon: (draft: Pick<Coupon, 'code' | 'discount' | 'kind' | 'limit' | 'expires'>) => void
   reset: () => void
 }
 
@@ -154,6 +157,48 @@ export function AdminProvider({ actor, children }: { actor: string; children: Re
     })
   }, [log])
 
+  const setPlanStatus = useCallback((id: Plan['id'], status: PublishStatus) => {
+    setData(prev => {
+      const plan = prev.plans.find(item => item.id === id)
+      if (!plan || plan.status === status) return prev
+      return {
+        ...prev,
+        plans: prev.plans.map(item => (item.id === id ? { ...item, status } : item)),
+        activity: [log(status === 'Published' ? 'published plan' : 'took plan offline', `${plan.name} plan`), ...prev.activity].slice(0, 60),
+      }
+    })
+  }, [log])
+
+  const setCouponStatus = useCallback((id: string, status: CouponStatus) => {
+    setData(prev => {
+      const coupon = prev.coupons.find(item => item.id === id)
+      if (!coupon || coupon.status === status) return prev
+      return {
+        ...prev,
+        coupons: prev.coupons.map(item => (item.id === id ? { ...item, status } : item)),
+        activity: [log(status === 'Active' ? 'resumed coupon' : 'paused coupon', coupon.code), ...prev.activity].slice(0, 60),
+      }
+    })
+  }, [log])
+
+  const addCoupon = useCallback((draft: Pick<Coupon, 'code' | 'discount' | 'kind' | 'limit' | 'expires'>) => {
+    setData(prev => {
+      const entry: Coupon = {
+        ...draft,
+        id: `C-${Date.now()}`,
+        code: draft.code.trim().toUpperCase(),
+        plan: 'Pro',
+        redemptions: 0,
+        status: 'Active',
+      }
+      return {
+        ...prev,
+        coupons: [entry, ...prev.coupons],
+        activity: [log('created coupon', entry.code), ...prev.activity].slice(0, 60),
+      }
+    })
+  }, [log])
+
   const reset = useCallback(() => {
     try {
       localStorage.removeItem(KEY)
@@ -164,8 +209,8 @@ export function AdminProvider({ actor, children }: { actor: string; children: Re
   }, [])
 
   const value = useMemo<AdminStore>(
-    () => ({ data, actor, setLearnerStatus, setSubjectStatus, setChapterStatus, setMockStatus, duplicateMock, setQuestionStatus, addAnnouncement, reset }),
-    [data, actor, setLearnerStatus, setSubjectStatus, setChapterStatus, setMockStatus, duplicateMock, setQuestionStatus, addAnnouncement, reset],
+    () => ({ data, actor, setLearnerStatus, setSubjectStatus, setChapterStatus, setMockStatus, duplicateMock, setQuestionStatus, addAnnouncement, setPlanStatus, setCouponStatus, addCoupon, reset }),
+    [data, actor, setLearnerStatus, setSubjectStatus, setChapterStatus, setMockStatus, duplicateMock, setQuestionStatus, addAnnouncement, setPlanStatus, setCouponStatus, addCoupon, reset],
   )
 
   return <AdminContext.Provider value={value}>{children}</AdminContext.Provider>

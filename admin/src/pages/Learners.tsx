@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { ChevronRight, Download, PauseCircle, PlayCircle } from 'lucide-react'
-import type { Learner, LearnerStatus } from '../data'
+import { TOTAL_LEARNERS, type Learner, type LearnerStatus } from '../data'
 import { useAdmin } from '../store'
 import { Badge, Drawer, Empty, PageHeader, Progress, SearchInput, Select, downloadCsv, formatDate, number, relativeTime, statusTone, useToast } from '../ui'
 
@@ -64,7 +64,7 @@ export function Learners() {
       <PageHeader
         eyebrow="ADMIN PORTAL"
         title="Learners"
-        description={`${number(data.learners.length)} accounts · ${counts.Active} active, ${counts.Invited} invited, ${counts.Suspended} suspended`}
+        description={`${number(TOTAL_LEARNERS)} accounts · ${counts.Active} active, ${counts.Invited} invited, ${counts.Suspended} suspended in this sample`}
         actions={<button className="button secondary" onClick={exportCsv}><Download size={16} />Export CSV</button>}
       />
 
@@ -116,7 +116,7 @@ export function Learners() {
           </table>
         </div>
         {!rows.length && <Empty>No learners match those filters.</Empty>}
-        <footer className="table-foot">Showing {rows.length} of {data.learners.length} learners</footer>
+        <footer className="table-foot">Showing {rows.length} of {number(TOTAL_LEARNERS)} learners · {data.learners.length} accounts are loaded as a sample</footer>
       </section>
 
       {selected && (

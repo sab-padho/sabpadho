@@ -1,5 +1,5 @@
 import { ArrowRight, ArrowUpRight, CircleAlert, TrendingDown, TrendingUp } from 'lucide-react'
-import type { Page } from '../data'
+import { TOTAL_LEARNERS, type Page } from '../data'
 import { useAdmin } from '../store'
 import { Badge, Bars, Progress, Sparkline, formatDate, number, relativeTime, statusTone } from '../ui'
 
@@ -16,12 +16,14 @@ function Delta({ value, label }: { value: number; label: string }) {
 export function Overview({ onNavigate }: { onNavigate: (page: Page) => void }) {
   const { data } = useAdmin()
   const active = data.learners.filter(learner => learner.status === 'Active')
-  const invited = data.learners.filter(learner => learner.status === 'Invited').length
   const suspended = data.learners.filter(learner => learner.status === 'Suspended').length
   const attempts = active.reduce((sum, learner) => sum + learner.attempts, 0)
   const accuracy = active.length ? Math.round(active.reduce((sum, learner) => sum + learner.accuracy, 0) / active.length) : 0
   const mockAttempts = data.mocks.reduce((sum, mock) => sum + mock.attempts, 0)
   const publishedQuestions = data.questions.filter(question => question.status === 'Published').length
+  const pro = data.plans.find(plan => plan.id === 'pro')
+  const free = data.plans.find(plan => plan.id === 'free')
+  const mrr = (pro?.learners ?? 0) * (pro?.price ?? 0)
 
   const attemptsSeries = data.daily.map(point => point.attempts)
   const learnerSeries = data.daily.map(point => point.learners)
@@ -40,11 +42,18 @@ export function Overview({ onNavigate }: { onNavigate: (page: Page) => void }) {
     <>
       <div className="stat-grid">
         <button className="panel stat" onClick={() => onNavigate('Learners')}>
-          <span className="stat-label">Active learners</span>
-          <strong>{number(active.length)}</strong>
+          <span className="stat-label">Learners</span>
+          <strong>{number(TOTAL_LEARNERS)}</strong>
           <Delta value={6} label="vs last week" />
           <Sparkline values={learnerSeries} tone="positive" />
-          <span className="stat-foot">{invited} invited · {suspended} suspended</span>
+          <span className="stat-foot">{number(free?.learners ?? 0)} free · {number(pro?.learners ?? 0)} pro</span>
+        </button>
+        <button className="panel stat" onClick={() => onNavigate('Plans')}>
+          <span className="stat-label">Pro subscribers</span>
+          <strong>{number(pro?.learners ?? 0)}</strong>
+          <Delta value={11} label="vs last week" />
+          <Progress value={Math.round(((pro?.learners ?? 0) / TOTAL_LEARNERS) * 100)} />
+          <span className="stat-foot">₹{number(mrr)} per month at ₹{pro?.price ?? 51}</span>
         </button>
         <button className="panel stat" onClick={() => onNavigate('Questions')}>
           <span className="stat-label">Practice attempts</span>
@@ -58,7 +67,7 @@ export function Overview({ onNavigate }: { onNavigate: (page: Page) => void }) {
           <strong>{accuracy}%</strong>
           <Delta value={3} label="vs last week" />
           <Progress value={accuracy} />
-          <span className="stat-foot">Across all active learners</span>
+          <span className="stat-foot">Sample of {data.learners.length} loaded accounts</span>
         </button>
         <button className="panel stat" onClick={() => onNavigate('Mock tests')}>
           <span className="stat-label">Mock attempts</span>

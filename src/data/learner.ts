@@ -7,7 +7,7 @@ export const learner = {
   target: 'SSC CGL 2027 · Tier I',
   targetDate: '11 March 2027',
   daysToExam: 112,
-  plan: 'Preview plan',
+  plan: 'Free plan',
   joined: 'August 2026',
   streak: 9,
   weeklyGoal: 300,

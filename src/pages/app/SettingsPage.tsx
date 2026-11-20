@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowRight, LogOut, Trash2 } from 'lucide-react'
+import { ArrowRight, Check, Crown, LogOut, Trash2 } from 'lucide-react'
 import { Avatar, Badge, Button, SectionLabel, Segmented, Switch } from '../../components/ui'
 import { learner } from '../../data/learner'
 import { useTheme } from '../../lib/theme'
@@ -181,6 +181,42 @@ export function SettingsPage() {
         </div>
 
         <aside className="space-y-3">
+          <section className="card p-4">
+            <div className="flex items-center justify-between gap-2">
+              <p className="label">{copy.settings.planCard}</p>
+              <Badge tone="brand">{planLabel(lang, learner.plan)}</Badge>
+            </div>
+
+            <div className="mt-3 flex items-baseline justify-between gap-2">
+              <p className="text-[13.5px] font-semibold">{copy.settings.planFree}</p>
+              <p className="text-[11.5px] text-muted">₹0</p>
+            </div>
+            <p className="mt-0.5 text-[11px] leading-relaxed text-muted">{copy.settings.planFreeBody}</p>
+
+            <div className="mt-3 rounded-xl border border-brand/25 bg-brand-soft/35 p-3">
+              <div className="flex items-baseline justify-between gap-2">
+                <p className="text-[13.5px] font-semibold">{copy.settings.planPro}</p>
+                <p className="text-[17px] font-semibold tracking-tight">
+                  {copy.settings.planPrice(51)}
+                  <span className="text-[10.5px] font-normal text-muted">{copy.settings.planPerMonth}</span>
+                </p>
+              </div>
+              <p className="mt-1 text-[11px] leading-relaxed text-muted">{copy.settings.planProBody}</p>
+              <ul className="mt-2 space-y-1">
+                {copy.settings.planProFeatures.map((feature) => (
+                  <li key={feature} className="flex gap-1.5 text-[11px] leading-relaxed text-ink-soft">
+                    <Check size={12} className="mt-0.5 shrink-0 text-positive" />
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+              <Button className="mt-3 w-full" size="sm" onClick={() => notify(copy.settings.planUpgraded)}>
+                <Crown size={13} /> {copy.settings.planUpgrade}
+              </Button>
+            </div>
+            <p className="mt-2 text-[10px] leading-relaxed text-muted">{copy.settings.planNote}</p>
+          </section>
+
           <div className="card p-4">
             <p className="label">{copy.settings.profile}</p>
             <div className="mt-3 flex items-center gap-3">

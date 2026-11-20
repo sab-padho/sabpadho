@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createClient } from '@supabase/supabase-js'
-import { ArrowRight, BookOpen, ClipboardList, Eye, EyeOff, History, LayoutDashboard, ListChecks, LockKeyhole, LogOut, Megaphone, RotateCcw, Users } from 'lucide-react'
+import { ArrowRight, BookOpen, ClipboardList, CreditCard, Eye, EyeOff, History, LayoutDashboard, ListChecks, LockKeyhole, LogOut, Megaphone, RotateCcw, Ticket, Users } from 'lucide-react'
 import logo from '../../public/brand/sabpadho-mark.png'
 import '../../src/index.css'
 import './style.css'
@@ -14,6 +14,8 @@ import { Learners } from './pages/Learners'
 import { Mocks } from './pages/Mocks'
 import { Overview } from './pages/Overview'
 import { Questions } from './pages/Questions'
+import { Plans } from './pages/Plans'
+import { Coupons } from './pages/Coupons'
 import { Subjects } from './pages/Subjects'
 
 const { VITE_SUPABASE_URL: url, VITE_SUPABASE_PUBLISHABLE_KEY: key } = import.meta.env
@@ -35,6 +37,8 @@ const navigation: Record<Page, typeof LayoutDashboard> = {
   Subjects: BookOpen,
   Questions: ListChecks,
   'Mock tests': ClipboardList,
+  Plans: CreditCard,
+  Coupons: Ticket,
   Announcements: Megaphone,
   Activity: History,
 }
@@ -234,6 +238,8 @@ function Workspace({ admin, onSignOut }: { admin: Admin; onSignOut: () => void }
         {page === 'Subjects' && <Subjects />}
         {page === 'Questions' && <Questions />}
         {page === 'Mock tests' && <Mocks />}
+        {page === 'Plans' && <Plans />}
+        {page === 'Coupons' && <Coupons />}
         {page === 'Announcements' && <Announcements />}
         {page === 'Activity' && <ActivityPage />}
       </main>

@@ -19,6 +19,26 @@ const projectHost = (() => {
   }
 })()
 
+/**
+ * Supabase Auth identifies an account by email, so staff usernames are created under an
+ * internal, non-routable domain: `aditya` becomes `aditya@sabpadho.local`. Override the
+ * domain with VITE_ADMIN_EMAIL_DOMAIN to match the accounts in your project.
+ */
+const USERNAME_DOMAIN = ((import.meta.env.VITE_ADMIN_EMAIL_DOMAIN as string | undefined) ?? '').trim() || 'sabpadho.local'
+
+/** `aditya`, `aditya@sabpadho.local` or any full email the account was created with. */
+function loginEmail(input: string): string {
+  const value = input.trim().toLowerCase()
+  return value.includes('@') ? value : `${value}@${USERNAME_DOMAIN}`
+}
+
+/** Short name for the signed-in account: `aditya@sabpadho.local` → `aditya`. */
+function displayName(address: string | undefined): string {
+  if (!address) return ''
+  const at = address.lastIndexOf('@')
+  return at > 0 && address.slice(at + 1) === USERNAME_DOMAIN ? address.slice(0, at) : address
+}
+
 const navigation = { Overview: LayoutDashboard, Learners: Users, Subjects: BookOpen, 'Mock tests': ClipboardList }
 type Page = keyof typeof navigation
 
@@ -36,16 +56,19 @@ function describeSignInFailure(failure: AuthFailure): SignInIssue {
   const issue = (text: string, canResend = false): SignInIssue => ({ message: text, code: code || undefined, canResend })
 
   if (code === 'email_not_confirmed' || message.includes('email not confirmed')) {
-    return issue('This account exists, but its email address has not been confirmed yet. Open the confirmation link Supabase emailed, or confirm the user in Authentication → Users.', true)
+    return issue('This account exists, but it is not confirmed yet. Confirm it in Authentication → Users (⋯ → Confirm email), then sign in again.', true)
   }
   if (code === 'invalid_credentials' || message.includes('invalid login credentials')) {
-    return issue('Supabase did not match that email and password. Use Show password to check for stray spaces or autocorrect, and make sure the account exists in this project’s Authentication → Users list.')
+    return issue('Supabase did not match that username and password. Type just the username (for example aditya), check the password with Show password, and make sure the account exists in this project’s Authentication → Users list.')
   }
   if (code === 'user_banned' || message.includes('banned')) {
     return issue('This account is banned. Unban it in Authentication → Users before signing in again.')
   }
   if (code === 'over_request_rate_limit' || code === 'over_email_send_rate_limit' || failure.status === 429 || message.includes('rate limit')) {
     return issue('Too many sign-in attempts. Wait a minute and try again.')
+  }
+  if (code === 'email_address_invalid' || code === 'validation_failed' || message.includes('unable to validate email')) {
+    return issue('That does not look like a username. Use letters, numbers, dot, dash or underscore, with no spaces.')
   }
   if (code === 'email_provider_disabled' || code === 'provider_disabled') {
     return issue('Email and password sign-in is disabled for this project. Enable the Email provider in Authentication → Providers.')
@@ -123,7 +146,7 @@ function App() {
   const [issue, setIssue] = useState<SignInIssue | null>(null)
   const [page, setPage] = useState<Page>('Overview')
   const [query, setQuery] = useState('')
-  const [email, setEmail] = useState('')
+  const [account, setAccount] = useState('')
   const [password, setPassword] = useState('')
   const [resend, setResend] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle')
   const token = session?.access_token
@@ -168,7 +191,8 @@ function App() {
     setResend('idle')
     try {
       const { error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
+        // `aditya` → `aditya@sabpadho.local`; a full address is passed through untouched.
+        email: loginEmail(account),
         // Passwords are sent exactly as typed: trimming one would break valid ones.
         password,
       })
@@ -181,10 +205,10 @@ function App() {
   }
 
   async function resendConfirmation() {
-    if (!supabase || !email.trim()) return
+    if (!supabase || !account.trim()) return
     setResend('sending')
     try {
-      const { error } = await supabase.auth.resend({ type: 'signup', email: email.trim() })
+      const { error } = await supabase.auth.resend({ type: 'signup', email: loginEmail(account) })
       setResend(error ? 'failed' : 'sent')
     } catch {
       setResend('failed')
@@ -217,23 +241,26 @@ function App() {
     const checking = loading || Boolean(session && !issue)
     return <main className="login-layout">
       <section className="login-intro"><Brand /><div><span className="eyebrow">SABPADHO WORKSPACE</span><h1>Manage the learning experience.</h1><p>One place to review learners, subjects, and mock tests.</p></div><small>Restricted to authorized staff</small></section>
-      <section className="login-main"><div className="panel login-card"><div className="icon-tile"><LockKeyhole size={22} /></div><h2>Admin sign in</h2><p>Use your SabPadho admin account to continue.</p>
+      <section className="login-main"><div className="panel login-card"><div className="icon-tile"><LockKeyhole size={22} /></div><h2>Admin sign in</h2><p>Use your staff username and password to continue.</p>
         {checking ? <p role="status">Checking admin access…</p> : <form onSubmit={signIn}>
           <div className="field-group">
-            <label htmlFor="email">Email address</label>
+            <label htmlFor="account">Username</label>
             <input
-              id="email"
-              name="email"
-              type="email"
+              id="account"
+              name="username"
+              type="text"
               autoComplete="username"
               autoCapitalize="none"
               autoCorrect="off"
               spellCheck={false}
-              placeholder="you@sabpadho.com"
-              value={email}
-              onChange={event => { setEmail(event.target.value); setResend('idle') }}
+              placeholder="aditya"
+              value={account}
+              onChange={event => { setAccount(event.target.value); setResend('idle') }}
               required
             />
+            <small className="field-note">
+              Signs in as {account.trim() ? loginEmail(account) : `yourname@${USERNAME_DOMAIN}`}. A full email works too.
+            </small>
           </div>
           <PasswordField value={password} onChange={next => { setPassword(next); setResend('idle') }} />
           {!supabase && <p className="notice" role="status">Sign-in is not configured. Add the Supabase URL and publishable key to enable it.</p>}
@@ -246,7 +273,7 @@ function App() {
           </div>}
           {session ? <button className="primary" type="button" disabled={busy} onClick={signOut}>Return to sign in</button> : <button className="primary" disabled={!supabase || busy}>{busy ? 'Signing in…' : 'Sign in'} <ArrowRight size={17} /></button>}
         </form>}
-        {projectHost && <small className="project-hint">Connected to {projectHost}. Accounts must exist in this project’s Authentication → Users.</small>}
+        {projectHost && <small className="project-hint">Connected to {projectHost}. Accounts live in this project’s Authentication → Users; usernames map to @{USERNAME_DOMAIN}.</small>}
       </div></section>
     </main>
   }
@@ -258,7 +285,7 @@ function App() {
       const Icon = navigation[item]
       return <button key={item} aria-current={page === item ? 'page' : undefined} onClick={() => navigate(item)}><Icon size={19} />{item}</button>
     })}</nav><button className="logout" onClick={signOut} disabled={busy}><LogOut size={18} />Sign out</button></aside>
-    <div className="workspace-body"><header className="topbar"><strong>Admin workspace</strong><span>{session.user.email}</span></header>
+    <div className="workspace-body"><header className="topbar"><strong>Admin workspace</strong><span title={session.user.email ?? ''}>{displayName(session.user.email)}</span></header>
       <main className="content"><div className="page-heading"><div><span className="eyebrow">ADMIN PORTAL</span><h1>{page}</h1><p>{section?.description ?? 'A snapshot of your SabPadho workspace.'}</p></div><span className="badge">Sample data</span></div>
       {issue && <p className="notice" role="alert">{issue.message}</p>}
       {section ? <section className="panel table-panel"><label className="search">Filter {page.toLowerCase()}<input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search records" /></label><div className="table-scroll"><table aria-label={page}><thead><tr>{section.columns.map(col => <th key={col} scope="col">{col}</th>)}</tr></thead><tbody>{rows?.length ? rows.map(row => <tr key={row[0]}>{row.map((cell, i) => <td key={i}>{i === 2 ? <span className="badge status">{cell}</span> : cell}</td>)}</tr>) : <tr><td colSpan={section.columns.length}>No matching records.</td></tr>}</tbody></table></div></section> : <>

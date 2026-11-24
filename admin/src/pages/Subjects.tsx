@@ -1,13 +1,18 @@
 import { useState } from 'react'
-import { ChevronRight, Download } from 'lucide-react'
+import { ChevronRight, Download, Sparkles } from 'lucide-react'
+import { AiUploadDrawer } from '../AiUploadDrawer'
 import type { Subject } from '../data'
-import { useAdmin } from '../store'
+import { toLearnerChapterId, useAdmin } from '../store'
 import { Badge, Drawer, PageHeader, Progress, Toggle, downloadCsv, formatDate, number, relativeTime, statusTone, useToast } from '../ui'
 
 export function Subjects() {
-  const { data, setSubjectStatus, setChapterStatus } = useAdmin()
+  const { data, setSubjectStatus, setChapterStatus, setChapterFree } = useAdmin()
   const notify = useToast()
   const [open, setOpen] = useState<string | null>(null)
+  const [uploadTarget, setUploadTarget] = useState<{
+    subjectId: string
+    chapterId?: string
+  } | null>(null)
   const subject = data.subjects.find(item => item.id === open) ?? null
   const chapters = data.subjects.reduce((sum, item) => sum + item.chapters.length, 0)
   const drafts = data.subjects.reduce((sum, item) => sum + item.chapters.filter(chapter => chapter.status === 'Draft').length, 0)
@@ -35,9 +40,23 @@ export function Subjects() {
     <>
       <PageHeader
         eyebrow="ADMIN PORTAL"
-        title="Subjects"
-        description={`${data.subjects.length} subjects · ${chapters} chapters · ${drafts} chapters in draft`}
-        actions={<button className="button secondary" onClick={exportCsv}><Download size={16} />Export CSV</button>}
+        title="Subjects & Notes"
+        description={`${data.subjects.length} subjects · ${chapters} chapters · ${data.notes.length} AI note sets · ${drafts} chapters in draft`}
+        actions={
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <button
+              className="button primary"
+              onClick={() => setUploadTarget({ subjectId: data.subjects[0]?.id ?? 'maths' })}
+            >
+              <Sparkles size={16} />
+              Upload PDF / Image Notes
+            </button>
+            <button className="button secondary" onClick={exportCsv}>
+              <Download size={16} />
+              Export CSV
+            </button>
+          </div>
+        }
       />
 
       <section className="panel table-panel">
@@ -103,15 +122,48 @@ export function Subjects() {
           </div>
 
           <div className="drawer-block">
-            <h3>Chapters</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3>Chapters</h3>
+              <button
+                type="button"
+                className="button small primary"
+                onClick={() => setUploadTarget({ subjectId: subject.id })}
+              >
+                <Sparkles size={13} /> Upload Notes / MCQs
+              </button>
+            </div>
             <ul className="chapter-list">
-              {subject.chapters.map(chapter => (
+              {subject.chapters.map(chapter => {
+                const noteCount = data.notes.filter(
+                  n => n.chapterId === toLearnerChapterId(chapter.id) || n.chapterId === chapter.id,
+                ).length
+                return (
                 <li key={chapter.id}>
                   <div>
                     <strong>{chapter.title}</strong>
-                    <small>{chapter.questions} questions · {chapter.difficulty} · edited {relativeTime(chapter.updated)}</small>
+                    <small>
+                      {chapter.questions} questions
+                      {noteCount > 0 ? ` · ${noteCount} note${noteCount === 1 ? '' : 's'}` : ''}
+                      {chapter.isFree ? ' · Free visitor sample' : ' · Signup required'}
+                      {' · '}edited {relativeTime(chapter.updated)}
+                    </small>
                   </div>
                   <div className="chapter-actions">
+                    <button
+                      type="button"
+                      className="button small secondary"
+                      onClick={() => {
+                        const nextFree = !chapter.isFree
+                        setChapterFree(subject.id, chapter.id, nextFree)
+                        notify(
+                          nextFree
+                            ? `${chapter.title} marked as free visitor primer`
+                            : `${chapter.title} restricted to signed-up learners`,
+                        )
+                      }}
+                    >
+                      {chapter.isFree ? 'Free primer' : 'Locked'}
+                    </button>
                     <Badge tone={statusTone(chapter.status)}>{chapter.status}</Badge>
                     <Toggle
                       checked={chapter.status === 'Published'}
@@ -120,7 +172,8 @@ export function Subjects() {
                     />
                   </div>
                 </li>
-              ))}
+                )
+              })}
             </ul>
           </div>
 
@@ -132,8 +185,17 @@ export function Subjects() {
               <li><span>Created</span><span>{formatDate(subject.chapters[0].updated)}</span></li>
             </ul>
           </div>
-          <p className="drawer-note">Demo action: chapter changes are stored in this browser and written to the activity log.</p>
+          <p className="drawer-note">Changes sync to Supabase tables (`subjects`, `chapters`, `chapter_notes`, `questions`) and update the learner portal.</p>
         </Drawer>
+      )}
+
+      {uploadTarget && (
+        <AiUploadDrawer
+          defaultMode="notes"
+          defaultSubjectId={uploadTarget.subjectId}
+          defaultChapterId={uploadTarget.chapterId}
+          onClose={() => setUploadTarget(null)}
+        />
       )}
     </>
   )

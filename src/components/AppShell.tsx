@@ -3,9 +3,12 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-do
 import {
   Bookmark,
   ChartNoAxesColumn,
+  Check,
+  ChevronDown,
   ChevronRight,
   ClipboardList,
   Flame,
+  FolderArchive,
   Home,
   Menu,
   PenLine,
@@ -16,11 +19,13 @@ import {
   X,
 } from 'lucide-react'
 import { Logo, LogoMark, LangToggle, ThemeToggle } from './brand'
-import { Avatar } from './ui'
+import { Avatar, Badge } from './ui'
 import { cn } from '../lib/utils'
 import { learner, revisionQueue, shelfItems } from '../data/learner'
-import { subjects } from '../data/subjects'
-import { isPlayableMock, mockPapers } from '../data/mocks'
+import { EXAM_OPTIONS, getExamConfig, type ExamId } from '../data/exams'
+import { useCatalog } from '../lib/catalog'
+import { useAuth } from '../lib/auth'
+import { useToast } from '../lib/toast'
 import { useLang } from '../lib/lang'
 import { planLabel, useCopy } from '../lib/ui-copy'
 
@@ -68,6 +73,8 @@ function pageTitle(pathname: string, copy: ReturnType<typeof useCopy>) {
 export function AppShell() {
   const { pathname } = useLocation()
   const copy = useCopy()
+  const { isPlayableMock } = useCatalog()
+  const { user, preferredExam } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => {
@@ -84,6 +91,7 @@ export function AppShell() {
   const examHallMatch = pathname.match(/^\/app\/mocks\/(.+)\/attempt$/)
   const inExamHall = examHallMatch ? isPlayableMock(examHallMatch[1]) : false
   const title = pageTitle(pathname, copy)
+  const initials = user?.initials ?? learner.initials
 
   return (
     <div className="min-h-dvh bg-canvas">
@@ -106,10 +114,14 @@ export function AppShell() {
               </Link>
               <ChevronRight size={13} className="text-line-strong" />
               <span className="font-medium text-ink">{title}</span>
+              <Badge tone="brand" className="ml-1">
+                {preferredExam}
+              </Badge>
             </div>
             <span className="text-[13px] font-semibold text-ink lg:hidden">SabPadho</span>
 
             <div className="ml-auto flex items-center gap-1.5">
+              <ExamOthersSwitcher />
               <SearchBox />
               <LangToggle className="hidden sm:inline-flex" />
               <ThemeToggle />
@@ -118,7 +130,7 @@ export function AppShell() {
                 className="ml-0.5 rounded-full transition hover:opacity-90"
                 aria-label={copy.shell.profile}
               >
-                <Avatar initials={learner.initials} size={32} />
+                <Avatar initials={initials} size={32} />
               </Link>
               <button
                 type="button"
@@ -149,6 +161,104 @@ export function AppShell() {
   )
 }
 
+/**
+ * Compact header switcher displaying the active exam + "Others" menu so the
+ * learner can switch to any other exam in one click from anywhere in the app.
+ */
+function ExamOthersSwitcher() {
+  const { preferredExam, setPreferredExam } = useAuth()
+  const { notify } = useToast()
+  const { lang } = useLang()
+  const [open, setOpen] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const otherExams = EXAM_OPTIONS.filter((item) => item.id !== preferredExam)
+
+  useEffect(() => {
+    if (!open) return
+    const handleOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleOutside)
+    return () => document.removeEventListener('mousedown', handleOutside)
+  }, [open])
+
+  async function selectExam(next: ExamId) {
+    await setPreferredExam(next)
+    setOpen(false)
+    notify(
+      lang === 'hi'
+        ? `परीक्षा ट्रैक बदलकर ${next} कर दिया गया है।`
+        : `Switched workspace to ${next}.`,
+      'success',
+    )
+  }
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="inline-flex h-9 items-center gap-1.5 rounded-[10px] border border-line bg-surface px-2.5 text-[12px] font-medium text-ink transition hover:border-line-strong"
+        title="Switch exam or open Others"
+      >
+        <FolderArchive size={13} className="text-brand" />
+        <span className="hidden sm:inline">{preferredExam}</span>
+        <span className="text-muted">·</span>
+        <span className="text-brand-ink">{lang === 'hi' ? 'अन्य' : 'Others'}</span>
+        <ChevronDown size={13} className={cn('text-muted transition-transform', open && 'rotate-180')} />
+      </button>
+
+      {open ? (
+        <div className="animate-pop absolute right-0 top-11 z-50 w-[280px] overflow-hidden rounded-xl border border-line bg-surface p-2 shadow-[var(--shadow-pop)]">
+          <div className="border-b border-line px-2.5 pb-2 pt-1">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
+              {lang === 'hi' ? 'वर्तमान परीक्षा' : 'Active exam'}
+            </p>
+            <div className="mt-1 flex items-center justify-between">
+              <span className="text-[12.5px] font-semibold text-ink">{preferredExam}</span>
+              <Badge tone="positive">
+                <Check size={10} /> {lang === 'hi' ? 'सक्रिय' : 'Active'}
+              </Badge>
+            </div>
+          </div>
+
+          <div className="pt-2">
+            <p className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
+              {lang === 'hi' ? 'अन्य परीक्षाएँ (Others)' : 'Others (Zipped exams)'}
+            </p>
+            <ul className="space-y-0.5">
+              {otherExams.map((exam) => (
+                <li key={exam.id}>
+                  <button
+                    type="button"
+                    onClick={() => selectExam(exam.id)}
+                    className="flex w-full items-start justify-between gap-2 rounded-lg px-2.5 py-2 text-left transition hover:bg-surface-2"
+                  >
+                    <span className="min-w-0">
+                      <span className="block text-[12.5px] font-medium text-ink">
+                        {exam.shortLabel}
+                      </span>
+                      <span className="block truncate text-[10.5px] text-muted">
+                        {lang === 'hi' ? exam.taglineHi : exam.tagline}
+                      </span>
+                    </span>
+                    <span className="mt-0.5 shrink-0 text-[10.5px] font-medium text-brand-ink">
+                      {lang === 'hi' ? 'चुनें' : 'Switch'}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 function navLinkClass(active: boolean) {
   return cn(
     'group flex items-center gap-2.5 rounded-[9px] px-2.5 py-2 text-[13.5px] transition',
@@ -161,6 +271,16 @@ function navLinkClass(active: boolean) {
 function DesktopSidebar() {
   const copy = useCopy()
   const { lang } = useLang()
+  const { user, preferredExam, setPreferredExam } = useAuth()
+  const { notify } = useToast()
+  const [othersExpanded, setOthersExpanded] = useState(false)
+
+  const examInfo = getExamConfig(preferredExam)
+  const otherExams = EXAM_OPTIONS.filter((item) => item.id !== preferredExam)
+  const displayName = user?.name ?? learner.name
+  const initials = user?.initials ?? learner.initials
+  const plan = user?.plan ?? learner.plan
+
   return (
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-[248px] flex-col border-r border-rail-line bg-rail lg:flex">
       <div className="flex h-16 items-center px-5">
@@ -172,10 +292,10 @@ function DesktopSidebar() {
           to="/app/settings"
           className="flex items-center gap-2.5 rounded-xl border border-white/10 bg-white/5 px-2.5 py-2 transition hover:bg-white/10"
         >
-          <Avatar initials={learner.initials} size={32} />
+          <Avatar initials={initials} size={32} />
           <span className="min-w-0 flex-1 leading-tight">
-            <span className="block truncate text-[13px] font-medium text-rail-ink">{learner.name}</span>
-            <span className="block truncate text-[11px] text-rail-muted">{learner.target}</span>
+            <span className="block truncate text-[13px] font-medium text-rail-ink">{displayName}</span>
+            <span className="block truncate text-[11px] text-rail-muted">{examInfo.targetDisplay}</span>
           </span>
           <ChevronRight size={14} className="text-rail-muted" />
         </Link>
@@ -183,7 +303,7 @@ function DesktopSidebar() {
 
       <nav className="mt-5 flex-1 overflow-y-auto px-3 pb-3" aria-label={copy.a11y.portal}>
         <p className="px-2.5 pb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-rail-muted/75">
-          {copy.shell.learn}
+          {copy.shell.learn} · {preferredExam}
         </p>
         <ul className="space-y-0.5">
           {learnNav.map((item) => (
@@ -214,7 +334,59 @@ function DesktopSidebar() {
           ))}
         </ul>
 
-        <p className="mt-6 px-2.5 pb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-rail-muted/75">
+        <p className="mt-5 px-2.5 pb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-rail-muted/75">
+          {lang === 'hi' ? 'परीक्षा ट्रैक' : 'Exam tracks'}
+        </p>
+        <div className="rounded-xl border border-white/10 bg-white/5 p-1.5">
+          <button
+            type="button"
+            onClick={() => setOthersExpanded((v) => !v)}
+            aria-expanded={othersExpanded}
+            className="flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left text-[12.5px] text-rail-ink transition hover:bg-white/5"
+          >
+            <span className="flex items-center gap-2">
+              <FolderArchive size={14} className="text-[#c6b1e6]" />
+              <span>{lang === 'hi' ? 'अन्य परीक्षाएँ (Others)' : 'Others (Zipped)'}</span>
+            </span>
+            <span className="flex items-center gap-1 text-[10.5px] text-rail-muted">
+              {otherExams.length}
+              <ChevronDown
+                size={13}
+                className={cn('transition-transform', othersExpanded && 'rotate-180')}
+              />
+            </span>
+          </button>
+
+          {othersExpanded ? (
+            <ul className="mt-1 space-y-0.5 border-t border-white/10 pt-1">
+              {otherExams.map((exam) => (
+                <li key={exam.id}>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await setPreferredExam(exam.id)
+                      setOthersExpanded(false)
+                      notify(
+                        lang === 'hi'
+                          ? `मुख्य परीक्षा ${exam.shortLabel} चुनी गई।`
+                          : `Switched active exam to ${exam.shortLabel}.`,
+                        'success',
+                      )
+                    }}
+                    className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-[12px] text-rail-muted transition hover:bg-white/10 hover:text-rail-ink"
+                  >
+                    <span className="truncate">{exam.shortLabel}</span>
+                    <span className="text-[10px] text-[#c6b1e6]">
+                      {lang === 'hi' ? 'चुनें' : 'Select'}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+
+        <p className="mt-5 px-2.5 pb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-rail-muted/75">
           {copy.shell.yourSpace}
         </p>
         <ul className="space-y-0.5">
@@ -236,7 +408,7 @@ function DesktopSidebar() {
           ))}
         </ul>
 
-        <div className="mt-6 rounded-xl border border-white/10 bg-white/5 p-3">
+        <div className="mt-5 rounded-xl border border-white/10 bg-white/5 p-3">
           <div className="flex items-center gap-2 text-[12px] font-medium text-rail-ink">
             <Flame size={15} className="text-[#dfa04f]" />
             {copy.shell.streak(learner.streak)}
@@ -256,9 +428,9 @@ function DesktopSidebar() {
       <div className="border-t border-rail-line px-3 py-3">
         <div className="flex items-center justify-between px-1 text-[11.5px] text-rail-muted">
           <span className="inline-flex items-center gap-1.5">
-            <Target size={13} /> {copy.shell.daysToGo(learner.daysToExam)}
+            <Target size={13} /> {copy.shell.daysToGo(examInfo.daysToExam)}
           </span>
-          <span>{planLabel(lang, learner.plan)}</span>
+          <span>{planLabel(lang, plan)}</span>
         </div>
       </div>
     </aside>
@@ -311,6 +483,12 @@ function MobileTabBar() {
 
 function MobileMenu({ onClose }: { onClose: () => void }) {
   const copy = useCopy()
+  const { lang } = useLang()
+  const { user, preferredExam, setPreferredExam } = useAuth()
+  const { notify } = useToast()
+  const examInfo = getExamConfig(preferredExam)
+  const otherExams = EXAM_OPTIONS.filter((item) => item.id !== preferredExam)
+
   return (
     <div className="fixed inset-0 z-50 lg:hidden">
       <button
@@ -333,12 +511,34 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="mt-4 flex items-center gap-2.5 rounded-xl border border-line bg-surface-2/60 p-2.5">
-          <Avatar initials={learner.initials} size={36} />
+          <Avatar initials={user?.initials ?? learner.initials} size={36} />
           <div className="min-w-0">
-            <p className="truncate text-[13.5px] font-medium">{learner.name}</p>
+            <p className="truncate text-[13.5px] font-medium">{user?.name ?? learner.name}</p>
             <p className="truncate text-[11.5px] text-muted">
-              {learner.target} · {copy.shell.daysToGo(learner.daysToExam)}
+              {examInfo.targetDisplay} · {copy.shell.daysToGo(examInfo.daysToExam)}
             </p>
+          </div>
+        </div>
+
+        <div className="mt-3 rounded-xl border border-line bg-surface-2/40 p-2.5">
+          <p className="text-[10.5px] font-semibold uppercase tracking-wider text-muted">
+            {lang === 'hi' ? 'अन्य परीक्षाएँ (Others)' : 'Others · Switch exam'}
+          </p>
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {otherExams.map((exam) => (
+              <button
+                key={exam.id}
+                type="button"
+                onClick={async () => {
+                  await setPreferredExam(exam.id)
+                  notify(`Switched exam to ${exam.shortLabel}`, 'success')
+                  onClose()
+                }}
+                className="rounded-md border border-line bg-surface px-2 py-1 text-[11.5px] font-medium text-ink-soft hover:border-brand hover:text-brand-ink"
+              >
+                {exam.shortLabel}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -376,6 +576,8 @@ function SearchBox() {
   const inputRef = useRef<HTMLInputElement>(null)
   const { lang } = useLang()
   const copy = useCopy()
+  const { subjects, mockPapers } = useCatalog()
+  const { preferredExam } = useAuth()
 
   const results = useMemo(() => {
     const term = query.trim().toLowerCase()
@@ -395,15 +597,16 @@ function SearchBox() {
         })),
     )
     const mockHits = mockPapers
-      .filter((paper) => paper.title.toLowerCase().includes(term))
+      .filter((paper) => `${paper.title} ${paper.exam}`.toLowerCase().includes(term))
+      .sort((a, b) => Number(b.exam === preferredExam) - Number(a.exam === preferredExam))
       .map((paper) => ({
         key: paper.id,
         label: paper.title,
-        meta: copy.shell.mockResult,
+        meta: `${paper.exam} · ${copy.shell.mockResult}`,
         to: `/app/mocks/${paper.id}/instructions`,
       }))
     return [...chapterHits, ...mockHits].slice(0, 5)
-  }, [query, lang, copy.shell.mockResult])
+  }, [query, lang, copy.shell.mockResult, subjects, mockPapers, preferredExam])
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {

@@ -1,4 +1,5 @@
 import type { SubjectId } from './subjects'
+import type { ExamId } from './exams'
 
 export type MockKind = 'Full length' | 'Sectional' | 'Mini'
 export type MockStatus = 'available' | 'scheduled' | 'completed'
@@ -15,7 +16,7 @@ export type MockSection = {
 export type MockPaper = {
   id: string
   title: string
-  exam: 'SSC CGL' | 'SSC CHSL'
+  exam: ExamId
   kind: MockKind
   status: MockStatus
   durationMinutes: number
@@ -168,6 +169,76 @@ export const mockPapers: MockPaper[] = [
         'en-idiom-2',
         'en-error-1',
       ]),
+    ],
+  },
+  {
+    id: 'chsl-mini-01',
+    title: 'CHSL Tier I · Mini mock 01',
+    exam: 'SSC CHSL',
+    kind: 'Mini',
+    status: 'available',
+    durationMinutes: 12,
+    description:
+      'Ten questions in the CHSL Tier-I pattern across Reasoning, Quant, Language (Hindi/English) and General Awareness.',
+    descriptionHi:
+      'CHSL Tier-I पैटर्न में दस प्रश्न: रीज़निंग, गणित, भाषा (हिंदी/अंग्रेज़ी) और सामान्य जागरूकता।',
+    sections: [
+      section('reasoning', 'General Intelligence & Reasoning', ['reasoning'], ['gi-syl-1', 'gi-code-1']),
+      section('quant', 'Quantitative Aptitude', ['maths'], ['qa-pct-1', 'qa-ratio-1', 'qa-pl-1']),
+      section('hindi', 'Hindi / English Language', ['hindi', 'english'], ['hi-muh-1', 'hi-paryay-1', 'en-syn-1']),
+      section('gk', 'General Awareness', ['gk'], ['ga-polity-1', 'ga-science-1']),
+    ],
+  },
+  {
+    id: 'gd-mini-01',
+    title: 'SSC GD Constable · Speed Set 01',
+    exam: 'SSC GD',
+    kind: 'Mini',
+    status: 'available',
+    durationMinutes: 12,
+    description:
+      'Eight questions tailored to the SSC GD Constable CBT pattern: Elementary Maths, Reasoning, General Knowledge and Hindi.',
+    descriptionHi:
+      'SSC GD कांस्टेबल पैटर्न पर आधारित आठ प्रश्नों का त्वरित अभ्यास सेट।',
+    sections: [
+      section('reasoning', 'General Intelligence & Reasoning', ['reasoning'], ['gi-code-1', 'gi-series-1']),
+      section('quant', 'Elementary Mathematics', ['maths'], ['qa-pct-1', 'qa-tw-1']),
+      section('hindi', 'Hindi Language', ['hindi'], ['hi-muh-1', 'hi-vakya-1']),
+      section('gk', 'General Knowledge', ['gk'], ['ga-polity-1', 'ga-geo-2']),
+    ],
+  },
+  {
+    id: 'rrb-ntpc-01',
+    title: 'Railways RRB NTPC · CBT-1 Mini 01',
+    exam: 'Railways',
+    kind: 'Mini',
+    status: 'available',
+    durationMinutes: 14,
+    description:
+      'Nine questions on the RRB NTPC Stage-I scheme with higher weight on General Science, Static GK, Maths and Reasoning.',
+    descriptionHi:
+      'रेलवे RRB NTPC CBT-1 पैटर्न पर आधारित नौ प्रश्न: सामान्य विज्ञान, जागरूकता, गणित और तर्कशक्ति।',
+    sections: [
+      section('maths', 'Mathematics', ['maths'], ['qa-pct-1', 'qa-tw-1', 'qa-ratio-1']),
+      section('reasoning', 'General Intelligence & Reasoning', ['reasoning'], ['gi-syl-1', 'gi-series-1', 'gi-code-1']),
+      section('gk', 'General Awareness & Science', ['gk'], ['ga-polity-1', 'ga-geo-2', 'ga-science-1']),
+    ],
+  },
+  {
+    id: 'ibps-po-01',
+    title: 'Banking IBPS PO · Prelims Mini 01',
+    exam: 'Banking',
+    kind: 'Mini',
+    status: 'available',
+    durationMinutes: 12,
+    description:
+      'Three-section IBPS PO Prelims speed rehearsal covering English Language, Quantitative Aptitude and Reasoning Ability.',
+    descriptionHi:
+      'बैंकिंग IBPS PO प्रारंभिक परीक्षा के तीन सेक्शनों का गति अभ्यास: अंग्रेज़ी, गणित और रीज़निंग।',
+    sections: [
+      section('english', 'English Language', ['english'], ['en-syn-1', 'en-error-1', 'en-fill-1']),
+      section('quant', 'Quantitative Aptitude', ['maths'], ['qa-pct-1', 'qa-pl-2', 'qa-ratio-1']),
+      section('reasoning', 'Reasoning Ability', ['reasoning'], ['gi-syl-1', 'gi-code-1', 'gi-series-1']),
     ],
   },
 ]

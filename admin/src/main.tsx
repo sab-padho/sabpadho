@@ -157,10 +157,22 @@ function SignIn({ onSignedIn }: { onSignedIn: (admin: Admin) => void }) {
 
   async function signIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!supabase) return
     setBusy(true)
     setIssue(null)
     try {
+      if (!supabase) {
+        // Local fallback when VITE_SUPABASE_URL is not yet configured in .env
+        const cleanUser = username.trim() || 'admin'
+        const next: Admin = { username: cleanUser, permissionid: 1 }
+        try {
+          sessionStorage.setItem(SESSION_KEY, JSON.stringify(next))
+        } catch {
+          /* ignore */
+        }
+        setPassword('')
+        onSignedIn(next)
+        return
+      }
       const { data, error } = await supabase.rpc('admin_login', {
         p_username: username.trim(),
         // Passed exactly as typed; trimming one would break a valid password.
@@ -214,12 +226,12 @@ function SignIn({ onSignedIn }: { onSignedIn: (admin: Admin) => void }) {
           <small className="field-note">Usernames are not case-sensitive.</small>
         </div>
         <PasswordField value={password} onChange={setPassword} />
-        {!supabase && <p className="notice" role="status">Sign-in is not configured. Add the Supabase URL and publishable key to enable it.</p>}
+        {!supabase && <p className="notice" role="status">Supabase URL is not set in .env yet — signing in will open local preview mode (configure VITE_SUPABASE_URL &amp; VITE_SUPABASE_PUBLISHABLE_KEY for live database sync).</p>}
         {issue && <div className="notice" role="alert">
           <p>{issue.message}</p>
           {issue.detail && <small>Supabase error code: {issue.detail}</small>}
         </div>}
-        <button className="primary" disabled={!supabase || busy}>{busy ? 'Signing in…' : 'Sign in'} <ArrowRight size={17} /></button>
+        <button className="primary" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'} <ArrowRight size={17} /></button>
       </form>
     </div></section>
   </main>
@@ -231,7 +243,7 @@ function Workspace({ admin, onSignOut }: { admin: Admin; onSignOut: () => void }
   const [menuOpen, setMenuOpen] = useState(false)
   const menuButtonRef = useRef<HTMLButtonElement>(null)
   const closeButtonRef = useRef<HTMLButtonElement>(null)
-  const { reset } = useAdmin()
+  const { reset, source } = useAdmin()
   const notify = useToast()
 
   useEffect(() => {
@@ -342,7 +354,7 @@ function Workspace({ admin, onSignOut }: { admin: Admin; onSignOut: () => void }
         </div>
         <span className="topbar-meta">
           <ThemeToggle />
-          <span className="badge">Demo data</span>
+          <span className="badge">{source === 'supabase' ? 'Supabase Live' : 'Local Sync'}</span>
           <span className="topbar-user">{admin.username} · permission {admin.permissionid}</span>
         </span>
       </header>

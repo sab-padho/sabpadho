@@ -17,21 +17,23 @@ import {
 import { HeroPreview, PracticePreview, PalettePreview, DuePreview } from '../components/previews'
 import { Badge, ButtonLink, SectionLabel } from '../components/ui'
 import { communitySize } from '../data/learner'
-import { allChapters } from '../data/subjects'
 import { LogoMark } from '../components/brand'
-import { questionsForSubject, questionById } from '../data/questions'
-import { subjects } from '../data/subjects'
-import { mockPapers, paperQuestionCount } from '../data/mocks'
+import { paperQuestionCount, type MockPaper } from '../data/mocks'
 import { tintTile } from '../components/subject-tint'
 import { cn } from '../lib/utils'
 import { useLang } from '../lib/lang'
 import { useCopy } from '../lib/ui-copy'
 import { subjectShortHindi, subjectTagline } from '../lib/ui-copy'
+import { useCatalog } from '../lib/catalog'
+import { useAuth } from '../lib/auth'
+import { EXAM_OPTIONS } from '../data/exams'
 import { usePageTitle } from '../lib/hooks'
 
 export function Home() {
   usePageTitle()
   const copy = useCopy()
+  const { mockPapers } = useCatalog()
+  const { email } = useAuth()
   const stripIcons = [Target, Languages, Clock, RotateCcw]
   const availableMocks = mockPapers.filter((paper) => paper.status !== 'completed').slice(0, 3)
 
@@ -67,7 +69,7 @@ export function Home() {
         title={copy.home.featureSprint.title}
         body={copy.home.featureSprint.body}
         bullets={copy.home.featureSprint.bullets}
-        cta={{ to: '/app/practice', label: copy.home.featureSprint.cta }}
+        cta={{ to: email ? '/app/practice' : '/signup', label: copy.home.featureSprint.cta }}
         visual={<PracticePreview />}
         background="plain"
       />
@@ -77,7 +79,7 @@ export function Home() {
         title={copy.home.featureMock.title}
         body={copy.home.featureMock.body}
         bullets={copy.home.featureMock.bullets}
-        cta={{ to: '/app/mocks', label: copy.home.featureMock.cta }}
+        cta={{ to: email ? '/app/mocks' : '/signup', label: copy.home.featureMock.cta }}
         visual={<PalettePreview />}
         background="surface"
         reverse
@@ -88,7 +90,7 @@ export function Home() {
         title={copy.home.featureRevision.title}
         body={copy.home.featureRevision.body}
         bullets={copy.home.featureRevision.bullets}
-        cta={{ to: '/app/revision', label: copy.home.featureRevision.cta }}
+        cta={{ to: email ? '/app/revision' : '/signup', label: copy.home.featureRevision.cta }}
         visual={<DuePreview />}
         background="plain"
       />
@@ -113,6 +115,8 @@ export function Home() {
 function Hero() {
   const copy = useCopy()
   const { lang } = useLang()
+  const { email, preferredExam } = useAuth()
+  const { subjects } = useCatalog()
   return (
     <section className="relative overflow-hidden">
       <div
@@ -128,9 +132,11 @@ function Hero() {
           <div className="flex flex-wrap items-center gap-2">
             <Badge tone="brand">
               <span className="h-1.5 w-1.5 rounded-full bg-brand" />
-              {copy.home.badge}
+              {email ? `${preferredExam} · Active` : 'SSC CGL · CHSL · GD · Railways · Banking'}
             </Badge>
-            <Badge tone="outline">{copy.home.beta}</Badge>
+            <Badge tone="outline">
+              {email ? copy.home.beta : lang === 'hi' ? '5 निःशुल्क सैंपल अध्याय' : 'Free starter primers'}
+            </Badge>
           </div>
 
           <h1 className="mt-5 max-w-[600px] text-[38px] font-semibold leading-[1.05] tracking-[-0.035em] text-ink sm:text-[46px] lg:text-[56px]">
@@ -144,13 +150,29 @@ function Hero() {
           </p>
 
           <div className="mt-7 flex flex-col gap-2.5 sm:flex-row">
-            <ButtonLink to="/app/practice" size="lg">
-              {copy.home.start}
+            <ButtonLink to="/subjects/maths/percentages" size="lg">
+              {lang === 'hi' ? 'निःशुल्क अध्याय पढ़ें' : 'Try free starter material'}
               <ArrowRight size={16} />
             </ButtonLink>
-            <ButtonLink to="/subjects/maths/percentages" size="lg" variant="secondary">
-              {copy.home.read}
+            <ButtonLink to={email ? '/app' : '/signup'} size="lg" variant="secondary">
+              {email
+                ? copy.marketing.openDesk
+                : lang === 'hi'
+                  ? 'साइन अप कर परीक्षा चुनें'
+                  : 'Sign up & choose your exam'}
             </ButtonLink>
+          </div>
+
+          <div className="mt-5 flex flex-wrap items-center gap-1.5">
+            {EXAM_OPTIONS.map((exam) => (
+              <Link
+                key={exam.id}
+                to={email ? '/app' : `/signup?exam=${encodeURIComponent(exam.id)}`}
+                className="rounded-md border border-line bg-surface/80 px-2 py-0.5 text-[11px] font-medium text-muted transition hover:border-brand/40 hover:text-brand-ink"
+              >
+                {exam.shortLabel}
+              </Link>
+            ))}
           </div>
 
           <p className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-muted">
@@ -191,10 +213,11 @@ function Hero() {
 
 function ProofBand() {
   const copy = useCopy()
+  const { allChapters } = useCatalog()
   const stats = [
     { value: allChapters.length, label: copy.home.proof.chapters },
     { value: 2, label: copy.home.proof.languages },
-    { value: 10, label: copy.home.proof.sprint },
+    { value: 5, label: 'Target exams' },
   ]
 
   return (
@@ -330,7 +353,9 @@ function FeatureRow({
 function BilingualBand() {
   const copy = useCopy()
   const [lang, setLang] = useState<'en' | 'hi'>('en')
-  const question = questionById('qa-pl-2')!
+  const { questionById, questions } = useCatalog()
+  const question = questionById('qa-pl-2') ?? questions[0]
+  if (!question) return null
 
   return (
     <section className="container-page py-16 md:py-24" id="bilingual">
@@ -409,6 +434,7 @@ function BilingualBand() {
 function SubjectsBand() {
   const { lang } = useLang()
   const copy = useCopy()
+  const { subjects, questionsForSubject } = useCatalog()
   return (
     <section className="border-y border-line bg-surface/50">
       <div className="container-page py-16 md:py-20">
@@ -483,7 +509,7 @@ function SubjectsBand() {
   )
 }
 
-function MockBand({ papers }: { papers: typeof mockPapers }) {
+function MockBand({ papers }: { papers: MockPaper[] }) {
   const copy = useCopy()
   return (
     <section className="container-page py-16 md:py-24" id="marking">
@@ -552,11 +578,12 @@ function MockBand({ papers }: { papers: typeof mockPapers }) {
 
 function Pricing() {
   const copy = useCopy()
+  const { email } = useAuth()
   const { free, pro } = copy.home.pricing
   type PlanCard = typeof free & { badge?: string; featured: boolean; to: string }
   const plans: PlanCard[] = [
-    { ...free, featured: false, to: '/app/practice' },
-    { ...pro, featured: true, to: '/app/settings' },
+    { ...free, featured: false, to: email ? '/app/practice' : '/signup' },
+    { ...pro, featured: true, to: email ? '/app/settings' : '/signup' },
   ]
 
   return (
@@ -708,6 +735,7 @@ function Faq() {
 
 function FinalCta() {
   const copy = useCopy()
+  const { email } = useAuth()
   return (
     <section className="container-page pb-20">
       <div className="relative overflow-hidden rounded-2xl border border-line bg-surface px-6 py-10 sm:px-10 sm:py-12">
@@ -732,11 +760,11 @@ function FinalCta() {
             </div>
           </div>
           <div className="flex shrink-0 flex-col gap-2 sm:items-end">
-            <ButtonLink to="/app" size="lg">
-              {copy.marketing.openDesk} <ArrowRight size={16} />
+            <ButtonLink to={email ? '/app' : '/signup'} size="lg">
+              {email ? copy.marketing.openDesk : 'Sign up & choose exam'} <ArrowRight size={16} />
             </ButtonLink>
-            <Link to="/signin" className="text-center text-[12px] text-muted hover:text-ink">
-              {copy.home.finalSignin}
+            <Link to={email ? '/subjects' : '/signin'} className="text-center text-[12px] text-muted hover:text-ink">
+              {email ? copy.home.allChapters : copy.home.finalSignin}
             </Link>
           </div>
         </div>

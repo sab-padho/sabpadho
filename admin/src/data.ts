@@ -6,7 +6,8 @@
 export type PublishStatus = 'Published' | 'Draft' | 'Archived'
 export type LearnerStatus = 'Active' | 'Invited' | 'Suspended'
 export type Difficulty = 'Easy' | 'Medium' | 'Hard'
-export type ExamTarget = 'SSC CGL' | 'SSC CHSL'
+export type ExamTarget = 'SSC CGL' | 'SSC CHSL' | 'SSC GD' | 'Railways' | 'Banking'
+export const EXAM_TARGETS: ExamTarget[] = ['SSC CGL', 'SSC CHSL', 'SSC GD', 'Railways', 'Banking']
 
 export type Learner = {
   id: string
@@ -29,6 +30,8 @@ export type Chapter = {
   status: PublishStatus
   difficulty: Difficulty
   updated: string
+  isFree?: boolean
+  exams?: ExamTarget[]
 }
 
 export type Subject = {
@@ -57,13 +60,40 @@ export type MockTest = {
 export type Question = {
   id: string
   subject: string
+  subjectId?: string
   chapter: string
+  chapterId?: string
   prompt: string
+  promptHi?: string
+  optionsEn?: [string, string, string, string]
+  optionsHi?: [string, string, string, string]
+  correct?: 0 | 1 | 2 | 3
+  explanationEn?: string
+  explanationHi?: string
+  exams?: ExamTarget[]
   difficulty: Difficulty
   type: 'MCQ' | 'Numeric'
   language: 'EN' | 'EN + HI'
   status: PublishStatus
   accuracy: number
+  updated: string
+}
+
+export type ChapterNoteRecord = {
+  id: string
+  subjectId: string
+  chapterId: string
+  titleEn: string
+  titleHi: string
+  contentEn: string
+  contentHi: string
+  keyPointsEn: string[]
+  keyPointsHi: string[]
+  formulas: Array<{ label: string; expr: string }>
+  isFree: boolean
+  exams: ExamTarget[]
+  status: PublishStatus
+  sourceFilename?: string
   updated: string
 }
 
@@ -120,6 +150,7 @@ export type AdminData = {
   subjects: Subject[]
   mocks: MockTest[]
   questions: Question[]
+  notes: ChapterNoteRecord[]
   announcements: Announcement[]
   activity: ActivityEntry[]
   daily: DayPoint[]
@@ -156,15 +187,15 @@ const learners: Learner[] = [
   { id: 'L-1052', name: 'Rohan Gupta', email: 'rohan.gupta@example.com', status: 'Active', target: 'SSC CGL', joined: iso(87), lastActive: iso(6), attempts: 1462, accuracy: 81, streak: 1, saved: 41 },
 ]
 
-const chapter = (id: string, title: string, questions: number, status: PublishStatus, difficulty: Difficulty, daysAgo: number): Chapter => ({
-  id, title, questions, status, difficulty, updated: iso(daysAgo),
+const chapter = (id: string, title: string, questions: number, status: PublishStatus, difficulty: Difficulty, daysAgo: number, isFree = false): Chapter => ({
+  id, title, questions, status, difficulty, updated: iso(daysAgo), isFree,
 })
 
 const subjects: Subject[] = [
   {
     id: 'maths', name: 'Quantitative Aptitude', code: 'QA', section: 'Section I', learners: 1240, accuracy: 72, status: 'Published',
     chapters: [
-      chapter('maths-percentages', 'Percentages', 84, 'Published', 'Easy', 3),
+      chapter('maths-percentages', 'Percentages', 84, 'Published', 'Easy', 3, true),
       chapter('maths-ratio', 'Ratio & proportion', 66, 'Published', 'Medium', 8),
       chapter('maths-profit-loss', 'Profit & loss', 58, 'Published', 'Medium', 12),
       chapter('maths-time-work', 'Time & work', 49, 'Draft', 'Hard', 1),
@@ -176,7 +207,7 @@ const subjects: Subject[] = [
     id: 'reasoning', name: 'General Intelligence & Reasoning', code: 'GI', section: 'Section II', learners: 1188, accuracy: 69, status: 'Published',
     chapters: [
       chapter('reasoning-series', 'Number series', 61, 'Published', 'Medium', 5),
-      chapter('reasoning-syllogisms', 'Syllogisms', 44, 'Published', 'Medium', 9),
+      chapter('reasoning-syllogisms', 'Syllogisms', 44, 'Published', 'Medium', 9, true),
       chapter('reasoning-blood', 'Blood relations', 32, 'Published', 'Easy', 15),
       chapter('reasoning-direction', 'Direction & distance', 28, 'Published', 'Easy', 18),
       chapter('reasoning-coding', 'Coding & decoding', 51, 'Draft', 'Medium', 2),
@@ -185,7 +216,7 @@ const subjects: Subject[] = [
   {
     id: 'english', name: 'English Language', code: 'EN', section: 'Section III', learners: 1092, accuracy: 66, status: 'Published',
     chapters: [
-      chapter('english-synonyms', 'Synonyms & antonyms', 96, 'Published', 'Medium', 4),
+      chapter('english-synonyms', 'Synonyms & antonyms', 96, 'Published', 'Medium', 4, true),
       chapter('english-errors', 'Spotting errors', 78, 'Published', 'Hard', 7),
       chapter('english-blanks', 'Fill in the blanks', 64, 'Published', 'Easy', 11),
       chapter('english-idioms', 'Idioms & phrases', 57, 'Published', 'Medium', 14),
@@ -195,7 +226,7 @@ const subjects: Subject[] = [
   {
     id: 'gk', name: 'General Awareness', code: 'GA', section: 'Section IV', learners: 986, accuracy: 61, status: 'Published',
     chapters: [
-      chapter('gk-polity', 'Indian polity', 88, 'Published', 'Medium', 6),
+      chapter('gk-polity', 'Indian polity', 88, 'Published', 'Medium', 6, true),
       chapter('gk-history', 'Modern history', 74, 'Published', 'Hard', 10),
       chapter('gk-geography', 'Geography', 69, 'Published', 'Medium', 13),
       chapter('gk-science', 'General science', 82, 'Draft', 'Hard', 2),
@@ -203,10 +234,10 @@ const subjects: Subject[] = [
     ],
   },
   {
-    id: 'hindi', name: 'Hindi Language', code: 'HI', section: 'Section III (CHSL)', learners: 431, accuracy: 74, status: 'Draft',
+    id: 'hindi', name: 'Hindi Language', code: 'HI', section: 'Section III (CHSL & GD)', learners: 431, accuracy: 74, status: 'Published',
     chapters: [
-      chapter('hindi-sandhi', 'Sandhi', 38, 'Draft', 'Medium', 4),
-      chapter('hindi-muhavare', 'Muhavare', 46, 'Draft', 'Medium', 6),
+      chapter('hindi-sandhi', 'Sandhi', 38, 'Published', 'Medium', 4),
+      chapter('hindi-muhavare', 'Muhavare', 46, 'Published', 'Medium', 6, true),
       chapter('hindi-vyakaran', 'Vyakaran', 52, 'Draft', 'Hard', 8),
     ],
   },
@@ -310,6 +341,7 @@ export const seed = (): AdminData => ({
   subjects,
   mocks,
   questions,
+  notes: [],
   announcements,
   activity,
   daily,

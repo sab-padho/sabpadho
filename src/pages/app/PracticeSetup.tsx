@@ -1,9 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowRight, BookOpen, Check, Clock, Info, Languages, Lock } from 'lucide-react'
+import { ArrowRight, BookOpen, Check, ChevronDown, Clock, FolderArchive, Info, Languages, Lock } from 'lucide-react'
 import { Badge, Button, SectionLabel, Segmented } from '../../components/ui'
-import { subjectById, subjects, type SubjectId } from '../../data/subjects'
-import { questionsForChapter } from '../../data/questions'
+import type { SubjectId } from '../../data/subjects'
+import { EXAM_OPTIONS, type ExamId } from '../../data/exams'
+import { useCatalog } from '../../lib/catalog'
+import { useAuth } from '../../lib/auth'
+import { useToast } from '../../lib/toast'
 import { tintTile } from '../../components/subject-tint'
 import { cn } from '../../lib/utils'
 import { usePageTitle } from '../../lib/hooks'
@@ -15,13 +18,36 @@ export function PracticeSetup() {
   const copy = useCopy()
   usePageTitle(copy.nav.practice)
   const navigate = useNavigate()
-  const [subjectId, setSubjectId] = useState<SubjectId>('maths')
-  const subject = subjectById[subjectId]
+  const { preferredExam, setPreferredExam } = useAuth()
+  const { notify } = useToast()
+  const { subjectById, partitionSubjectsByExam, questionsForChapter } = useCatalog()
+
+  const { preferred: preferredSubjects, others: otherSubjects } =
+    partitionSubjectsByExam(preferredExam)
+
+  const [subjectId, setSubjectId] = useState<SubjectId>(
+    preferredSubjects[0]?.id ?? 'maths',
+  )
+  const [othersOpen, setOthersOpen] = useState(false)
+
+  useEffect(() => {
+    if (!preferredSubjects.some((s) => s.id === subjectId) && preferredSubjects[0]) {
+      setSubjectId(preferredSubjects[0].id)
+    }
+  }, [preferredExam, preferredSubjects, subjectId])
+
+  const activeSubject =
+    preferredSubjects.find((s) => s.id === subjectId) ??
+    otherSubjects.find((s) => s.id === subjectId) ??
+    subjectById[subjectId]
+
   const [chapterSlug, setChapterSlug] = useState('percentages')
   const [length, setLength] = useState(5)
 
-  const chapter = subject.chapters.find((item) => item.slug === chapterSlug) ?? subject.chapters[0]
-  const pool = questionsForChapter(chapter.id)
+  const chapter =
+    activeSubject.chapters.find((item) => item.slug === chapterSlug) ??
+    activeSubject.chapters[0]
+  const pool = chapter ? questionsForChapter(chapter.id) : []
   const lengths = Array.from(
     new Set([5, 10, 15, pool.length].filter((value) => value > 0 && value <= pool.length)),
   ).sort((a, b) => a - b)
@@ -30,15 +56,30 @@ export function PracticeSetup() {
 
   function chooseSubject(id: SubjectId) {
     setSubjectId(id)
-    const first = subjectById[id].chapters.find((item) => questionsForChapter(item.id).length > 0)
-    setChapterSlug(first?.slug ?? subjectById[id].chapters[0].slug)
+    const targetSubj =
+      preferredSubjects.find((s) => s.id === id) ??
+      otherSubjects.find((s) => s.id === id) ??
+      subjectById[id]
+    const first = targetSubj.chapters.find((item) => questionsForChapter(item.id).length > 0)
+    setChapterSlug(first?.slug ?? targetSubj.chapters[0]?.slug ?? 'percentages')
     setLength(5)
+  }
+
+  const otherExamOptions = EXAM_OPTIONS.filter((item) => item.id !== preferredExam)
+
+  async function switchExam(next: ExamId) {
+    await setPreferredExam(next)
+    setOthersOpen(false)
+    notify(`Switched exam to ${next}`, 'success')
   }
 
   return (
     <div className="space-y-5">
       <header>
-        <SectionLabel>{copy.practice.label}</SectionLabel>
+        <div className="flex flex-wrap items-center gap-2">
+          <SectionLabel>{copy.practice.label}</SectionLabel>
+          <Badge tone="brand">{preferredExam}</Badge>
+        </div>
         <div className="mt-1.5 flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="text-[26px] font-semibold leading-tight sm:text-[30px]">
@@ -48,18 +89,24 @@ export function PracticeSetup() {
               {copy.practice.intro}
             </p>
           </div>
-          <Badge tone="outline">
-            <Clock size={11} /> {copy.practice.minutes(chapter.minutes)}
-          </Badge>
+          {chapter ? (
+            <Badge tone="outline">
+              <Clock size={11} /> {copy.practice.minutes(chapter.minutes)}
+            </Badge>
+          ) : null}
         </div>
       </header>
 
       <div className="grid gap-4 xl:grid-cols-[1.55fr_1fr]">
         <div className="space-y-4">
           <section className="card p-4 sm:p-5">
-            <StepHeading n="1" title={copy.practice.subject} />
+            <StepHeading
+              n="1"
+              title={`${copy.practice.subject} (${preferredExam})`}
+              hint={`${preferredSubjects.length} in track`}
+            />
             <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-              {subjects.map((item) => {
+              {preferredSubjects.map((item) => {
                 const active = item.id === subjectId
                 const count = item.chapters.reduce(
                   (sum, chapterItem) => sum + questionsForChapter(chapterItem.id).length,
@@ -96,6 +143,69 @@ export function PracticeSetup() {
                 )
               })}
             </div>
+
+            <div className="mt-3 border-t border-line pt-3">
+              <button
+                type="button"
+                onClick={() => setOthersOpen((v) => !v)}
+                aria-expanded={othersOpen}
+                className="flex w-full items-center justify-between gap-2 rounded-lg border border-dashed border-line bg-surface-2/40 px-3 py-2 text-left text-[12px] text-muted transition hover:border-line-strong hover:text-ink"
+              >
+                <span className="flex items-center gap-2 font-medium text-ink-soft">
+                  <FolderArchive size={13} className="text-brand" />
+                  {lang === 'hi' ? 'अन्य परीक्षाएँ (Others · Zipped)' : 'Others · Other exams & subjects (zipped)'}
+                </span>
+                <ChevronDown size={14} className={cn('transition-transform', othersOpen && 'rotate-180')} />
+              </button>
+
+              {othersOpen ? (
+                <div className="mt-2.5 space-y-3 rounded-xl border border-line bg-surface-2/35 p-3">
+                  <div>
+                    <p className="text-[11px] text-muted">
+                      {lang === 'hi'
+                        ? 'दूसरी परीक्षा का अभ्यास करने के लिए परीक्षा बदलें:'
+                        : 'Switch your exam track to unlock its full subject list:'}
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {otherExamOptions.map((exam) => (
+                        <Button
+                          key={exam.id}
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => switchExam(exam.id)}
+                        >
+                          Switch to {exam.shortLabel}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  {otherSubjects.length > 0 ? (
+                    <div className="border-t border-line pt-2.5">
+                      <p className="text-[10.5px] font-semibold uppercase tracking-wider text-muted">
+                        Subjects outside {preferredExam}
+                      </p>
+                      <div className="mt-1.5 flex flex-wrap gap-1.5">
+                        {otherSubjects.map((other) => (
+                          <button
+                            key={`other-subj-${other.id}`}
+                            type="button"
+                            onClick={() => chooseSubject(other.id)}
+                            className={cn(
+                              'rounded-lg border px-2.5 py-1 text-[11.5px] font-medium transition',
+                              subjectId === other.id
+                                ? 'border-brand bg-brand-soft text-brand-ink'
+                                : 'border-line bg-surface text-ink-soft hover:border-line-strong',
+                            )}
+                          >
+                            {lang === 'hi' ? subjectShortHindi(other.id) : other.short} ({other.chapters.length} ch)
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
           </section>
 
           <section className="card p-4 sm:p-5">
@@ -103,13 +213,13 @@ export function PracticeSetup() {
               n="2"
               title={copy.practice.chapter}
               hint={copy.practice.inSubject(
-                subject.chapters.length,
-                lang === 'hi' ? subjectShortHindi(subject.id) : subject.short,
+                activeSubject.chapters.length,
+                lang === 'hi' ? subjectShortHindi(activeSubject.id) : activeSubject.short,
               )}
             />
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
-              {subject.chapters.map((item) => {
-                const active = item.id === chapter.id
+              {activeSubject.chapters.map((item) => {
+                const active = item.id === chapter?.id
                 const count = questionsForChapter(item.id).length
                 const notReady = count === 0
                 return (
@@ -231,15 +341,15 @@ export function PracticeSetup() {
                 <span
                   className={cn(
                     'grid h-9 w-9 place-items-center rounded-lg font-display text-[10.5px] font-bold',
-                    tintTile[subject.tint],
+                    tintTile[activeSubject.tint],
                   )}
                 >
-                  {subject.code}
+                  {activeSubject.code}
                 </span>
                 <div className="min-w-0">
-                  <p className="truncate text-[13px] font-medium">{chapter.title[lang]}</p>
+                  <p className="truncate text-[13px] font-medium">{chapter?.title[lang]}</p>
                   <p className="text-[11px] text-muted">
-                    {lang === 'hi' ? subjectShortHindi(subject.id) : subject.short} ·{' '}
+                    {lang === 'hi' ? subjectShortHindi(activeSubject.id) : activeSubject.short} ·{' '}
                     {copy.practice.questions(selectedLength || 0)}
                   </p>
                 </div>
@@ -252,7 +362,17 @@ export function PracticeSetup() {
                 </div>
                 <div className="flex justify-between gap-3">
                   <dt className="text-muted">{copy.practice.timeRow}</dt>
-                  <dd>{copy.practice.aboutMin(Math.max(3, Math.round((chapter.minutes / Math.max(1, pool.length)) * Math.max(1, selectedLength))))}</dd>
+                  <dd>
+                    {copy.practice.aboutMin(
+                      Math.max(
+                        3,
+                        Math.round(
+                          ((chapter?.minutes ?? 10) / Math.max(1, pool.length)) *
+                            Math.max(1, selectedLength),
+                        ),
+                      ),
+                    )}
+                  </dd>
                 </div>
                 <div className="flex justify-between gap-3">
                   <dt className="text-muted">{copy.practice.languageRow}</dt>
@@ -267,18 +387,20 @@ export function PracticeSetup() {
               <Button
                 className="mt-4 w-full"
                 size="lg"
-                disabled={!canStart}
-                onClick={() => navigate(`/app/practice/${chapter.slug}?len=${selectedLength}`)}
+                disabled={!canStart || !chapter}
+                onClick={() => chapter && navigate(`/app/practice/${chapter.slug}?len=${selectedLength}`)}
               >
                 {copy.practice.start} <ArrowRight size={15} />
               </Button>
 
-              <Link
-                to={`/subjects/${subject.slug}/${chapter.slug}`}
-                className="mt-2 flex items-center justify-center gap-1.5 text-[11.5px] text-muted hover:text-ink"
-              >
-                <BookOpen size={12} /> {copy.practice.readPrimer}
-              </Link>
+              {chapter ? (
+                <Link
+                  to={`/subjects/${activeSubject.slug}/${chapter.slug}`}
+                  className="mt-2 flex items-center justify-center gap-1.5 text-[11.5px] text-muted hover:text-ink"
+                >
+                  <BookOpen size={12} /> {copy.practice.readPrimer}
+                </Link>
+              ) : null}
 
               <p className="mt-4 flex items-start gap-2 border-t border-line pt-3 text-[10.5px] leading-relaxed text-muted">
                 <Lock size={12} className="mt-0.5 shrink-0" />

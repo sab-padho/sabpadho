@@ -11,7 +11,8 @@ import {
   recentAttempts,
   weeklyActivity,
 } from '../../data/learner'
-import { subjects } from '../../data/subjects'
+import { useCatalog } from '../../lib/catalog'
+import { useAuth } from '../../lib/auth'
 import { cn } from '../../lib/utils'
 import { usePageTitle } from '../../lib/hooks'
 import { useLang } from '../../lib/lang'
@@ -28,6 +29,9 @@ export function Progress() {
   const { lang } = useLang()
   const copy = useCopy()
   usePageTitle(copy.nav.progress)
+  const { preferredExam } = useAuth()
+  const { partitionSubjectsByExam } = useCatalog()
+  const { preferred: subjects } = partitionSubjectsByExam(preferredExam)
   const [range, setRange] = useState<'week' | 'month'>('week')
   const weekQuestions = weeklyActivity.reduce((sum, day) => sum + day.questions, 0)
 

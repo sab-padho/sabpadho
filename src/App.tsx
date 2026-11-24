@@ -42,6 +42,7 @@ export function App() {
         <Route path="/mocks" element={<PublicMocks />} />
         <Route path="/how-it-works" element={<HowItWorks />} />
         <Route path="/signin" element={<SignIn />} />
+        <Route path="/signup" element={<SignIn initialMode="signup" />} />
       </Route>
 
       <Route
@@ -73,6 +74,6 @@ export function App() {
 function RequireAuth({ children }: { children: ReactNode }) {
   const { email } = useAuth()
   const location = useLocation()
-  if (!email) return <Navigate to="/signin" replace state={{ from: location.pathname }} />
+  if (!email) return <Navigate to="/signup" replace state={{ from: location.pathname }} />
   return <>{children}</>
 }

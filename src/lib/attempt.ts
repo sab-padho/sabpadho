@@ -1,5 +1,6 @@
 import type { AttemptSnapshot, MockPaper } from '../data/mocks'
 import { questionById } from '../data/questions'
+import { isSupabaseConfigured, supabase } from './supabase'
 
 export type AttemptState = {
   paperId: string
@@ -54,6 +55,27 @@ export function saveResult(snapshot: AttemptSnapshot) {
   } catch {
     /* ignore */
   }
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const rawAuth = localStorage.getItem('sabpadho-auth-v2')
+      const parsed = rawAuth ? (JSON.parse(rawAuth) as { email?: string }) : null
+      if (parsed?.email) {
+        void supabase.from('mock_attempts').upsert(
+          {
+            learner_email: parsed.email,
+            paper_id: snapshot.paperId,
+            answers: snapshot.answers,
+            marked: snapshot.marked,
+            submitted_at: snapshot.submittedAt,
+            time_used_seconds: snapshot.timeUsedSeconds,
+          },
+          { onConflict: 'learner_email,paper_id' },
+        )
+      }
+    } catch {
+      /* ignore */
+    }
+  }
 }
 
 export type ComputedResult = {
@@ -72,6 +94,7 @@ export function computeResult(
   paper: MockPaper,
   answers: Record<string, number>,
   _timeUsedSeconds?: number,
+  lookupQuestion: (id: string) => { correct: number } | undefined = questionById,
 ): ComputedResult {
   let correct = 0
   let wrong = 0
@@ -82,7 +105,7 @@ export function computeResult(
     let sectionCorrect = 0
     for (const questionId of section.questionIds) {
       total += 1
-      const question = questionById(questionId)
+      const question = lookupQuestion(questionId)
       const picked = answers[questionId]
       if (picked === undefined || picked === null) {
         unattempted += 1

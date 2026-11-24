@@ -2,7 +2,9 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Bell, CalendarDays, Clock, Lock, Trophy } from 'lucide-react'
 import { Badge, Button, ButtonLink, SectionLabel } from '../components/ui'
-import { mockPapers, paperQuestionCount, type MockKind } from '../data/mocks'
+import { paperQuestionCount, type MockKind } from '../data/mocks'
+import { useCatalog } from '../lib/catalog'
+import { useAuth } from '../lib/auth'
 import { useToast } from '../lib/toast'
 import { usePageTitle } from '../lib/hooks'
 import { useLang } from '../lib/lang'
@@ -15,10 +17,17 @@ export function PublicMocks() {
   const copy = useCopy()
   const { lang } = useLang()
   usePageTitle(copy.pmocks.title)
+  const { mockPapers } = useCatalog()
+  const { email, preferredExam } = useAuth()
+  const isSignedIn = Boolean(email)
   const [filter, setFilter] = useState<'All' | MockKind>('All')
   const { notify } = useToast()
 
-  const papers = mockPapers
+  const basePapers = isSignedIn
+    ? mockPapers.filter((paper) => paper.exam === preferredExam)
+    : mockPapers
+
+  const papers = basePapers
     .filter((paper) => paper.status !== 'completed')
     .sort((a, b) => Number(a.status === 'scheduled') - Number(b.status === 'scheduled'))
   const visible = filter === 'All' ? papers : papers.filter((paper) => paper.kind === filter)
@@ -27,12 +36,25 @@ export function PublicMocks() {
     <div className="container-page pb-16 pt-10 md:pt-14">
       <div className="grid gap-8 lg:grid-cols-[1.4fr_0.8fr] lg:items-end">
         <div>
-          <SectionLabel>{copy.pmocks.eyebrow}</SectionLabel>
+          <div className="flex flex-wrap items-center gap-2">
+            <SectionLabel>{copy.pmocks.eyebrow}</SectionLabel>
+            {isSignedIn ? (
+              <Badge tone="brand">{preferredExam}</Badge>
+            ) : (
+              <Badge tone="outline">
+                <Lock size={10} /> {lang === 'hi' ? 'साइन अप के बाद अनलॉक' : 'Sign up to attempt'}
+              </Badge>
+            )}
+          </div>
           <h1 className="mt-3 text-[32px] font-semibold leading-[1.08] sm:text-[44px]">
             {copy.pmocks.heading}
           </h1>
           <p className="mt-3 max-w-xl text-[14.5px] leading-relaxed text-muted">
-            {copy.pmocks.intro}
+            {isSignedIn
+              ? copy.pmocks.intro
+              : lang === 'hi'
+                ? 'SSC CGL, CHSL, GD, Railways और Banking के पैटर्न पर टाइम्ड मॉक टेस्ट। निःशुल्क साइन अप कर अपनी परीक्षा चुनें और मॉक देना शुरू करें।'
+                : 'Timed mock rehearsals across SSC CGL, CHSL, GD, Railways, and Banking. Sign up for free and pick your exam preference to unlock all papers.'}
           </p>
         </div>
         <div className="grid grid-cols-3 gap-2">
@@ -98,9 +120,20 @@ export function PublicMocks() {
                     >
                       <Bell size={14} /> {copy.pmocks.remind}
                     </Button>
-                  ) : (
+                  ) : isSignedIn ? (
                     <ButtonLink to={`/app/mocks/${paper.id}/instructions`} size="sm">
                       {copy.pmocks.startNow} <ArrowRight size={14} />
+                    </ButtonLink>
+                  ) : (
+                    <ButtonLink
+                      to={`/signup?exam=${encodeURIComponent(paper.exam)}`}
+                      state={{
+                        from: `/app/mocks/${paper.id}/instructions`,
+                        reason: `Sign up for free and select ${paper.exam} to start "${paper.title}".`,
+                      }}
+                      size="sm"
+                    >
+                      <Lock size={13} /> {lang === 'hi' ? 'साइन अप कर शुरू करें' : 'Sign up to attempt'}
                     </ButtonLink>
                   )}
                 </div>
@@ -165,12 +198,21 @@ export function PublicMocks() {
             </p>
           </div>
 
-          <div className="rounded-xl border border-line bg-surface-2/60 p-4">
-            <p className="text-[12.5px] font-medium">{copy.pmocks.previewTitle}</p>
-            <p className="mt-1.5 text-[11.5px] leading-relaxed text-muted">
-              {copy.pmocks.previewBody}
-            </p>
-          </div>
+          {!isSignedIn ? (
+            <div className="rounded-xl border border-brand/25 bg-brand-soft/35 p-4">
+              <p className="text-[12.5px] font-semibold text-ink">
+                {lang === 'hi' ? 'अपनी परीक्षा चुनें' : 'Focus on your target exam'}
+              </p>
+              <p className="mt-1.5 text-[11.5px] leading-relaxed text-muted">
+                {lang === 'hi'
+                  ? 'साइन अप करते समय SSC CGL, CHSL, GD, Railways या Banking चुनें — बाकी परीक्षाओं के मॉक Others में रहेंगे।'
+                  : 'Pick SSC CGL, CHSL, GD, Railways, or Banking at signup so your mock feed stays clutter-free.'}
+              </p>
+              <ButtonLink to="/signup" size="sm" className="mt-3 w-full">
+                {lang === 'hi' ? 'निःशुल्क साइन अप' : 'Sign up free'} <ArrowRight size={13} />
+              </ButtonLink>
+            </div>
+          ) : null}
         </aside>
       </div>
 

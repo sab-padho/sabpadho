@@ -1,14 +1,17 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   ArrowRight,
   ArrowUpRight,
   CalendarDays,
+  ChevronDown,
   ClipboardList,
   Clock,
+  FolderArchive,
   RotateCcw,
   TrendingUp,
 } from 'lucide-react'
-import { Badge, ButtonLink, SectionLabel } from '../../components/ui'
+import { Badge, Button, ButtonLink, SectionLabel } from '../../components/ui'
 import { WeeklyActivityChart, AccuracyRing } from '../../components/charts'
 import {
   accuracyTrend,
@@ -18,9 +21,10 @@ import {
   revisionQueue,
   weeklyActivity,
 } from '../../data/learner'
-import { subjects, allChapters, chapterById } from '../../data/subjects'
-import { questionById, questionsForChapter } from '../../data/questions'
-import { mockPapers } from '../../data/mocks'
+import { EXAM_OPTIONS, getExamConfig, type ExamId } from '../../data/exams'
+import { useCatalog } from '../../lib/catalog'
+import { useAuth } from '../../lib/auth'
+import { useToast } from '../../lib/toast'
 import { tintDot, tintTile } from '../../components/subject-tint'
 import { cn } from '../../lib/utils'
 import { usePageTitle } from '../../lib/hooks'
@@ -38,8 +42,33 @@ export function Dashboard() {
   const { lang } = useLang()
   const copy = useCopy()
   usePageTitle(copy.nav.desk)
-  const nextPaper = mockPapers.find((paper) => paper.status === 'scheduled')
-  const availablePaper = mockPapers.find((paper) => paper.id === 'mini-06')
+
+  const { user, preferredExam, setPreferredExam } = useAuth()
+  const { notify } = useToast()
+  const {
+    subjects,
+    allChapters,
+    chapterById,
+    questionById,
+    questionsForChapter,
+    partitionSubjectsByExam,
+    partitionMocksByExam,
+    liveFromSupabase,
+  } = useCatalog()
+
+  const [othersOpen, setOthersOpen] = useState(false)
+
+  const examInfo = getExamConfig(preferredExam)
+  const { preferred: preferredSubjects, others: otherSubjects } =
+    partitionSubjectsByExam(preferredExam)
+  const { preferred: preferredMocks, others: otherMocks } =
+    partitionMocksByExam(preferredExam)
+
+  const nextPaper = preferredMocks.find((paper) => paper.status === 'scheduled')
+  const availablePaper =
+    preferredMocks.find((paper) => paper.status === 'available' && paper.sections.some((s) => s.questionIds.length > 0)) ??
+    preferredMocks[0]
+
   const weekAccuracy = accuracyTrend[accuracyTrend.length - 1].value
   const resumeQuestions = questionsForChapter('maths-percentages').length
   const resumeChapter =
@@ -49,15 +78,33 @@ export function Dashboard() {
     resumeSprint.subjectTitle
   const resumePct = Math.round((resumeSprint.answered / resumeSprint.total) * 100)
 
+  const firstName = user?.firstName ?? (lang === 'hi' ? 'आरव' : learner.firstName)
+  const otherExamOptions = EXAM_OPTIONS.filter((item) => item.id !== preferredExam)
+
+  async function switchExam(next: ExamId) {
+    await setPreferredExam(next)
+    notify(
+      lang === 'hi'
+        ? `आपका डेस्क अब ${next} पर केंद्रित है।`
+        : `Switched your workspace to ${next}.`,
+      'success',
+    )
+  }
+
   return (
     <div className="space-y-5">
       <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
           <div className="flex flex-wrap items-center gap-2">
             <SectionLabel>
-              {greeting(copy)}, {lang === 'hi' ? 'आरव' : learner.firstName}
+              {greeting(copy)}, {firstName}
             </SectionLabel>
-            <Badge tone="outline">{copy.dashboard.preview}</Badge>
+            <Badge tone="brand">{preferredExam}</Badge>
+            {liveFromSupabase ? (
+              <Badge tone="positive">Live DB</Badge>
+            ) : (
+              <Badge tone="outline">{copy.dashboard.preview}</Badge>
+            )}
           </div>
           <h1 className="mt-1.5 text-[26px] font-semibold leading-tight sm:text-[30px]">
             {copy.dashboard.title}
@@ -67,10 +114,10 @@ export function Dashboard() {
               <CalendarDays size={13} /> {copy.dashboard.date}
             </span>
             <span className="hidden h-1 w-1 rounded-full bg-line-strong sm:block" />
-            <span>{learner.target}</span>
+            <span>{examInfo.targetDisplay}</span>
             <span className="hidden h-1 w-1 rounded-full bg-line-strong sm:block" />
             <span className="font-medium text-ink-soft">
-              {copy.dashboard.daysToGo(learner.daysToExam)}
+              {copy.dashboard.daysToGo(examInfo.daysToExam)}
             </span>
           </p>
         </div>
@@ -94,7 +141,7 @@ export function Dashboard() {
                 {copy.dashboard.continueLabel}
               </p>
               <span className="rounded-full bg-white/60 px-1.5 py-0.5 text-[9.5px] font-medium text-brand-ink dark:bg-black/25">
-                {copy.dashboard.sprintBadge}
+                {preferredExam} · {copy.dashboard.sprintBadge}
               </span>
             </div>
             <h2 className="mt-2 font-display text-[19px] font-semibold leading-snug text-brand-ink sm:text-[22px]">
@@ -156,14 +203,16 @@ export function Dashboard() {
           }
         />
         <StatCell
-          label={copy.dashboard.mocksTaken}
-          value="2"
-          hint={copy.dashboard.oneFull}
+          label={`${preferredExam} Mocks`}
+          value={String(preferredMocks.length)}
+          hint={`${otherMocks.length} zipped in Others`}
           foot={
-            <span className="text-muted">
-              {copy.dashboard.best}{' '}
-              <span className="font-medium text-ink-soft">133.5 / 200</span>
-            </span>
+            <Link
+              to="/app/mocks"
+              className="inline-flex items-center gap-1 font-medium text-brand-ink hover:underline"
+            >
+              {copy.dashboard.allMocks} <ArrowRight size={11} />
+            </Link>
           }
         />
         <StatCell
@@ -283,14 +332,18 @@ export function Dashboard() {
 
         <div className="space-y-4">
           <section className="card p-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-[14.5px] font-semibold">{copy.dashboard.subjects}</h2>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <h2 className="text-[14.5px] font-semibold">
+                  {preferredExam} · {copy.dashboard.subjects}
+                </h2>
+              </div>
               <Link to="/app/practice" className="text-[11px] text-muted hover:text-ink">
                 {copy.dashboard.practise}
               </Link>
             </div>
             <ul className="mt-3 space-y-2.5">
-              {subjects.map((subject) => (
+              {preferredSubjects.map((subject) => (
                 <li key={subject.id}>
                   <Link
                     to={`/subjects/${subject.slug}`}
@@ -329,6 +382,67 @@ export function Dashboard() {
                 </li>
               ))}
             </ul>
+
+            {/* Zipped "Others" section right below preferred exam subjects */}
+            <div className="mt-4 border-t border-line pt-3">
+              <button
+                type="button"
+                onClick={() => setOthersOpen((v) => !v)}
+                aria-expanded={othersOpen}
+                className="flex w-full items-center justify-between gap-2 rounded-lg border border-dashed border-line bg-surface-2/50 px-2.5 py-2 text-left transition hover:border-line-strong"
+              >
+                <span className="flex items-center gap-2 text-[12px] font-medium text-ink-soft">
+                  <FolderArchive size={13} className="text-brand" />
+                  <span>{lang === 'hi' ? 'अन्य परीक्षाएँ (Others)' : 'Others (Zipped exams)'}</span>
+                </span>
+                <span className="flex items-center gap-1 text-[10.5px] text-muted">
+                  {otherExamOptions.length} {lang === 'hi' ? 'परीक्षाएँ' : 'exams'}
+                  <ChevronDown
+                    size={13}
+                    className={cn('transition-transform', othersOpen && 'rotate-180')}
+                  />
+                </span>
+              </button>
+
+              {othersOpen ? (
+                <div className="mt-2.5 space-y-2.5 rounded-xl border border-line bg-surface-2/35 p-3">
+                  <p className="text-[11px] leading-relaxed text-muted">
+                    {lang === 'hi'
+                      ? `केवल ${preferredExam} का सिलेबस मुख्य डेस्क पर खुला है। दूसरी परीक्षा चुनने के लिए नीचे क्लिक करें:`
+                      : `Your desk only shows ${preferredExam} content. Select another exam below to switch:`}
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {otherExamOptions.map((exam) => (
+                      <Button
+                        key={exam.id}
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => switchExam(exam.id)}
+                      >
+                        {exam.shortLabel}
+                      </Button>
+                    ))}
+                  </div>
+                  {otherSubjects.length > 0 ? (
+                    <div className="border-t border-line pt-2">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">
+                        {lang === 'hi' ? 'अन्य विषय (इस परीक्षा में नहीं)' : 'Subjects outside this exam'}
+                      </p>
+                      <ul className="mt-1.5 space-y-1">
+                        {otherSubjects.map((sub) => (
+                          <li key={`zipped-${sub.id}`} className="flex items-center justify-between text-[11.5px]">
+                            <Link to={`/subjects/${sub.slug}`} className="text-ink-soft hover:underline">
+                              {subjectLabel(lang, sub)}
+                            </Link>
+                            <span className="text-[10px] text-muted">{sub.chapters.length} ch</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
           </section>
 
           <section className="card p-4">
@@ -374,7 +488,9 @@ export function Dashboard() {
                   <ClipboardList size={15} />
                 </span>
                 <div className="min-w-0">
-                  <p className="text-[12.5px] font-medium">{copy.dashboard.ready}</p>
+                  <p className="text-[12.5px] font-medium">
+                    {preferredExam} · {copy.dashboard.ready}
+                  </p>
                   <p className="truncate text-[11px] text-muted">{availablePaper.title}</p>
                 </div>
               </div>
@@ -415,7 +531,7 @@ export function Dashboard() {
       ) : null}
 
       <p className="px-1 text-[10.5px] leading-relaxed text-muted">
-        {copy.dashboard.preview} · {copy.dashboard.chaptersAcross(allChapters.length, subjects.length)}{' '}
+        {preferredExam} track · {copy.dashboard.chaptersAcross(allChapters.length, subjects.length)}{' '}
         {copy.dashboard.footerTail}
       </p>
     </div>

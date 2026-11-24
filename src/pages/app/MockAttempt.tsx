@@ -13,8 +13,8 @@ import {
 } from 'lucide-react'
 import { Button, ButtonLink, Dialog } from '../../components/ui'
 import { LangToggle, ThemeToggle } from '../../components/brand'
-import { getMock, type MockPaper } from '../../data/mocks'
-import { questionById } from '../../data/questions'
+import type { MockPaper } from '../../data/mocks'
+import { useCatalog } from '../../lib/catalog'
 import { clearAttempt, loadAttempt, saveAttempt, saveResult } from '../../lib/attempt'
 import { cn, formatClock } from '../../lib/utils'
 import { usePageTitle } from '../../lib/hooks'
@@ -24,6 +24,7 @@ import { useToast } from '../../lib/toast'
 
 export function MockAttempt() {
   const { mockId = '' } = useParams()
+  const { getMock } = useCatalog()
   const paper = getMock(mockId)
   const { lang } = useLang()
   const copy = useCopy()
@@ -78,6 +79,7 @@ function AttemptRunner({ paper }: { paper: MockPaper }) {
   const { lang } = useLang()
   const copy = useCopy()
   const { notify } = useToast()
+  const { questionById } = useCatalog()
 
   const [boot] = useState(() => loadAttempt(paper.id))
   const entries = useMemo(

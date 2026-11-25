@@ -227,7 +227,7 @@ function ExamOthersSwitcher() {
 
           <div className="pt-2">
             <p className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
-              {lang === 'hi' ? 'अन्य परीक्षाएँ (Others)' : 'Others (Zipped exams)'}
+              {lang === 'hi' ? 'अन्य परीक्षाएँ' : 'Other Exams'}
             </p>
             <ul className="space-y-0.5">
               {otherExams.map((exam) => (
@@ -346,7 +346,7 @@ function DesktopSidebar() {
           >
             <span className="flex items-center gap-2">
               <FolderArchive size={14} className="text-[#c6b1e6]" />
-              <span>{lang === 'hi' ? 'अन्य परीक्षाएँ (Others)' : 'Others (Zipped)'}</span>
+              <span>{lang === 'hi' ? 'अन्य परीक्षाएँ' : 'Other Exams'}</span>
             </span>
             <span className="flex items-center gap-1 text-[10.5px] text-rail-muted">
               {otherExams.length}

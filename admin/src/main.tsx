@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createClient } from '@supabase/supabase-js'
-import { ArrowRight, BookOpen, ClipboardList, CreditCard, Eye, EyeOff, History, LayoutDashboard, ListChecks, LockKeyhole, LogOut, Megaphone, Menu, Moon, PanelLeftClose, PanelLeftOpen, RotateCcw, Sun, Ticket, Users, X } from 'lucide-react'
+import { ArrowRight, BookOpen, ClipboardList, CreditCard, Eye, EyeOff, History, LayoutDashboard, LockKeyhole, LogOut, Megaphone, Menu, Moon, PanelLeftClose, PanelLeftOpen, RotateCcw, Sun, Ticket, Users, X } from 'lucide-react'
 import logo from '../../public/brand/sabpadho-mark.png'
 import '../../src/index.css'
 import './style.css'
@@ -14,7 +14,6 @@ import { Announcements } from './pages/Announcements'
 import { Learners } from './pages/Learners'
 import { Mocks } from './pages/Mocks'
 import { Overview } from './pages/Overview'
-import { Questions } from './pages/Questions'
 import { Plans } from './pages/Plans'
 import { Coupons } from './pages/Coupons'
 import { Subjects } from './pages/Subjects'
@@ -36,7 +35,6 @@ const navigation: Record<Page, typeof LayoutDashboard> = {
   Overview: LayoutDashboard,
   Learners: Users,
   Subjects: BookOpen,
-  Questions: ListChecks,
   'Mock tests': ClipboardList,
   Plans: CreditCard,
   Coupons: Ticket,
@@ -362,7 +360,6 @@ function Workspace({ admin, onSignOut }: { admin: Admin; onSignOut: () => void }
         {page === 'Overview' && <Overview onNavigate={setPage} />}
         {page === 'Learners' && <Learners />}
         {page === 'Subjects' && <Subjects />}
-        {page === 'Questions' && <Questions />}
         {page === 'Mock tests' && <Mocks />}
         {page === 'Plans' && <Plans />}
         {page === 'Coupons' && <Coupons />}

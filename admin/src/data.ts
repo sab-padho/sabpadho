@@ -349,5 +349,5 @@ export const seed = (): AdminData => ({
   coupons,
 })
 
-export const navigationPages = ['Overview', 'Learners', 'Subjects', 'Questions', 'Mock tests', 'Plans', 'Coupons', 'Announcements', 'Activity'] as const
+export const navigationPages = ['Overview', 'Learners', 'Subjects', 'Mock tests', 'Plans', 'Coupons', 'Announcements', 'Activity'] as const
 export type Page = (typeof navigationPages)[number]

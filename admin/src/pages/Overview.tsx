@@ -34,7 +34,7 @@ export function Overview({ onNavigate }: { onNavigate: (page: Page) => void }) {
 
   const drafts = [
     { label: 'Mock tests in draft', count: data.mocks.filter(mock => mock.status === 'Draft').length, page: 'Mock tests' as Page },
-    { label: 'Questions awaiting review', count: data.questions.filter(question => question.status === 'Draft').length, page: 'Questions' as Page },
+    { label: 'Questions awaiting review', count: data.questions.filter(question => question.status === 'Draft').length, page: 'Subjects' as Page },
     { label: 'Subject chapters in draft', count: data.subjects.reduce((sum, subject) => sum + subject.chapters.filter(chapter => chapter.status === 'Draft').length, 0), page: 'Subjects' as Page },
   ]
 
@@ -55,7 +55,7 @@ export function Overview({ onNavigate }: { onNavigate: (page: Page) => void }) {
           <Progress value={Math.round(((pro?.learners ?? 0) / TOTAL_LEARNERS) * 100)} />
           <span className="stat-foot">₹{number(yearly)} a year at ₹{pro?.price ?? 51}</span>
         </button>
-        <button className="panel stat" onClick={() => onNavigate('Questions')}>
+        <button className="panel stat" onClick={() => onNavigate('Subjects')}>
           <span className="stat-label">Practice attempts</span>
           <strong>{number(attempts)}</strong>
           <Delta value={weekChange} label="weekly trend" />

@@ -1,13 +1,15 @@
 import { useState } from 'react'
-import { ChevronRight, Download, Sparkles } from 'lucide-react'
+import { ChevronRight, Download, ListChecks, Sparkles } from 'lucide-react'
 import { AiUploadDrawer } from '../AiUploadDrawer'
 import type { Subject } from '../data'
 import { toLearnerChapterId, useAdmin } from '../store'
 import { Badge, Drawer, PageHeader, Progress, Toggle, downloadCsv, formatDate, number, relativeTime, statusTone, useToast } from '../ui'
+import { Questions } from './Questions'
 
 export function Subjects() {
   const { data, setSubjectStatus, setChapterStatus, setChapterFree } = useAdmin()
   const notify = useToast()
+  const [view, setView] = useState<'subjects' | 'questions'>('subjects')
   const [open, setOpen] = useState<string | null>(null)
   const [uploadTarget, setUploadTarget] = useState<{
     subjectId: string
@@ -38,6 +40,28 @@ export function Subjects() {
 
   return (
     <>
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
+        <button
+          type="button"
+          className={`button ${view === 'subjects' ? 'primary' : 'secondary'}`}
+          onClick={() => setView('subjects')}
+        >
+          Subjects &amp; Chapters ({data.subjects.length})
+        </button>
+        <button
+          type="button"
+          className={`button ${view === 'questions' ? 'primary' : 'secondary'}`}
+          onClick={() => setView('questions')}
+        >
+          <ListChecks size={16} />
+          Questions Bank ({number(data.questions.length)})
+        </button>
+      </div>
+
+      {view === 'questions' ? (
+        <Questions />
+      ) : (
+        <>
       <PageHeader
         eyebrow="ADMIN PORTAL"
         title="Subjects & Notes"
@@ -196,6 +220,8 @@ export function Subjects() {
           defaultChapterId={uploadTarget.chapterId}
           onClose={() => setUploadTarget(null)}
         />
+      )}
+        </>
       )}
     </>
   )

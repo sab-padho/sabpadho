@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowRight, Check, GraduationCap, Lock, Mail, Sparkles, User } from 'lucide-react'
-import { Badge, Button, SectionLabel } from '../components/ui'
-import { EXAM_OPTIONS, getExamConfig, isValidExam, type ExamId } from '../data/exams'
+import { ArrowRight, Check, Lock, Mail, Sparkles, User } from 'lucide-react'
+import { Button, SectionLabel } from '../components/ui'
+import { getExamConfig, isValidExam, type ExamId } from '../data/exams'
 import { useToast } from '../lib/toast'
 import { usePageTitle } from '../lib/hooks'
 import { PREVIEW_EMAIL, useAuth } from '../lib/auth'
@@ -37,7 +37,7 @@ export function SignIn({ initialMode }: { initialMode?: 'signin' | 'signup' }) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState<string>(defaultMode === 'signin' ? PREVIEW_EMAIL : '')
   const [password, setPassword] = useState<string>('')
-  const [preferredExam, setPreferredExam] = useState<ExamId>(
+  const [preferredExam] = useState<ExamId>(
     isValidExam(preselectedExam) ? preselectedExam : 'SSC CGL',
   )
   const [error, setError] = useState<string | null>(null)
@@ -70,11 +70,11 @@ export function SignIn({ initialMode }: { initialMode?: 'signin' | 'signup' }) {
         if (res.ok && res.profile) {
           notify(
             lang === 'hi'
-              ? `स्वागत है ${res.profile.firstName}! आपका ${preferredExam} अध्ययन डेस्क तैयार है।`
-              : `Welcome, ${res.profile.firstName}! Your ${preferredExam} workspace is ready.`,
+              ? `स्वागत है ${res.profile.firstName}! आइए आपका अध्ययन डेस्क सेटअप करें।`
+              : `Welcome, ${res.profile.firstName}! Let’s personalize your study desk.`,
             'success',
           )
-          navigate(from, { replace: true })
+          navigate('/app/onboarding', { replace: true })
         } else {
           setError(res.error ?? 'Could not create your account.')
         }
@@ -237,58 +237,6 @@ export function SignIn({ initialMode }: { initialMode?: 'signin' | 'signup' }) {
                 </div>
               </div>
 
-              {mode === 'signup' ? (
-                <div className="pt-1">
-                  <div className="mb-2 flex items-center justify-between gap-2">
-                    <label className="flex items-center gap-1.5 text-[12px] font-medium text-ink-soft">
-                      <GraduationCap size={14} className="text-brand" />
-                      {lang === 'hi'
-                        ? 'आप किस परीक्षा की तैयारी कर रहे हैं?'
-                        : 'Which exam are you preparing for?'}
-                    </label>
-                    <Badge tone="brand">{preferredExam}</Badge>
-                  </div>
-
-                  <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Preferred exam">
-                    {EXAM_OPTIONS.map((option) => {
-                      const active = option.id === preferredExam
-                      return (
-                        <button
-                          key={option.id}
-                          type="button"
-                          role="radio"
-                          aria-checked={active}
-                          onClick={() => setPreferredExam(option.id)}
-                          className={cn(
-                            'flex items-start gap-2.5 rounded-xl border p-3 text-left transition',
-                            active
-                              ? 'border-brand bg-brand-soft/70 shadow-[0_0_0_1px_var(--brand)]'
-                              : 'border-line bg-surface hover:border-line-strong hover:bg-surface-2/50',
-                          )}
-                        >
-                          <span
-                            className={cn(
-                              'mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full border',
-                              active ? 'border-brand bg-brand text-white' : 'border-line-strong bg-surface',
-                            )}
-                          >
-                            {active ? <Check size={10} /> : null}
-                          </span>
-                          <span className="min-w-0 flex-1">
-                            <span className="block text-[12.5px] font-semibold text-ink">
-                              {option.shortLabel}
-                            </span>
-                            <span className="mt-0.5 block text-[10.5px] leading-snug text-muted">
-                              {lang === 'hi' ? option.taglineHi : option.tagline}
-                            </span>
-                          </span>
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              ) : null}
-
               {error ? (
                 <p
                   role="alert"
@@ -307,8 +255,8 @@ export function SignIn({ initialMode }: { initialMode?: 'signin' | 'signup' }) {
                     : copy.auth.signingIn
                   : mode === 'signup'
                     ? lang === 'hi'
-                      ? `${preferredExam} के साथ शुरू करें`
-                      : `Create account for ${preferredExam}`
+                      ? 'खाता बनाएँ'
+                      : 'Create account'
                     : copy.auth.signInContinue}
                 {busy ? null : <ArrowRight size={16} />}
               </Button>

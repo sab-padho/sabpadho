@@ -24,6 +24,7 @@ import { Revision } from './pages/app/Revision'
 import { Shelf } from './pages/app/Shelf'
 import { Progress } from './pages/app/Progress'
 import { SettingsPage } from './pages/app/SettingsPage'
+import { Onboarding } from './pages/app/Onboarding'
 
 export function App() {
   useScrollToTop()
@@ -64,6 +65,7 @@ export function App() {
         <Route path="shelf" element={<Shelf />} />
         <Route path="progress" element={<Progress />} />
         <Route path="settings" element={<SettingsPage />} />
+        <Route path="onboarding" element={<Onboarding />} />
       </Route>
 
       <Route path="*" element={<NotFound />} />

@@ -114,7 +114,12 @@ export function Subjects() {
                       </button>
                     </td>
                     <td data-label="Chapters">{published}/{item.chapters.length} published</td>
-                    <td data-label="Questions">{number(item.chapters.reduce((sum, chapter) => sum + chapter.questions, 0))}</td>
+                    <td data-label="Questions">
+                      {number(
+                        data.questions.filter((q) => q.subject === item.name).length ||
+                          item.chapters.reduce((sum, chapter) => sum + chapter.questions, 0),
+                      )}
+                    </td>
                     <td data-label="Accuracy">
                       <div className="cell-meter">
                         <Progress value={item.accuracy} tone={item.accuracy >= 70 ? 'positive' : item.accuracy >= 60 ? 'brand' : 'warning'} />
@@ -252,7 +257,15 @@ export function Subjects() {
                     : '—'}
                 </span>
               </li>
-              <li><span>Questions in subject</span><span>{number(subject.chapters.reduce((sum, chapter) => sum + chapter.questions, 0))}</span></li>
+              <li>
+                <span>Questions in subject</span>
+                <span>
+                  {number(
+                    data.questions.filter((q) => q.subject === subject.name).length ||
+                      subject.chapters.reduce((sum, chapter) => sum + chapter.questions, 0),
+                  )}
+                </span>
+              </li>
               <li>
                 <span>Created</span>
                 <span>{subject.chapters.length > 0 ? formatDate(subject.chapters[0].updated) : '—'}</span>

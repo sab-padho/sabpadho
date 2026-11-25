@@ -104,6 +104,7 @@ type AdminStore = {
   refreshFromSupabase: () => Promise<void>
   setLearnerStatus: (id: string, status: LearnerStatus) => void
   setSubjectStatus: (id: string, status: PublishStatus) => void
+  setSubjectExams: (id: string, exams: string[]) => void
   setChapterStatus: (subjectId: string, chapterId: string, status: PublishStatus) => void
   setChapterFree: (subjectId: string, chapterId: string, isFree: boolean) => void
   setMockStatus: (id: string, status: PublishStatus) => void
@@ -461,6 +462,30 @@ export function AdminProvider({ actor, children }: { actor: string; children: Re
       })
     },
     [log],
+  )
+
+  const setSubjectExams = useCallback(
+    (id: string, exams: string[]) => {
+      if (isSupabaseConfigured && supabase) {
+        void supabase
+          .from('subjects')
+          .update({ exams, updated_at: new Date().toISOString() })
+          .eq('id', id)
+      }
+      setData((prev) => {
+        const subject = prev.subjects.find((item) => item.id === id)
+        if (!subject) return prev
+        return {
+          ...prev,
+          subjects: prev.subjects.map((item) => (item.id === id ? { ...item, exams } : item)),
+          activity: [
+            log('updated exams for', `${subject.name} (${exams.join(', ') || 'None'})`),
+            ...prev.activity,
+          ],
+        }
+      })
+    },
+    [],
   )
 
   const setSubjectStatus = useCallback(
@@ -916,6 +941,7 @@ export function AdminProvider({ actor, children }: { actor: string; children: Re
       refreshFromSupabase,
       setLearnerStatus,
       setSubjectStatus,
+      setSubjectExams,
       setChapterStatus,
       setChapterFree,
       setMockStatus,
@@ -937,6 +963,7 @@ export function AdminProvider({ actor, children }: { actor: string; children: Re
       refreshFromSupabase,
       setLearnerStatus,
       setSubjectStatus,
+      setSubjectExams,
       setChapterStatus,
       setChapterFree,
       setMockStatus,

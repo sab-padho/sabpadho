@@ -289,7 +289,7 @@ function Workspace({ admin, onSignOut }: { admin: Admin; onSignOut: () => void }
     if (!window.confirm('Reset all demo changes and restore the sample data?')) return
     reset()
     setMenuOpen(false)
-    notify('Demo data restored')
+    notify('Data restored')
   }
 
   function goTo(next: Page) {
@@ -329,7 +329,7 @@ function Workspace({ admin, onSignOut }: { admin: Admin; onSignOut: () => void }
         })}
       </nav>
       <div className="rail-foot">
-        <button className="rail-utility" onClick={resetDemo} aria-label={collapsed ? 'Reset demo data' : undefined} title={collapsed ? 'Reset demo data' : undefined}><RotateCcw size={16} /><span className="rail-label">Reset demo data</span></button>
+        <button className="rail-utility" onClick={resetDemo} aria-label={collapsed ? 'Reset data' : undefined} title={collapsed ? 'Reset data' : undefined}><RotateCcw size={16} /><span className="rail-label">Reset data</span></button>
         <button className="logout" onClick={onSignOut} aria-label={collapsed ? 'Sign out' : undefined} title={collapsed ? 'Sign out' : undefined}><LogOut size={18} /><span className="rail-label">Sign out</span></button>
       </div>
     </aside>

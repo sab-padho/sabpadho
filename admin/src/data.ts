@@ -42,6 +42,7 @@ export type Subject = {
   learners: number
   accuracy: number
   status: PublishStatus
+  exams?: string[]
   chapters: Chapter[]
 }
 

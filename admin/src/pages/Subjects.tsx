@@ -6,8 +6,10 @@ import { toLearnerChapterId, useAdmin } from '../store'
 import { Badge, Drawer, PageHeader, Progress, Toggle, downloadCsv, formatDate, number, relativeTime, statusTone, useToast } from '../ui'
 import { Questions } from './Questions'
 
+const EXAM_TRACKS = ['SSC CGL', 'SSC CHSL', 'SSC GD', 'Railways', 'Banking'] as const
+
 export function Subjects() {
-  const { data, setSubjectStatus, setChapterStatus, setChapterFree } = useAdmin()
+  const { data, setSubjectStatus, setSubjectExams, setChapterStatus, setChapterFree } = useAdmin()
   const notify = useToast()
   const [view, setView] = useState<'subjects' | 'questions'>('subjects')
   const [open, setOpen] = useState<string | null>(null)
@@ -105,7 +107,10 @@ export function Subjects() {
                     <td data-label="Subject">
                       <button className="cell-button" onClick={() => setOpen(item.id)}>
                         <strong>{item.name}</strong>
-                        <small className="cell-sub">{item.code} · {item.section}</small>
+                        <small className="cell-sub">
+                          {item.code} · {item.section}
+                          {(item.exams ?? []).length > 0 ? ` · ${(item.exams ?? []).join(', ')}` : ''}
+                        </small>
                       </button>
                     </td>
                     <td data-label="Chapters">{published}/{item.chapters.length} published</td>
@@ -143,6 +148,36 @@ export function Subjects() {
             <Badge tone={statusTone(subject.status)}>{subject.status}</Badge>
             <Badge tone="brand">{(subject.chapters ?? []).length} chapters</Badge>
             <Badge tone="neutral">{subject.accuracy ?? 0}% accuracy</Badge>
+          </div>
+
+          <div className="drawer-block">
+            <h3>Related Exams</h3>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
+              {EXAM_TRACKS.map((exam) => {
+                const currentExams = subject.exams ?? []
+                const active = currentExams.includes(exam)
+                return (
+                  <button
+                    key={exam}
+                    type="button"
+                    className={`button small ${active ? 'primary' : 'secondary'}`}
+                    onClick={() => {
+                      const nextExams = active
+                        ? currentExams.filter((e) => e !== exam)
+                        : [...currentExams, exam]
+                      setSubjectExams(subject.id, nextExams)
+                      notify(
+                        active
+                          ? `Removed ${exam} from ${subject.name}`
+                          : `Added ${exam} to ${subject.name}`,
+                      )
+                    }}
+                  >
+                    {exam}
+                  </button>
+                )
+              })}
+            </div>
           </div>
 
           <div className="drawer-block">

@@ -1,5 +1,6 @@
 import type { Bilingual } from '../lib/lang'
 import type { SubjectId } from './subjects'
+import type { ExamId } from './exams'
 
 export type Difficulty = 'Easy' | 'Medium' | 'Hard'
 
@@ -12,4 +13,6 @@ export type Question = {
   options: { en: string[]; hi: string[] }
   correct: number
   explanation: Bilingual
+  exams?: ExamId[]
 }
+

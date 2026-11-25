@@ -7,6 +7,7 @@ import { ThemeProvider } from './lib/theme'
 import { LangProvider } from './lib/lang'
 import { ToastProvider } from './lib/toast'
 import { AuthProvider } from './lib/auth'
+import { CatalogProvider } from './lib/catalog'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -14,9 +15,11 @@ createRoot(document.getElementById('root')!).render(
       <LangProvider>
         <ToastProvider>
           <AuthProvider>
-            <BrowserRouter>
-              <App />
-            </BrowserRouter>
+            <CatalogProvider>
+              <BrowserRouter>
+                <App />
+              </BrowserRouter>
+            </CatalogProvider>
           </AuthProvider>
         </ToastProvider>
       </LangProvider>

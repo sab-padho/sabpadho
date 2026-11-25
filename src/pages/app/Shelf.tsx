@@ -11,8 +11,7 @@ import {
   Trash2,
 } from 'lucide-react'
 import { Badge, Button, ButtonLink, EmptyState, SectionLabel } from '../../components/ui'
-import { questionById } from '../../data/questions'
-import { chapterById, subjectById } from '../../data/subjects'
+import { useCatalog } from '../../lib/catalog'
 import { useShelf } from '../../lib/shelf'
 import { useLang } from '../../lib/lang'
 import { useCopy, localDate, subjectShortByLabel } from '../../lib/ui-copy'
@@ -26,6 +25,7 @@ export function Shelf() {
   usePageTitle(copy.nav.shelf)
   const { entries, remove } = useShelf()
   const { notify } = useToast()
+  const { questionById, chapterById, subjectById } = useCatalog()
   const [filter, setFilter] = useState('all')
 
   const items = useMemo(
@@ -39,7 +39,7 @@ export function Shelf() {
           return { entry, question, chapter, subject }
         })
         .filter((item): item is NonNullable<typeof item> => Boolean(item)),
-    [entries],
+    [entries, questionById, chapterById, subjectById],
   )
 
   const subjectOptions = Array.from(

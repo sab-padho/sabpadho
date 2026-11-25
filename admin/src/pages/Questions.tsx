@@ -1,5 +1,6 @@
 import { Fragment, useMemo, useState } from 'react'
-import { ChevronDown, Download } from 'lucide-react'
+import { ChevronDown, Download, Sparkles } from 'lucide-react'
+import { AiUploadDrawer } from '../AiUploadDrawer'
 import { useAdmin } from '../store'
 import { Badge, Empty, PageHeader, Progress, SearchInput, Select, downloadCsv, number, relativeTime, statusTone, useToast } from '../ui'
 
@@ -15,6 +16,7 @@ export function Questions() {
   const [status, setStatus] = useState<(typeof statusFilters)[number]>('All statuses')
   const [selected, setSelected] = useState<string[]>([])
   const [expanded, setExpanded] = useState<string | null>(null)
+  const [uploadOpen, setUploadOpen] = useState(false)
 
   const subjectOptions = useMemo(() => ['All subjects', ...data.subjects.map(item => item.name)], [data.subjects])
 
@@ -65,7 +67,18 @@ export function Questions() {
         eyebrow="ADMIN PORTAL"
         title="Questions"
         description={`${number(data.questions.length)} questions · ${counts.published} published · ${counts.draft} in draft`}
-        actions={<button className="button secondary" onClick={exportCsv}><Download size={16} />Export CSV</button>}
+        actions={
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <button className="button primary" onClick={() => setUploadOpen(true)}>
+              <Sparkles size={16} />
+              Upload PDF / Image (OpenAI)
+            </button>
+            <button className="button secondary" onClick={exportCsv}>
+              <Download size={16} />
+              Export CSV
+            </button>
+          </div>
+        }
       />
 
       <section className="panel table-panel">
@@ -150,11 +163,27 @@ export function Questions() {
                       <td />
                       <td colSpan={6}>
                         <p className="detail-prompt">{question.prompt}</p>
+                        {question.promptHi ? (
+                          <p className="detail-prompt" style={{ marginTop: '4px', opacity: 0.85 }}>
+                            {question.promptHi}
+                          </p>
+                        ) : null}
+                        {question.optionsEn ? (
+                          <ul style={{ marginTop: '8px', display: 'grid', gap: '4px', fontSize: '12.5px' }}>
+                            {question.optionsEn.map((opt, idx) => (
+                              <li key={idx}>
+                                <strong>{['A', 'B', 'C', 'D'][idx]}.</strong> {opt}
+                                {question.correct === idx ? ' ✓' : ''}
+                              </li>
+                            ))}
+                          </ul>
+                        ) : null}
                         <div className="detail-meta">
                           <span>Type: {question.type}</span>
                           <span>Language: {question.language}</span>
                           <span>Subject: {question.subject}</span>
                           <span>Chapter: {question.chapter}</span>
+                          {question.exams?.length ? <span>Exams: {question.exams.join(', ')}</span> : null}
                         </div>
                         <div className="detail-actions">
                           <button className="button small" disabled={question.status === 'Published'} onClick={() => { setQuestionStatus([question.id], 'Published'); notify(`${question.id} published`) }}>Publish</button>
@@ -172,6 +201,13 @@ export function Questions() {
         {!rows.length && <Empty>No questions match those filters.</Empty>}
         <footer className="table-foot">Showing {rows.length} of {data.questions.length}. Select rows for bulk changes.</footer>
       </section>
+
+      {uploadOpen && (
+        <AiUploadDrawer
+          defaultMode="questions"
+          onClose={() => setUploadOpen(false)}
+        />
+      )}
     </>
   )
 }

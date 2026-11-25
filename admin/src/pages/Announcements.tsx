@@ -4,7 +4,7 @@ import type { Announcement } from '../data'
 import { useAdmin } from '../store'
 import { Badge, PageHeader, Select, formatDate, relativeTime, statusTone, useToast } from '../ui'
 
-const audiences: Announcement['audience'][] = ['All learners', 'SSC CGL', 'SSC CHSL']
+const audiences: Announcement['audience'][] = ['All learners', 'SSC CGL', 'SSC CHSL', 'SSC GD', 'Railways', 'Banking']
 
 export function Announcements() {
   const { data, addAnnouncement } = useAdmin()

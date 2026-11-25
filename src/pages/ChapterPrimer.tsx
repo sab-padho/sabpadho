@@ -1,8 +1,8 @@
 import { Link, useParams } from 'react-router-dom'
-import { ArrowRight, BookOpen, Check, ChevronRight, Clock, Languages, ListChecks } from 'lucide-react'
+import { ArrowRight, BookOpen, Check, ChevronRight, Clock, FileText, Languages, ListChecks, Lock, Sparkles } from 'lucide-react'
 import { Badge, ButtonLink, SectionLabel } from '../components/ui'
-import { findChapter, subjects } from '../data/subjects'
-import { questionsForChapter } from '../data/questions'
+import { useCatalog } from '../lib/catalog'
+import { useAuth } from '../lib/auth'
 import { tintTile } from '../components/subject-tint'
 import { cn } from '../lib/utils'
 import { usePageTitle } from '../lib/hooks'
@@ -13,15 +13,106 @@ import { subjectShortByLabel, useCopy } from '../lib/ui-copy'
 export function ChapterPrimer() {
   const copy = useCopy()
   const { subjectSlug = '', chapterSlug = '' } = useParams()
+  const { findChapter, questionsForChapter, notesForChapter, subjects, isChapterFree } = useCatalog()
+  const { email } = useAuth()
+  const isSignedIn = Boolean(email)
   const found = findChapter(subjectSlug, chapterSlug)
   const { lang } = useLang()
   usePageTitle(found ? (lang === 'hi' ? found.chapter.title.hi : found.chapter.title.en) : copy.primerPage.fallback)
 
   if (!found) return <NotFound />
   const { subject, chapter } = found
+  const unlocked = isSignedIn || isChapterFree(chapter)
   const bank = questionsForChapter(chapter.id)
+  const notes = notesForChapter(chapter.id)
   const example = bank[0]
   const others = subject.chapters.filter((item) => item.id !== chapter.id)
+  const freeTwin = subject.chapters.find((item) => isChapterFree(item))
+
+  if (!unlocked) {
+    return (
+      <div className="container-page pb-16 pt-8 md:pt-12">
+        <nav className="flex flex-wrap items-center gap-1.5 text-[12px] text-muted" aria-label={copy.a11y.breadcrumb}>
+          <Link to="/" className="hover:text-ink">
+            {copy.primerPage.home}
+          </Link>
+          <ChevronRight size={12} />
+          <Link to="/subjects" className="hover:text-ink">
+            {copy.primerPage.crumbSubjects}
+          </Link>
+          <ChevronRight size={12} />
+          <Link to={`/subjects/${subject.slug}`} className="hover:text-ink">
+            {subjectShortByLabel(lang, subject.short)}
+          </Link>
+          <ChevronRight size={12} />
+          <span className="text-ink-soft">{lang === 'hi' ? chapter.title.hi : chapter.title.en}</span>
+        </nav>
+
+        <div className="mx-auto mt-10 max-w-2xl">
+          <div className="card border-brand/25 p-6 sm:p-8">
+            <div className="flex items-center gap-2">
+              <Badge tone="brand">
+                <Lock size={11} /> {lang === 'hi' ? 'साइन अप आवश्यक' : 'Members-only chapter'}
+              </Badge>
+              <span className="text-[11.5px] text-muted">{subject.name[lang]}</span>
+            </div>
+
+            <h1 className="mt-4 text-[28px] font-semibold leading-tight sm:text-[34px]">
+              {chapter.title[lang]}
+            </h1>
+            <p className="mt-2 text-[14px] leading-relaxed text-muted">{chapter.blurb}</p>
+
+            <div className="mt-5 rounded-xl border border-line bg-surface-2/60 p-4">
+              <p className="flex items-center gap-2 text-[12.5px] font-semibold text-ink">
+                <Sparkles size={14} className="text-brand" />
+                {lang === 'hi'
+                  ? 'निःशुल्क खाता बनाएँ और अपनी परीक्षा चुनें'
+                  : 'Create a free account to unlock this chapter & full practice'}
+              </p>
+              <p className="mt-1.5 text-[12px] leading-relaxed text-muted">
+                {lang === 'hi'
+                  ? 'बिना खाते के केवल सीमित सैंपल सामग्री उपलब्ध है। साइन अप के दौरान अपनी परीक्षा (SSC CGL, CHSL, GD, Railways या Banking) चुनें और सभी अध्याय, स्प्रिंट व मॉक टेस्ट अनलॉक करें।'
+                  : 'Guest visitors have limited access to starter primers only. Sign up for free, tell us which exam you are preparing for, and unlock every chapter primer, topic sprint, and mock test tailored to your exam.'}
+              </p>
+            </div>
+
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              <ButtonLink
+                to="/signup"
+                state={{
+                  from: `/subjects/${subject.slug}/${chapter.slug}`,
+                  reason: `Sign up to unlock "${chapter.title.en}" and customize SabPadho for your exam.`,
+                }}
+                size="lg"
+              >
+                {lang === 'hi' ? 'निःशुल्क साइन अप करें' : 'Sign up free & unlock'} <ArrowRight size={16} />
+              </ButtonLink>
+              <ButtonLink
+                to="/signin"
+                state={{ from: `/subjects/${subject.slug}/${chapter.slug}` }}
+                variant="secondary"
+                size="lg"
+              >
+                {lang === 'hi' ? 'साइन इन' : 'Sign in'}
+              </ButtonLink>
+            </div>
+
+            {freeTwin ? (
+              <p className="mt-5 border-t border-line pt-4 text-[12px] text-muted">
+                {lang === 'hi' ? 'पहले सैंपल देखना चाहते हैं?' : 'Want to read the free sample chapter in this subject first?'}{' '}
+                <Link
+                  to={`/subjects/${subject.slug}/${freeTwin.slug}`}
+                  className="font-medium text-brand-ink hover:underline"
+                >
+                  {freeTwin.title[lang]} →
+                </Link>
+              </p>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="container-page pb-16 pt-8 md:pt-12">
@@ -45,7 +136,12 @@ export function ChapterPrimer() {
         <div>
           <div className="flex flex-wrap items-center gap-2">
             <Badge tone="brand">
-              <BookOpen size={11} /> {copy.primerPage.badge}
+              <BookOpen size={11} />{' '}
+              {!isSignedIn
+                ? lang === 'hi'
+                  ? 'निःशुल्क सैंपल अध्याय'
+                  : 'Free starter primer'
+                : copy.primerPage.badge}
             </Badge>
             <span className="inline-flex items-center gap-1.5 text-[11.5px] text-muted">
               <Clock size={12} /> {copy.primerPage.minRead(chapter.minutes)}
@@ -84,6 +180,35 @@ export function ChapterPrimer() {
               ))}
             </ol>
           </section>
+
+          {notes.length > 0 ? (
+            <section className="mt-10 space-y-3">
+              <SectionLabel>
+                {lang === 'hi' ? 'अध्याय नोट्स (Study Notes)' : 'Study notes & quick revision'}
+              </SectionLabel>
+              {notes.map((note) => (
+                <div key={note.id} className="card p-4 sm:p-5">
+                  <div className="flex items-center gap-2">
+                    <FileText size={14} className="text-brand" />
+                    <h3 className="text-[14.5px] font-semibold text-ink">{note.title}</h3>
+                  </div>
+                  {note.summary ? (
+                    <p className="mt-2 text-[13px] leading-relaxed text-muted">{note.summary}</p>
+                  ) : null}
+                  {note.keyPoints.length > 0 ? (
+                    <ul className="mt-3 space-y-1.5">
+                      {note.keyPoints.map((pt) => (
+                        <li key={pt} className="flex gap-2 text-[12.5px] leading-relaxed text-ink-soft">
+                          <Check size={13} className="mt-0.5 shrink-0 text-positive" />
+                          <span>{pt}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </div>
+              ))}
+            </section>
+          ) : null}
 
           {example ? (
             <section className="mt-10">
@@ -167,10 +292,18 @@ export function ChapterPrimer() {
             </div>
 
             <h2 className="mt-4 font-display text-[19px] font-semibold leading-snug">
-              {copy.primerPage.readyTitle}
+              {isSignedIn
+                ? copy.primerPage.readyTitle
+                : lang === 'hi'
+                  ? 'प्रैक्टिस स्प्रिंट अनलॉक करें'
+                  : 'Sign up to start this sprint'}
             </h2>
             <p className="mt-1.5 text-[12.5px] leading-relaxed text-muted">
-              {copy.primerPage.readyBody}
+              {isSignedIn
+                ? copy.primerPage.readyBody
+                : lang === 'hi'
+                  ? 'अभ्यास प्रश्न, टाइम्ड मॉक टेस्ट और अपनी पसंदीदा परीक्षा के सभी अध्यायों के लिए निःशुल्क साइन अप करें।'
+                  : 'Practice sprints, mocks, and other chapters require a free account. Choose your target exam at signup!'}
             </p>
 
             <div className="mt-3 space-y-1.5 text-[12px] text-ink-soft">
@@ -188,35 +321,71 @@ export function ChapterPrimer() {
               </p>
             </div>
 
-            <ButtonLink to={`/app/practice/${chapter.slug}`} className="mt-4 w-full">
-              {copy.primerPage.startSprint} <ArrowRight size={15} />
-            </ButtonLink>
-            <Link
-              to="/signin"
-              className="mt-2 block text-center text-[11.5px] text-muted hover:text-ink"
-            >
-              {copy.primerPage.signinKeep}
-            </Link>
+            {isSignedIn ? (
+              <ButtonLink to={`/app/practice/${chapter.slug}`} className="mt-4 w-full">
+                {copy.primerPage.startSprint} <ArrowRight size={15} />
+              </ButtonLink>
+            ) : (
+              <>
+                <ButtonLink
+                  to="/signup"
+                  state={{
+                    from: `/app/practice/${chapter.slug}`,
+                    reason: `Sign up for free and select your exam to practise "${chapter.title.en}".`,
+                  }}
+                  className="mt-4 w-full"
+                >
+                  {lang === 'hi' ? 'साइन अप करें और अभ्यास शुरू करें' : 'Sign up to start sprint'}{' '}
+                  <ArrowRight size={15} />
+                </ButtonLink>
+                <Link
+                  to="/signin"
+                  state={{ from: `/app/practice/${chapter.slug}` }}
+                  className="mt-2 block text-center text-[11.5px] text-muted hover:text-ink"
+                >
+                  {copy.primerPage.signinKeep}
+                </Link>
+              </>
+            )}
 
             <p className="mt-4 border-t border-line pt-3 text-[10.5px] leading-relaxed text-muted">
-              {copy.primerPage.primersNote}
+              {isSignedIn
+                ? copy.primerPage.primersNote
+                : lang === 'hi'
+                  ? 'केवल पहला सैंपल अध्याय मेहमानों के लिए खुला है। साइन अप निःशुल्क है।'
+                  : 'Starter chapter primers are free for visitors. Full syllabus & sprints unlock on free signup.'}
             </p>
           </div>
 
           <div className="card mt-3 p-4">
             <p className="label">{copy.primerPage.moreIn(subjectShortByLabel(lang, subject.short))}</p>
             <ul className="mt-2.5 space-y-1">
-              {others.slice(0, 4).map((item) => (
-                <li key={item.id}>
-                  <Link
-                    to={`/subjects/${subject.slug}/${item.slug}`}
-                    className="group flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-[12.5px] text-ink-soft transition hover:bg-surface-2"
-                  >
-                    {lang === 'hi' ? item.title.hi : item.title.en}
-                    <ChevronRight size={13} className="text-muted group-hover:text-ink" />
-                  </Link>
-                </li>
-              ))}
+              {others.slice(0, 4).map((item) => {
+                const itemUnlocked = isSignedIn || isChapterFree(item)
+                return (
+                  <li key={item.id}>
+                    <Link
+                      to={itemUnlocked ? `/subjects/${subject.slug}/${item.slug}` : '/signup'}
+                      state={
+                        itemUnlocked
+                          ? undefined
+                          : {
+                              from: `/subjects/${subject.slug}/${item.slug}`,
+                              reason: `Sign up for free to unlock "${item.title.en}" and all chapters for your target exam.`,
+                            }
+                      }
+                      className="group flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-[12.5px] text-ink-soft transition hover:bg-surface-2"
+                    >
+                      <span className="truncate">{lang === 'hi' ? item.title.hi : item.title.en}</span>
+                      {itemUnlocked ? (
+                        <ChevronRight size={13} className="shrink-0 text-muted group-hover:text-ink" />
+                      ) : (
+                        <Lock size={12} className="shrink-0 text-muted group-hover:text-brand" />
+                      )}
+                    </Link>
+                  </li>
+                )
+              })}
             </ul>
           </div>
 

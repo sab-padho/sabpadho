@@ -1,4 +1,5 @@
 import type { Bilingual } from '../lib/lang'
+import type { ExamId } from './exams'
 
 export type SubjectId = 'maths' | 'reasoning' | 'english' | 'gk' | 'hindi'
 
@@ -12,6 +13,9 @@ export type Chapter = {
   attempts: number | null
   accuracy: number | null
   minutes: number
+  isFree?: boolean
+  exams?: ExamId[]
+  notesMarkdown?: string
 }
 
 export type Subject = {
@@ -26,7 +30,24 @@ export type Subject = {
   chapters: Chapter[]
   accuracy: number
   paperSection: string
+  exams?: ExamId[]
 }
+
+const DEFAULT_SUBJECT_EXAMS: Record<SubjectId, ExamId[]> = {
+  maths: ['SSC CGL', 'SSC CHSL', 'SSC GD', 'Railways', 'Banking'],
+  reasoning: ['SSC CGL', 'SSC CHSL', 'SSC GD', 'Railways', 'Banking'],
+  english: ['SSC CGL', 'SSC CHSL', 'SSC GD', 'Banking'],
+  gk: ['SSC CGL', 'SSC CHSL', 'SSC GD', 'Railways', 'Banking'],
+  hindi: ['SSC CHSL', 'SSC GD'],
+}
+
+const FREE_CHAPTER_SLUGS = new Set([
+  'percentages',
+  'syllogisms',
+  'synonyms',
+  'indian-polity',
+  'muhavare',
+])
 
 const chapter = (
   subjectId: SubjectId,
@@ -37,6 +58,7 @@ const chapter = (
   attempts: number | null,
   accuracy: number | null,
   minutes = 12,
+  exams?: ExamId[],
 ): Chapter => ({
   id: `${subjectId}-${slug}`,
   subjectId,
@@ -47,6 +69,8 @@ const chapter = (
   attempts,
   accuracy,
   minutes,
+  isFree: FREE_CHAPTER_SLUGS.has(slug),
+  exams: exams ?? DEFAULT_SUBJECT_EXAMS[subjectId],
 })
 
 export const subjects: Subject[] = [
@@ -62,6 +86,7 @@ export const subjects: Subject[] = [
       'Short-cut methods for the topics that repeat in every paper. Each solution shows the working, not just the final option.',
     accuracy: 68,
     paperSection: 'Quantitative Aptitude',
+    exams: ['SSC CGL', 'SSC CHSL', 'SSC GD', 'Railways', 'Banking'],
     chapters: [
       chapter(
         'maths',
@@ -152,6 +177,7 @@ export const subjects: Subject[] = [
       'Draw the diagram, test every conclusion, and stop guessing between two options that look similar.',
     accuracy: 64,
     paperSection: 'General Intelligence & Reasoning',
+    exams: ['SSC CGL', 'SSC CHSL', 'SSC GD', 'Railways', 'Banking'],
     chapters: [
       chapter(
         'reasoning',
@@ -242,6 +268,7 @@ export const subjects: Subject[] = [
       'A small daily vocabulary habit, plus the grammar checks that decide most Tier-I English questions.',
     accuracy: 70,
     paperSection: 'English Comprehension',
+    exams: ['SSC CGL', 'SSC CHSL', 'SSC GD', 'Banking'],
     chapters: [
       chapter(
         'english',
@@ -332,6 +359,7 @@ export const subjects: Subject[] = [
       'Static topics that reward regular small doses. Every answer links to the chapter it came from.',
     accuracy: 74,
     paperSection: 'General Awareness',
+    exams: ['SSC CGL', 'SSC CHSL', 'SSC GD', 'Railways', 'Banking'],
     chapters: [
       chapter(
         'gk',
@@ -421,7 +449,8 @@ export const subjects: Subject[] = [
     description:
       'हिंदी की तैयारी के लिए छोटे-छोटे अभ्यास, व्याकरण के नियम, मुहावरे और शब्द भंडार।',
     accuracy: 81,
-    paperSection: 'Hindi Language (CHSL)',
+    paperSection: 'Hindi Language (CHSL & GD)',
+    exams: ['SSC CHSL', 'SSC GD'],
     chapters: [
       chapter(
         'hindi',

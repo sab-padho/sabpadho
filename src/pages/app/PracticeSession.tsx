@@ -14,8 +14,7 @@ import {
 } from 'lucide-react'
 import { Badge, Button, ButtonLink, ProgressBar } from '../../components/ui'
 import { AccuracyRing } from '../../components/charts'
-import { allChapters, subjectById } from '../../data/subjects'
-import { questionsForChapter } from '../../data/questions'
+import { useCatalog } from '../../lib/catalog'
 import { tintTile } from '../../components/subject-tint'
 import { cn, clamp } from '../../lib/utils'
 import { useLocalStorage, usePageTitle } from '../../lib/hooks'
@@ -33,6 +32,7 @@ export function PracticeSession() {
   const { notify } = useToast()
   const shelf = useShelf()
   const extraRevision = useExtraRevision()
+  const { allChapters, subjectById, questionsForChapter } = useCatalog()
 
   const chapter = allChapters.find(
     (item) => item.slug === chapterSlug && questionsForChapter(item.id).length > 0,

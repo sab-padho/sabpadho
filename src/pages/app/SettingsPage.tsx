@@ -1,13 +1,15 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowRight, Check, Crown, LogOut, Trash2 } from 'lucide-react'
+import { ArrowRight, Check, Crown, GraduationCap, LogOut, Trash2 } from 'lucide-react'
 import { Avatar, Badge, Button, SectionLabel, Segmented, Switch } from '../../components/ui'
 import { learner } from '../../data/learner'
+import { EXAM_OPTIONS, getExamConfig } from '../../data/exams'
 import { useTheme } from '../../lib/theme'
 import { useLang } from '../../lib/lang'
 import { localDate, planLabel, useCopy } from '../../lib/ui-copy'
 import { useAuth } from '../../lib/auth'
 import { useLocalStorage, usePageTitle } from '../../lib/hooks'
 import { useToast } from '../../lib/toast'
+import { cn } from '../../lib/utils'
 
 export function SettingsPage() {
   const { lang, setLang } = useLang()
@@ -16,7 +18,8 @@ export function SettingsPage() {
   const navigate = useNavigate()
   const { resolved, setMode } = useTheme()
   const { notify } = useToast()
-  const { signOut } = useAuth()
+  const { user, preferredExam, setPreferredExam, signOut } = useAuth()
+  const examInfo = getExamConfig(preferredExam)
   const [defaultLength, setDefaultLength] = useLocalStorage('sabpadho-default-length', 5)
   const [showExplanation, setShowExplanation] = useLocalStorage('sabpadho-auto-explain', true)
   const [reminders, setReminders] = useLocalStorage('sabpadho-reminders', true)
@@ -27,7 +30,14 @@ export function SettingsPage() {
     const keys: string[] = []
     for (let index = 0; index < localStorage.length; index += 1) {
       const key = localStorage.key(index)
-      if (key && key.startsWith('sabpadho-') && key !== 'sabpadho-theme' && key !== 'sabpadho-lang') {
+      if (
+        key &&
+        key.startsWith('sabpadho-') &&
+        key !== 'sabpadho-theme' &&
+        key !== 'sabpadho-lang' &&
+        key !== 'sabpadho-auth-v2' &&
+        key !== 'sabpadho-accounts-v1'
+      ) {
         keys.push(key)
       }
     }
@@ -49,6 +59,63 @@ export function SettingsPage() {
 
       <div className="grid gap-4 xl:grid-cols-[1.5fr_1fr] xl:items-start">
         <div className="space-y-4">
+          <section className="card p-4 sm:p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="flex items-center gap-2 text-[14.5px] font-semibold">
+                  <GraduationCap size={16} className="text-brand" />
+                  {lang === 'hi' ? 'पसंदीदा परीक्षा (Exam Preference)' : 'Preferred exam track'}
+                </h2>
+                <p className="mt-0.5 text-[11.5px] text-muted">
+                  {lang === 'hi'
+                    ? 'केवल चुनी हुई परीक्षा के विषय और मॉक मुख्य डेस्क पर दिखेंगे; बाकी Others में ज़िप रहेंगे।'
+                    : 'Only content for your selected exam appears on your main desk; other exams stay zipped under Others.'}
+                </p>
+              </div>
+              <Badge tone="brand">{preferredExam}</Badge>
+            </div>
+
+            <div className="mt-3 grid gap-2 border-t border-line pt-3 sm:grid-cols-2">
+              {EXAM_OPTIONS.map((exam) => {
+                const active = exam.id === preferredExam
+                return (
+                  <button
+                    key={exam.id}
+                    type="button"
+                    onClick={async () => {
+                      await setPreferredExam(exam.id)
+                      notify(`Preferred exam updated to ${exam.shortLabel}`, 'success')
+                    }}
+                    aria-pressed={active}
+                    className={cn(
+                      'flex items-start gap-2.5 rounded-xl border p-2.5 text-left transition',
+                      active
+                        ? 'border-brand bg-brand-soft/60'
+                        : 'border-line bg-surface hover:border-line-strong hover:bg-surface-2/50',
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        'mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full border',
+                        active ? 'border-brand bg-brand text-white' : 'border-line-strong bg-surface',
+                      )}
+                    >
+                      {active ? <Check size={10} /> : null}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[12.5px] font-semibold text-ink">
+                        {exam.shortLabel}
+                      </span>
+                      <span className="mt-0.5 block text-[10.5px] leading-snug text-muted">
+                        {lang === 'hi' ? exam.taglineHi : exam.tagline}
+                      </span>
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </section>
+
           <section className="card p-4 sm:p-5">
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -220,18 +287,18 @@ export function SettingsPage() {
           <div className="card p-4">
             <p className="label">{copy.settings.profile}</p>
             <div className="mt-3 flex items-center gap-3">
-              <Avatar initials={learner.initials} size={44} />
+              <Avatar initials={user?.initials ?? learner.initials} size={44} />
               <div className="min-w-0">
-                <p className="truncate text-[14px] font-semibold">{learner.name}</p>
-                <p className="truncate text-[11.5px] text-muted">{learner.email}</p>
+                <p className="truncate text-[14px] font-semibold">{user?.name ?? learner.name}</p>
+                <p className="truncate text-[11.5px] text-muted">{user?.email ?? learner.email}</p>
               </div>
             </div>
             <dl className="mt-3 space-y-2 border-t border-line pt-3 text-[11.5px]">
               {[
-                [copy.settings.target, learner.target],
-                [copy.settings.examDate, `${localDate(lang, learner.targetDate)} · ${copy.settings.daysN(learner.daysToExam)}`],
-                [copy.settings.joined, localDate(lang, learner.joined)],
-                [copy.settings.plan, planLabel(lang, learner.plan)],
+                [copy.settings.target, examInfo.targetDisplay],
+                [copy.settings.examDate, `${localDate(lang, examInfo.targetDate)} · ${copy.settings.daysN(examInfo.daysToExam)}`],
+                [copy.settings.joined, localDate(lang, user?.joined ?? learner.joined)],
+                [copy.settings.plan, planLabel(lang, user?.plan ?? learner.plan)],
               ].map(([label, value]) => (
                 <div key={label} className="flex items-start justify-between gap-3">
                   <dt className="text-muted">{label}</dt>
@@ -239,9 +306,6 @@ export function SettingsPage() {
                 </div>
               ))}
             </dl>
-            <p className="mt-3 rounded-md bg-brand-soft/60 px-2 py-1.5 text-[9.5px] leading-relaxed text-brand-ink">
-              {copy.settings.demoProfile}
-            </p>
           </div>
 
           <div className="card p-4">

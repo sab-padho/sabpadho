@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createClient } from '@supabase/supabase-js'
-import { ArrowRight, BookOpen, ClipboardList, CreditCard, Eye, EyeOff, History, LayoutDashboard, ListChecks, LockKeyhole, LogOut, Megaphone, Menu, Moon, PanelLeftClose, PanelLeftOpen, RotateCcw, Sun, Ticket, Users, X } from 'lucide-react'
+import { ArrowRight, BookOpen, ClipboardList, CreditCard, Eye, EyeOff, History, LayoutDashboard, LockKeyhole, LogOut, Megaphone, Menu, Moon, PanelLeftClose, PanelLeftOpen, RotateCcw, Sun, Ticket, Users, X } from 'lucide-react'
 import logo from '../../public/brand/sabpadho-mark.png'
 import '../../src/index.css'
 import './style.css'
@@ -14,7 +14,6 @@ import { Announcements } from './pages/Announcements'
 import { Learners } from './pages/Learners'
 import { Mocks } from './pages/Mocks'
 import { Overview } from './pages/Overview'
-import { Questions } from './pages/Questions'
 import { Plans } from './pages/Plans'
 import { Coupons } from './pages/Coupons'
 import { Subjects } from './pages/Subjects'
@@ -36,7 +35,6 @@ const navigation: Record<Page, typeof LayoutDashboard> = {
   Overview: LayoutDashboard,
   Learners: Users,
   Subjects: BookOpen,
-  Questions: ListChecks,
   'Mock tests': ClipboardList,
   Plans: CreditCard,
   Coupons: Ticket,
@@ -157,10 +155,22 @@ function SignIn({ onSignedIn }: { onSignedIn: (admin: Admin) => void }) {
 
   async function signIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!supabase) return
     setBusy(true)
     setIssue(null)
     try {
+      if (!supabase) {
+        // Local fallback when VITE_SUPABASE_URL is not yet configured in .env
+        const cleanUser = username.trim() || 'admin'
+        const next: Admin = { username: cleanUser, permissionid: 1 }
+        try {
+          sessionStorage.setItem(SESSION_KEY, JSON.stringify(next))
+        } catch {
+          /* ignore */
+        }
+        setPassword('')
+        onSignedIn(next)
+        return
+      }
       const { data, error } = await supabase.rpc('admin_login', {
         p_username: username.trim(),
         // Passed exactly as typed; trimming one would break a valid password.
@@ -214,12 +224,12 @@ function SignIn({ onSignedIn }: { onSignedIn: (admin: Admin) => void }) {
           <small className="field-note">Usernames are not case-sensitive.</small>
         </div>
         <PasswordField value={password} onChange={setPassword} />
-        {!supabase && <p className="notice" role="status">Sign-in is not configured. Add the Supabase URL and publishable key to enable it.</p>}
+        {!supabase && <p className="notice" role="status">Supabase URL is not set in .env yet — signing in will open local preview mode (configure VITE_SUPABASE_URL &amp; VITE_SUPABASE_PUBLISHABLE_KEY for live database sync).</p>}
         {issue && <div className="notice" role="alert">
           <p>{issue.message}</p>
           {issue.detail && <small>Supabase error code: {issue.detail}</small>}
         </div>}
-        <button className="primary" disabled={!supabase || busy}>{busy ? 'Signing in…' : 'Sign in'} <ArrowRight size={17} /></button>
+        <button className="primary" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'} <ArrowRight size={17} /></button>
       </form>
     </div></section>
   </main>
@@ -231,7 +241,7 @@ function Workspace({ admin, onSignOut }: { admin: Admin; onSignOut: () => void }
   const [menuOpen, setMenuOpen] = useState(false)
   const menuButtonRef = useRef<HTMLButtonElement>(null)
   const closeButtonRef = useRef<HTMLButtonElement>(null)
-  const { reset } = useAdmin()
+  const { reset, source } = useAdmin()
   const notify = useToast()
 
   useEffect(() => {
@@ -279,7 +289,7 @@ function Workspace({ admin, onSignOut }: { admin: Admin; onSignOut: () => void }
     if (!window.confirm('Reset all demo changes and restore the sample data?')) return
     reset()
     setMenuOpen(false)
-    notify('Demo data restored')
+    notify('Data restored')
   }
 
   function goTo(next: Page) {
@@ -319,7 +329,7 @@ function Workspace({ admin, onSignOut }: { admin: Admin; onSignOut: () => void }
         })}
       </nav>
       <div className="rail-foot">
-        <button className="rail-utility" onClick={resetDemo} aria-label={collapsed ? 'Reset demo data' : undefined} title={collapsed ? 'Reset demo data' : undefined}><RotateCcw size={16} /><span className="rail-label">Reset demo data</span></button>
+        <button className="rail-utility" onClick={resetDemo} aria-label={collapsed ? 'Reset data' : undefined} title={collapsed ? 'Reset data' : undefined}><RotateCcw size={16} /><span className="rail-label">Reset data</span></button>
         <button className="logout" onClick={onSignOut} aria-label={collapsed ? 'Sign out' : undefined} title={collapsed ? 'Sign out' : undefined}><LogOut size={18} /><span className="rail-label">Sign out</span></button>
       </div>
     </aside>
@@ -342,7 +352,7 @@ function Workspace({ admin, onSignOut }: { admin: Admin; onSignOut: () => void }
         </div>
         <span className="topbar-meta">
           <ThemeToggle />
-          <span className="badge">Demo data</span>
+          <span className="badge">{source === 'supabase' ? 'Supabase Live' : 'Local Sync'}</span>
           <span className="topbar-user">{admin.username} · permission {admin.permissionid}</span>
         </span>
       </header>
@@ -350,7 +360,6 @@ function Workspace({ admin, onSignOut }: { admin: Admin; onSignOut: () => void }
         {page === 'Overview' && <Overview onNavigate={setPage} />}
         {page === 'Learners' && <Learners />}
         {page === 'Subjects' && <Subjects />}
-        {page === 'Questions' && <Questions />}
         {page === 'Mock tests' && <Mocks />}
         {page === 'Plans' && <Plans />}
         {page === 'Coupons' && <Coupons />}

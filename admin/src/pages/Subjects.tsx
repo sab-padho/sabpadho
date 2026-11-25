@@ -1,13 +1,22 @@
 import { useState } from 'react'
-import { ChevronRight, Download } from 'lucide-react'
+import { ChevronRight, Download, ListChecks, Sparkles } from 'lucide-react'
+import { AiUploadDrawer } from '../AiUploadDrawer'
 import type { Subject } from '../data'
-import { useAdmin } from '../store'
+import { toLearnerChapterId, useAdmin } from '../store'
 import { Badge, Drawer, PageHeader, Progress, Toggle, downloadCsv, formatDate, number, relativeTime, statusTone, useToast } from '../ui'
+import { Questions } from './Questions'
+
+const EXAM_TRACKS = ['SSC CGL', 'SSC CHSL', 'SSC GD', 'Railways', 'Banking'] as const
 
 export function Subjects() {
-  const { data, setSubjectStatus, setChapterStatus } = useAdmin()
+  const { data, setSubjectStatus, setSubjectExams, setChapterStatus, setChapterFree } = useAdmin()
   const notify = useToast()
+  const [view, setView] = useState<'subjects' | 'questions'>('subjects')
   const [open, setOpen] = useState<string | null>(null)
+  const [uploadTarget, setUploadTarget] = useState<{
+    subjectId: string
+    chapterId?: string
+  } | null>(null)
   const subject = data.subjects.find(item => item.id === open) ?? null
   const chapters = data.subjects.reduce((sum, item) => sum + item.chapters.length, 0)
   const drafts = data.subjects.reduce((sum, item) => sum + item.chapters.filter(chapter => chapter.status === 'Draft').length, 0)
@@ -33,11 +42,47 @@ export function Subjects() {
 
   return (
     <>
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
+        <button
+          type="button"
+          className={`button ${view === 'subjects' ? 'primary' : 'secondary'}`}
+          onClick={() => setView('subjects')}
+        >
+          Subjects &amp; Chapters ({data.subjects.length})
+        </button>
+        <button
+          type="button"
+          className={`button ${view === 'questions' ? 'primary' : 'secondary'}`}
+          onClick={() => setView('questions')}
+        >
+          <ListChecks size={16} />
+          Questions Bank ({number(data.questions.length)})
+        </button>
+      </div>
+
+      {view === 'questions' ? (
+        <Questions />
+      ) : (
+        <>
       <PageHeader
         eyebrow="ADMIN PORTAL"
-        title="Subjects"
-        description={`${data.subjects.length} subjects · ${chapters} chapters · ${drafts} chapters in draft`}
-        actions={<button className="button secondary" onClick={exportCsv}><Download size={16} />Export CSV</button>}
+        title="Subjects & Notes"
+        description={`${data.subjects.length} subjects · ${chapters} chapters · ${data.notes.length} AI note sets · ${drafts} chapters in draft`}
+        actions={
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <button
+              className="button primary"
+              onClick={() => setUploadTarget({ subjectId: data.subjects[0]?.id ?? 'maths' })}
+            >
+              <Sparkles size={16} />
+              Upload PDF / Image Notes
+            </button>
+            <button className="button secondary" onClick={exportCsv}>
+              <Download size={16} />
+              Export CSV
+            </button>
+          </div>
+        }
       />
 
       <section className="panel table-panel">
@@ -62,11 +107,19 @@ export function Subjects() {
                     <td data-label="Subject">
                       <button className="cell-button" onClick={() => setOpen(item.id)}>
                         <strong>{item.name}</strong>
-                        <small className="cell-sub">{item.code} · {item.section}</small>
+                        <small className="cell-sub">
+                          {item.code} · {item.section}
+                          {(item.exams ?? []).length > 0 ? ` · ${(item.exams ?? []).join(', ')}` : ''}
+                        </small>
                       </button>
                     </td>
                     <td data-label="Chapters">{published}/{item.chapters.length} published</td>
-                    <td data-label="Questions">{number(item.chapters.reduce((sum, chapter) => sum + chapter.questions, 0))}</td>
+                    <td data-label="Questions">
+                      {number(
+                        data.questions.filter((q) => q.subject === item.name).length ||
+                          item.chapters.reduce((sum, chapter) => sum + chapter.questions, 0),
+                      )}
+                    </td>
                     <td data-label="Accuracy">
                       <div className="cell-meter">
                         <Progress value={item.accuracy} tone={item.accuracy >= 70 ? 'positive' : item.accuracy >= 60 ? 'brand' : 'warning'} />
@@ -95,23 +148,86 @@ export function Subjects() {
       </section>
 
       {subject && (
-        <Drawer title={subject.name} subtitle={`${subject.code} · ${subject.section} · ${number(subject.learners)} learners`} onClose={() => setOpen(null)}>
+        <Drawer title={subject.name} subtitle={`${subject.code} · ${subject.section} · ${number(subject.learners ?? 0)} learners`} onClose={() => setOpen(null)}>
           <div className="drawer-row">
             <Badge tone={statusTone(subject.status)}>{subject.status}</Badge>
-            <Badge tone="brand">{subject.chapters.length} chapters</Badge>
-            <Badge tone="neutral">{subject.accuracy}% accuracy</Badge>
+            <Badge tone="brand">{(subject.chapters ?? []).length} chapters</Badge>
+            <Badge tone="neutral">{subject.accuracy ?? 0}% accuracy</Badge>
           </div>
 
           <div className="drawer-block">
-            <h3>Chapters</h3>
+            <h3>Related Exams</h3>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
+              {EXAM_TRACKS.map((exam) => {
+                const currentExams = subject.exams ?? []
+                const active = currentExams.includes(exam)
+                return (
+                  <button
+                    key={exam}
+                    type="button"
+                    className={`button small ${active ? 'primary' : 'secondary'}`}
+                    onClick={() => {
+                      const nextExams = active
+                        ? currentExams.filter((e) => e !== exam)
+                        : [...currentExams, exam]
+                      setSubjectExams(subject.id, nextExams)
+                      notify(
+                        active
+                          ? `Removed ${exam} from ${subject.name}`
+                          : `Added ${exam} to ${subject.name}`,
+                      )
+                    }}
+                  >
+                    {exam}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          <div className="drawer-block">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3>Chapters</h3>
+              <button
+                type="button"
+                className="button small primary"
+                onClick={() => setUploadTarget({ subjectId: subject.id })}
+              >
+                <Sparkles size={13} /> Upload Notes / MCQs
+              </button>
+            </div>
             <ul className="chapter-list">
-              {subject.chapters.map(chapter => (
+              {(subject.chapters ?? []).map(chapter => {
+                const noteCount = (data.notes ?? []).filter(
+                  n => n.chapterId === toLearnerChapterId(chapter.id) || n.chapterId === chapter.id,
+                ).length
+                return (
                 <li key={chapter.id}>
                   <div>
                     <strong>{chapter.title}</strong>
-                    <small>{chapter.questions} questions · {chapter.difficulty} · edited {relativeTime(chapter.updated)}</small>
+                    <small>
+                      {chapter.questions ?? 0} questions
+                      {noteCount > 0 ? ` · ${noteCount} note${noteCount === 1 ? '' : 's'}` : ''}
+                      {chapter.isFree ? ' · Free visitor sample' : ' · Signup required'}
+                      {chapter.updated ? ` · edited ${relativeTime(chapter.updated)}` : ''}
+                    </small>
                   </div>
                   <div className="chapter-actions">
+                    <button
+                      type="button"
+                      className="button small secondary"
+                      onClick={() => {
+                        const nextFree = !chapter.isFree
+                        setChapterFree(subject.id, chapter.id, nextFree)
+                        notify(
+                          nextFree
+                            ? `${chapter.title} marked as free visitor primer`
+                            : `${chapter.title} restricted to signed-up learners`,
+                        )
+                      }}
+                    >
+                      {chapter.isFree ? 'Free primer' : 'Locked'}
+                    </button>
                     <Badge tone={statusTone(chapter.status)}>{chapter.status}</Badge>
                     <Toggle
                       checked={chapter.status === 'Published'}
@@ -120,20 +236,55 @@ export function Subjects() {
                     />
                   </div>
                 </li>
-              ))}
+                )
+              })}
             </ul>
           </div>
 
           <div className="drawer-block">
             <h3>Details</h3>
             <ul className="key-values">
-              <li><span>Last catalogue change</span><span>{relativeTime(subject.chapters.reduce((latest, chapter) => (chapter.updated > latest ? chapter.updated : latest), subject.chapters[0].updated))}</span></li>
-              <li><span>Questions in subject</span><span>{number(subject.chapters.reduce((sum, chapter) => sum + chapter.questions, 0))}</span></li>
-              <li><span>Created</span><span>{formatDate(subject.chapters[0].updated)}</span></li>
+              <li>
+                <span>Last catalogue change</span>
+                <span>
+                  {subject.chapters.length > 0
+                    ? relativeTime(
+                        subject.chapters.reduce(
+                          (latest, chapter) => (chapter.updated > latest ? chapter.updated : latest),
+                          subject.chapters[0].updated,
+                        ),
+                      )
+                    : '—'}
+                </span>
+              </li>
+              <li>
+                <span>Questions in subject</span>
+                <span>
+                  {number(
+                    data.questions.filter((q) => q.subject === subject.name).length ||
+                      subject.chapters.reduce((sum, chapter) => sum + chapter.questions, 0),
+                  )}
+                </span>
+              </li>
+              <li>
+                <span>Created</span>
+                <span>{subject.chapters.length > 0 ? formatDate(subject.chapters[0].updated) : '—'}</span>
+              </li>
             </ul>
           </div>
-          <p className="drawer-note">Demo action: chapter changes are stored in this browser and written to the activity log.</p>
+          <p className="drawer-note">Changes sync to Supabase tables (`subjects`, `chapters`, `chapter_notes`, `questions`) and update the learner portal.</p>
         </Drawer>
+      )}
+
+      {uploadTarget && (
+        <AiUploadDrawer
+          defaultMode="notes"
+          defaultSubjectId={uploadTarget.subjectId}
+          defaultChapterId={uploadTarget.chapterId}
+          onClose={() => setUploadTarget(null)}
+        />
+      )}
+        </>
       )}
     </>
   )

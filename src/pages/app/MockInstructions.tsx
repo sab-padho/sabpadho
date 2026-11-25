@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, CalendarDays, Check, Clock, Info, Trophy } from 'lucide-react'
 import { Badge, Button, ButtonLink, SectionLabel } from '../../components/ui'
-import { getMock, paperMarks, paperQuestionCount, sectionQuestionCount } from '../../data/mocks'
+import { paperMarks, paperQuestionCount, sectionQuestionCount } from '../../data/mocks'
+import { useCatalog } from '../../lib/catalog'
 import { loadResult } from '../../lib/attempt'
 import { usePageTitle } from '../../lib/hooks'
 import { useLang } from '../../lib/lang'
@@ -10,6 +11,7 @@ import { useCopy, localDate, mockKindLabel, sectionName } from '../../lib/ui-cop
 
 export function MockInstructions() {
   const { mockId = '' } = useParams()
+  const { getMock } = useCatalog()
   const paper = getMock(mockId)
   const navigate = useNavigate()
   const { lang } = useLang()

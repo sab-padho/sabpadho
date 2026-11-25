@@ -12,8 +12,7 @@ import {
 import { Badge, Button, ButtonLink, Dialog, EmptyState, SectionLabel } from '../../components/ui'
 import { LangToggle } from '../../components/brand'
 import { revisionQueue, revisionWeek } from '../../data/learner'
-import { chapterById, subjectById } from '../../data/subjects'
-import { questionById } from '../../data/questions'
+import { useCatalog } from '../../lib/catalog'
 import { useExtraRevision, useRevisionDone } from '../../lib/shelf'
 import { useLang } from '../../lib/lang'
 import {
@@ -42,6 +41,7 @@ export function Revision() {
   usePageTitle(copy.nav.revision)
   const extra = useExtraRevision()
   const { notify } = useToast()
+  const { questionById, chapterById, subjectById } = useCatalog()
   const [selectedDay, setSelectedDay] = useState('19')
   const [retryId, setRetryId] = useState<string | null>(null)
 
@@ -66,7 +66,7 @@ export function Revision() {
         }
       })
     return [...extras, ...base].filter((item) => !done.includes(item.questionId))
-  }, [done, extra.ids, copy.revision.fromSprint, copy.revision.mixedWord, copy.revision.practiceWord, lang])
+  }, [done, extra.ids, copy.revision.fromSprint, copy.revision.mixedWord, copy.revision.practiceWord, lang, questionById, chapterById, subjectById])
 
   const today = revisionWeek.find((day) => day.today)!
   const activeDay = revisionWeek.find((day) => day.date === selectedDay) ?? today
@@ -359,6 +359,7 @@ function RetryDialog({
 }) {
   const { lang } = useLang()
   const copy = useCopy()
+  const { questionById, chapterById } = useCatalog()
   const question = questionById(questionId)
   const chapter = question ? chapterById(question.chapterId) : undefined
   const [picked, setPicked] = useState<number | null>(null)

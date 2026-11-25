@@ -12,6 +12,7 @@ import {
   Timer,
 } from 'lucide-react'
 import { Badge, ButtonLink, SectionLabel } from '../components/ui'
+import { useAuth } from '../lib/auth'
 import { usePageTitle } from '../lib/hooks'
 import { useCopy } from '../lib/ui-copy'
 
@@ -19,6 +20,7 @@ const journeyIcons = [BookOpen, PenLine, Timer, RotateCcw]
 
 export function HowItWorks() {
   const copy = useCopy()
+  const { email } = useAuth()
   usePageTitle(copy.how.title)
 
   return (
@@ -198,7 +200,9 @@ export function HowItWorks() {
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <ButtonLink to="/app">{copy.how.openDesk} <ArrowRight size={15} /></ButtonLink>
+            <ButtonLink to={email ? '/app' : '/signup'}>
+              {email ? copy.how.openDesk : 'Sign up & choose exam'} <ArrowRight size={15} />
+            </ButtonLink>
             <Link to="/subjects" className="btn btn-secondary">
               {copy.how.browseChapters}
             </Link>

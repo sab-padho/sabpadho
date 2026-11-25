@@ -24,6 +24,7 @@ import { Revision } from './pages/app/Revision'
 import { Shelf } from './pages/app/Shelf'
 import { Progress } from './pages/app/Progress'
 import { SettingsPage } from './pages/app/SettingsPage'
+import { Onboarding } from './pages/app/Onboarding'
 
 export function App() {
   useScrollToTop()
@@ -42,6 +43,7 @@ export function App() {
         <Route path="/mocks" element={<PublicMocks />} />
         <Route path="/how-it-works" element={<HowItWorks />} />
         <Route path="/signin" element={<SignIn />} />
+        <Route path="/signup" element={<SignIn initialMode="signup" />} />
       </Route>
 
       <Route
@@ -63,6 +65,7 @@ export function App() {
         <Route path="shelf" element={<Shelf />} />
         <Route path="progress" element={<Progress />} />
         <Route path="settings" element={<SettingsPage />} />
+        <Route path="onboarding" element={<Onboarding />} />
       </Route>
 
       <Route path="*" element={<NotFound />} />
@@ -73,6 +76,16 @@ export function App() {
 function RequireAuth({ children }: { children: ReactNode }) {
   const { email } = useAuth()
   const location = useLocation()
-  if (!email) return <Navigate to="/signin" replace state={{ from: location.pathname }} />
+  if (!email) return <Navigate to="/signup" replace state={{ from: location.pathname }} />
+  const onboarded = (() => {
+    try {
+      return Boolean(localStorage.getItem('sabpadho-onboarding-v1'))
+    } catch {
+      return false
+    }
+  })()
+  if (!onboarded && location.pathname !== '/app/onboarding') {
+    return <Navigate to="/app/onboarding" replace />
+  }
   return <>{children}</>
 }

@@ -12,10 +12,9 @@ import {
 } from 'lucide-react'
 import { Badge, ButtonLink, SectionLabel } from '../../components/ui'
 import { AccuracyRing, SectionScoreBars, ScoreSplitBar } from '../../components/charts'
-import { completedMockResult, getMock, paperQuestionCount } from '../../data/mocks'
+import { completedMockResult, paperQuestionCount } from '../../data/mocks'
 import { loadResult, computeResult } from '../../lib/attempt'
-import { questionById } from '../../data/questions'
-import { allChapters, chapterById, subjectById } from '../../data/subjects'
+import { useCatalog } from '../../lib/catalog'
 import { formatClock } from '../../lib/utils'
 import { usePageTitle } from '../../lib/hooks'
 import { useLang } from '../../lib/lang'
@@ -33,6 +32,7 @@ function formatScore(value: number) {
 
 export function MockResult() {
   const { mockId = '' } = useParams()
+  const { getMock, questionById, allChapters, chapterById, subjectById } = useCatalog()
   const paper = getMock(mockId)
   const stored = loadResult(mockId)
   const { lang } = useLang()
@@ -68,7 +68,7 @@ export function MockResult() {
     )
   }
 
-  const computed = stored ? computeResult(paper, stored.answers) : null
+  const computed = stored ? computeResult(paper, stored.answers, undefined, questionById) : null
   const score = computed ? computed.score : completedMockResult.score
   const maxScore = computed ? computed.maxScore : completedMockResult.maxScore
   const correct = computed ? computed.correct : completedMockResult.correct

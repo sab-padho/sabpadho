@@ -3,11 +3,15 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { ArrowRight, Menu, X } from 'lucide-react'
 import { Logo, LangToggle, ThemeToggle } from './brand'
 import { useCopy } from '../lib/ui-copy'
+import { useAuth } from '../lib/auth'
+import { useLang } from '../lib/lang'
 import { ButtonLink } from './ui'
 import { cn } from '../lib/utils'
 
 export function MarketingLayout() {
   const copy = useCopy()
+  const { email, preferredExam } = useAuth()
+  const { lang } = useLang()
   const navLinks = [
     { to: '/subjects', label: copy.marketing.subjects },
     { to: '/mocks', label: copy.marketing.mocks },
@@ -53,16 +57,25 @@ export function MarketingLayout() {
           <div className="flex items-center gap-1.5">
             <LangToggle className="hidden sm:inline-flex" />
             <ThemeToggle />
-            <Link
-              to="/signin"
-              className="hidden rounded-lg px-3 py-2 text-[13.5px] font-medium text-ink-soft transition hover:text-ink sm:inline-flex"
-            >
-              {copy.marketing.signIn}
-            </Link>
-            <ButtonLink to="/app" size="sm" className="hidden sm:inline-flex">
-              {copy.marketing.openDesk}
-              <ArrowRight size={15} />
-            </ButtonLink>
+            {email ? (
+              <ButtonLink to="/app" size="sm" className="hidden sm:inline-flex">
+                {preferredExam} · {copy.marketing.openDesk}
+                <ArrowRight size={15} />
+              </ButtonLink>
+            ) : (
+              <>
+                <Link
+                  to="/signin"
+                  className="hidden rounded-lg px-3 py-2 text-[13.5px] font-medium text-ink-soft transition hover:text-ink sm:inline-flex"
+                >
+                  {copy.marketing.signIn}
+                </Link>
+                <ButtonLink to="/signup" size="sm" className="hidden sm:inline-flex">
+                  {lang === 'hi' ? 'निःशुल्क साइन अप' : 'Sign up free'}
+                  <ArrowRight size={15} />
+                </ButtonLink>
+              </>
+            )}
             <button
               type="button"
               className="grid h-9 w-9 place-items-center rounded-[10px] border border-line bg-surface text-ink md:hidden"
@@ -94,13 +107,22 @@ export function MarketingLayout() {
                 </NavLink>
               ))}
               <div className="mt-3 flex flex-col gap-2 border-t border-line pt-4">
-                <ButtonLink to="/app" size="lg" className="w-full">
-                  {copy.marketing.openDesk}
-                  <ArrowRight size={16} />
-                </ButtonLink>
-                <ButtonLink to="/signin" variant="secondary" size="lg" className="w-full">
-                  {copy.marketing.signIn}
-                </ButtonLink>
+                {email ? (
+                  <ButtonLink to="/app" size="lg" className="w-full">
+                    {preferredExam} · {copy.marketing.openDesk}
+                    <ArrowRight size={16} />
+                  </ButtonLink>
+                ) : (
+                  <>
+                    <ButtonLink to="/signup" size="lg" className="w-full">
+                      {lang === 'hi' ? 'निःशुल्क साइन अप' : 'Sign up free'}
+                      <ArrowRight size={16} />
+                    </ButtonLink>
+                    <ButtonLink to="/signin" variant="secondary" size="lg" className="w-full">
+                      {copy.marketing.signIn}
+                    </ButtonLink>
+                  </>
+                )}
                 <div className="mt-1 flex items-center justify-between px-1">
                   <span className="text-xs text-muted">{copy.marketing.questionLanguage}</span>
                   <LangToggle />

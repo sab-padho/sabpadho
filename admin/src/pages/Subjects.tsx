@@ -138,11 +138,11 @@ export function Subjects() {
       </section>
 
       {subject && (
-        <Drawer title={subject.name} subtitle={`${subject.code} · ${subject.section} · ${number(subject.learners)} learners`} onClose={() => setOpen(null)}>
+        <Drawer title={subject.name} subtitle={`${subject.code} · ${subject.section} · ${number(subject.learners ?? 0)} learners`} onClose={() => setOpen(null)}>
           <div className="drawer-row">
             <Badge tone={statusTone(subject.status)}>{subject.status}</Badge>
-            <Badge tone="brand">{subject.chapters.length} chapters</Badge>
-            <Badge tone="neutral">{subject.accuracy}% accuracy</Badge>
+            <Badge tone="brand">{(subject.chapters ?? []).length} chapters</Badge>
+            <Badge tone="neutral">{subject.accuracy ?? 0}% accuracy</Badge>
           </div>
 
           <div className="drawer-block">
@@ -157,8 +157,8 @@ export function Subjects() {
               </button>
             </div>
             <ul className="chapter-list">
-              {subject.chapters.map(chapter => {
-                const noteCount = data.notes.filter(
+              {(subject.chapters ?? []).map(chapter => {
+                const noteCount = (data.notes ?? []).filter(
                   n => n.chapterId === toLearnerChapterId(chapter.id) || n.chapterId === chapter.id,
                 ).length
                 return (
@@ -166,10 +166,10 @@ export function Subjects() {
                   <div>
                     <strong>{chapter.title}</strong>
                     <small>
-                      {chapter.questions} questions
+                      {chapter.questions ?? 0} questions
                       {noteCount > 0 ? ` · ${noteCount} note${noteCount === 1 ? '' : 's'}` : ''}
                       {chapter.isFree ? ' · Free visitor sample' : ' · Signup required'}
-                      {' · '}edited {relativeTime(chapter.updated)}
+                      {chapter.updated ? ` · edited ${relativeTime(chapter.updated)}` : ''}
                     </small>
                   </div>
                   <div className="chapter-actions">

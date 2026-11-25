@@ -204,9 +204,24 @@ export function Subjects() {
           <div className="drawer-block">
             <h3>Details</h3>
             <ul className="key-values">
-              <li><span>Last catalogue change</span><span>{relativeTime(subject.chapters.reduce((latest, chapter) => (chapter.updated > latest ? chapter.updated : latest), subject.chapters[0].updated))}</span></li>
+              <li>
+                <span>Last catalogue change</span>
+                <span>
+                  {subject.chapters.length > 0
+                    ? relativeTime(
+                        subject.chapters.reduce(
+                          (latest, chapter) => (chapter.updated > latest ? chapter.updated : latest),
+                          subject.chapters[0].updated,
+                        ),
+                      )
+                    : '—'}
+                </span>
+              </li>
               <li><span>Questions in subject</span><span>{number(subject.chapters.reduce((sum, chapter) => sum + chapter.questions, 0))}</span></li>
-              <li><span>Created</span><span>{formatDate(subject.chapters[0].updated)}</span></li>
+              <li>
+                <span>Created</span>
+                <span>{subject.chapters.length > 0 ? formatDate(subject.chapters[0].updated) : '—'}</span>
+              </li>
             </ul>
           </div>
           <p className="drawer-note">Changes sync to Supabase tables (`subjects`, `chapters`, `chapter_notes`, `questions`) and update the learner portal.</p>

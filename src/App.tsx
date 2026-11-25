@@ -77,5 +77,15 @@ function RequireAuth({ children }: { children: ReactNode }) {
   const { email } = useAuth()
   const location = useLocation()
   if (!email) return <Navigate to="/signup" replace state={{ from: location.pathname }} />
+  const onboarded = (() => {
+    try {
+      return Boolean(localStorage.getItem('sabpadho-onboarding-v1'))
+    } catch {
+      return false
+    }
+  })()
+  if (!onboarded && location.pathname !== '/app/onboarding') {
+    return <Navigate to="/app/onboarding" replace />
+  }
   return <>{children}</>
 }

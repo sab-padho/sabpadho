@@ -118,13 +118,6 @@ export function Onboarding() {
               : `Welcome${user?.firstName ? `, ${user.firstName}` : ''}! Let’s personalize your prep`}
           </h1>
         </div>
-        <button
-          type="button"
-          onClick={() => navigate('/app', { replace: true })}
-          className="text-[12px] font-medium text-muted underline-offset-4 hover:text-ink hover:underline"
-        >
-          {lang === 'hi' ? 'अभी छोड़ें' : 'Skip for now'}
-        </button>
       </div>
 
       {/* Progress bar */}

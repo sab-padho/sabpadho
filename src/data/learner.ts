@@ -12,29 +12,29 @@ export const learner = {
   daysToExam: 112,
   plan: 'Free plan',
   joined: 'August 2026',
-  streak: 9,
+  streak: 0,
   weeklyGoal: 300,
-  questionsThisWeek: 157,
-  minutesThisWeek: 214,
+  questionsThisWeek: 0,
+  minutesThisWeek: 0,
 } as const
 
 export const weeklyActivity = [
-  { label: 'Thu', date: '13 Nov', questions: 22 },
-  { label: 'Fri', date: '14 Nov', questions: 34 },
-  { label: 'Sat', date: '15 Nov', questions: 18 },
+  { label: 'Thu', date: '13 Nov', questions: 0 },
+  { label: 'Fri', date: '14 Nov', questions: 0 },
+  { label: 'Sat', date: '15 Nov', questions: 0 },
   { label: 'Sun', date: '16 Nov', questions: 0 },
-  { label: 'Mon', date: '17 Nov', questions: 26 },
-  { label: 'Tue', date: '18 Nov', questions: 45 },
-  { label: 'Wed', date: '19 Nov', questions: 12 },
+  { label: 'Mon', date: '17 Nov', questions: 0 },
+  { label: 'Tue', date: '18 Nov', questions: 0 },
+  { label: 'Wed', date: '19 Nov', questions: 0 },
 ]
 
 export const accuracyTrend = [
-  { label: 'Wk 41', value: 58 },
-  { label: 'Wk 42', value: 61 },
-  { label: 'Wk 43', value: 64 },
-  { label: 'Wk 44', value: 62 },
-  { label: 'Wk 45', value: 69 },
-  { label: 'Wk 46', value: 72 },
+  { label: 'Wk 41', value: 0 },
+  { label: 'Wk 42', value: 0 },
+  { label: 'Wk 43', value: 0 },
+  { label: 'Wk 44', value: 0 },
+  { label: 'Wk 45', value: 0 },
+  { label: 'Wk 46', value: 0 },
 ]
 
 export type RecentAttempt = {
@@ -47,44 +47,7 @@ export type RecentAttempt = {
   href: string
 }
 
-export const recentAttempts: RecentAttempt[] = [
-  {
-    id: 'mock-03',
-    paper: 'CGL Tier I · Mock 03',
-    subjectLabel: 'Full length',
-    date: '15 Nov 2026',
-    score: '133.5 / 200',
-    accuracy: 73,
-    href: '/app/mocks/mock-03/result',
-  },
-  {
-    id: 'quant-sec-06',
-    paper: 'Quant · Sectional 06',
-    subjectLabel: 'Quantitative Aptitude',
-    date: '12 Nov 2026',
-    score: '9 / 16',
-    accuracy: 62,
-    href: '/app/progress',
-  },
-  {
-    id: 'reasoning-sec-05',
-    paper: 'Reasoning · Sectional 05',
-    subjectLabel: 'Reasoning',
-    date: '9 Nov 2026',
-    score: '11.5 / 14',
-    accuracy: 83,
-    href: '/app/progress',
-  },
-  {
-    id: 'english-sec-06',
-    paper: 'English · Sectional 06',
-    subjectLabel: 'English',
-    date: '5 Nov 2026',
-    score: '8 / 12',
-    accuracy: 70,
-    href: '/app/progress',
-  },
-]
+export const recentAttempts: RecentAttempt[] = []
 
 export const resumeSprint = {
   subjectSlug: 'maths',

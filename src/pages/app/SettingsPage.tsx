@@ -306,9 +306,6 @@ export function SettingsPage() {
                 </div>
               ))}
             </dl>
-            <p className="mt-3 rounded-md bg-brand-soft/60 px-2 py-1.5 text-[9.5px] leading-relaxed text-brand-ink">
-              {copy.settings.demoProfile}
-            </p>
           </div>
 
           <div className="card p-4">
